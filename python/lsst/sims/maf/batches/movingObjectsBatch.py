@@ -12,12 +12,48 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import summaryCompletenessAtTime, summaryCompletenessOverH, fractionPopulationAtThreshold
 
-__all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch',
+__all__ = ['defaultHrange', 'defaultCharacterization','setupMoSlicer',
+           'quickDiscoveryBatch', 'discoveryBatch',
            'runCompletenessSummary', 'plotCompleteness',
-           'characterizationAsteroidBatch', 'characterizationOuterBatch',
+           'characterizationInnerBatch', 'characterizationOuterBatch',
            'runFractionSummary', 'plotFractions',
            'plotSingle', 'plotActivity',
            'readAndCombine', 'combineSubsets']
+
+
+def defaultHrange(metadata):
+    "Provide useful default ranges for H, based on metadata of population type."
+    defaultRanges = {'PHA': [16, 28, 0.2],
+                     'NEO': [16, 28, 0.2],
+                     'MBA': [16, 26, 0.2],
+                     'Trojan': [14, 22, 0.2],
+                     'TNO': [4, 12, 0.2],
+                     'SDO': [4, 12, 0.2]}
+    if metadata in defaultRanges:
+        Hrange = defaultRanges[metadata]
+    elif metadata.startswith('GRANVIK'):
+        Hrange = defaultRanges['NEO']
+    elif metadata.startswith('L7'):
+        Hrange = defaultRanges('TNO')
+    else:
+        raise ValueError('metadata not in known populations')
+    return Hrange
+
+
+def defaultCharacterization(metadata):
+    "Provide useful characterization bundle type, based on metadata of population type."
+    defaultChar = {'PHA': 'inner', 'NEO': 'inner',
+                   'MBA': 'inner', 'Trojan': 'inner',
+                   'TNO': 'outer', 'SDO': 'outer'}
+    if metadata in defaultChar:
+        char = defaultChar[metadata]
+    elif metadata.startswith('GRANVIK'):
+        char = 'inner'
+    elif metadata.startswith('L7'):
+        char = 'outer'
+    else:
+        raise ValueError('metadata not in known populations')
+    return char
 
 
 def setupMoSlicer(orbitFile, Hrange, obsFile=None):
@@ -450,6 +486,8 @@ def runCompletenessSummary(bdict, Hmark, times, outDir, resultsDb):
         including bundles we're expecting to contain completeness.
     Hmark : float
         Hmark value to add to completeness plotting dict.
+        If not defined (None), then the Hmark from the plotdict from the metric will be used if available.
+        If None and Hmark not in plotDict, then median of Hrange value will be used.
     times : np.ndarray
         The times at which to calculate completeness (over time).
     outDir : str
@@ -598,7 +636,7 @@ def plotCompleteness(bdictCompleteness, figroot=None, resultsDb=None,
             outfileRoot=figroot + '_DifferentialCompleteness')
 
 
-def characterizationAsteroidBatch(slicer, colmap=None, runName='opsim', metadata='',
+def characterizationInnerBatch(slicer, colmap=None, runName='opsim', metadata='',
                                   albedo=None, Hmark=None, constraint=None, npReduce=np.mean,
                                   windows=None, bins=None):
     """Characterization metrics for inner solar system objects.
@@ -832,6 +870,8 @@ def runFractionSummary(bdict, Hmark, outDir, resultsDb):
         including bundles we're expecting to contain lightcurve/color evaluations.
     Hmark : float
         Hmark value to add to completeness plotting dict.
+        If defined, this value is used. If None, but Hmark in plotDict for metric, then this value (-2) is
+        used. If Hmark not in plotdict, then the median Hrange value - 2 is used.
     times : np.ndarray
         The times at which to calculate completeness (over time).
     outDir : str

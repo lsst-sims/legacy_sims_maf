@@ -19,8 +19,6 @@ if __name__ == '__main__':
                         help="Output (and input) directory for moving object metrics. Default '.'.")
     parser.add_argument('--metadata', type=str, default=None,
                         help="Select only files matching this metadata string. Default None (all files).")
-    parser.add_argument("--albedo", type=float, default=None,
-                        help="Albedo value, to add diameters to upper scales on plots. Default None.")
     parser.add_argument("--hMark", type=float, default=None,
                         help="H value at which to calculate cumulative/differential completeness, etc."
                              "Default will be set to median of H range.")
@@ -63,8 +61,6 @@ if __name__ == '__main__':
 
     # Calculate completeness. This utility writes these to disk.
     bdictCompleteness = batches.runCompletenessSummary(bdict, args.hMark, times, args.outDir, resultsDb)
-    for k, b in bdictCompleteness.items():
-        b.setPlotDict({'albedo': args.albedo, 'Hmark': args.hMark})
 
     # Plot some of the completeness results.
     batches.plotCompleteness(bdictCompleteness, figroot=figroot,

@@ -109,9 +109,9 @@ if __name__ == '__main__':
 
     # Run all characterization metrics
     if args.characterization.lower() == 'inner':
-        bdictC, pbundle = batches.characterizationAsteroidBatch(slicer, colmap=colmap, runName=args.opsimRun,
-                                                                metadata=args.metadata, albedo=args.albedo,
-                                                                Hmark=args.hMark, constraint=None)
+        bdictC, pbundle = batches.characterizationInnerBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                                             metadata=args.metadata, albedo=args.albedo,
+                                                             Hmark=args.hMark, constraint=None)
     elif args.characterization.lower() == 'outer':
         bdictC, pbundle = batches.characterizationOuterBatch(slicer, colmap=colmap, runName=args.opsimRun,
                                                              metadata=args.metadata, albedo=args.albedo,
