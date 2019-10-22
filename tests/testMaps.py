@@ -88,18 +88,18 @@ class TestMaps(unittest.TestCase):
                 slicer1 = slicers.HealpixSlicer(nside=nside, latLonDeg=False)
                 slicer1.setupSlicer(data)
                 result1 = starmap.run(slicer1.slicePoints)
-                assert('starMapBins' in list(result1.keys()))
-                assert('starLumFunc' in list(result1.keys()))
-                assert(np.max(result1['starLumFunc'] > 0))
+                assert('starMapBins_r' in list(result1.keys()))
+                assert('starLumFunc_r' in list(result1.keys()))
+                assert(np.max(result1['starLumFunc_r'] > 0))
 
             fieldData = makeFieldData(22)
 
             slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = starmap.run(slicer2.slicePoints)
-            assert('starMapBins' in list(result2.keys()))
-            assert('starLumFunc' in list(result2.keys()))
-            assert(np.max(result2['starLumFunc'] > 0))
+            assert('starMapBins_r' in list(result2.keys()))
+            assert('starLumFunc_r' in list(result2.keys()))
+            assert(np.max(result2['starLumFunc_r'] > 0))
 
         else:
             warnings.warn('Did not find stellar density map, skipping test.')
