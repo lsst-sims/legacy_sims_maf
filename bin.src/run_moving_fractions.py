@@ -56,8 +56,8 @@ if __name__ == '__main__':
 
     first = bdict[metricNames[0]]
     figroot = f'{first.runName}'
-    if args.workDir is not '.':
-        figroot += f'_{args.workDir}'
+    if args.metadata is not '.':
+        figroot += f'_{args.metadata}'
 
     # Calculate completeness. This utility writes these to disk.
     bdictCompleteness = batches.runCompletenessSummary(bdict, args.hMark, times, args.workDir, resultsDb)

@@ -31,9 +31,9 @@ def defaultHrange(metadata):
                      'SDO': [4, 12, 0.2]}
     if metadata in defaultRanges:
         Hrange = defaultRanges[metadata]
-    elif metadata.startswith('GRANVIK'):
+    elif metadata.upper().startswith('GRANVIK'):
         Hrange = defaultRanges['NEO']
-    elif metadata.startswith('L7'):
+    elif metadata.upper().startswith('L7'):
         Hrange = defaultRanges('TNO')
     else:
         raise ValueError('metadata not in known populations')
@@ -47,9 +47,9 @@ def defaultCharacterization(metadata):
                    'TNO': 'outer', 'SDO': 'outer'}
     if metadata in defaultChar:
         char = defaultChar[metadata]
-    elif metadata.startswith('GRANVIK'):
+    elif metadata.upper().startswith('GRANVIK'):
         char = 'inner'
-    elif metadata.startswith('L7'):
+    elif metadata.upper().startswith('L7'):
         char = 'outer'
     else:
         raise ValueError('metadata not in known populations')
@@ -505,7 +505,7 @@ def runCompletenessSummary(bdict, Hmark, times, outDir, resultsDb):
     # Add completeness bundles and write completeness at Hmark to resultsDb.
     completeness = {}
     group = 'Discovery'
-    subgroup = 'Completeness' % (Hmark)
+    subgroup = 'Completeness'
 
     def _compbundles(b, bundle, Hmark, resultsDb):
         # Find Hmark if not set (this may be different for different bundles).
