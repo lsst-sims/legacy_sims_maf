@@ -13,7 +13,7 @@ __all__ = ['intraNight', 'interNight', 'seasons']
 
 
 def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
-               ditherStacker=None, ditherkwargs=None):
+               ditherStacker=None, ditherkwargs=None, slicer=None, display_group='IntraNight', subgroup='Pairs'):
     """Generate a set of statistics about the pair/triplet/etc. rate within a night.
 
     Parameters
@@ -32,6 +32,8 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         Optional dither stacker to use to define ra/dec columns.
     ditherkwargs: dict, opt
         Optional dictionary of kwargs for the dither stacker.
+    slicer : slicer object (None)
+        Optinally use something other than a HealpixSlicer
 
     Returns
     -------
@@ -53,10 +55,11 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
+    if slicer is None:
+        slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
     # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
-    displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': 0}
+    displayDict = {'group': display_group, 'subgroup': subgroup, 'caption': None, 'order': 0}
     if extraSql is not None and len(extraSql) > 0:
         sql = '(%s) and (filter="g" or filter="r" or filter="i")' % extraSql
     else:
@@ -130,7 +133,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point ' \
                              'on the sky, considering visits between %.1f and %.1f minutes' % (binMin,
-                                                                                                binMax)
+                                                                                               binMax)
     if metadata is None or len(metadata) == 0:
         displayDict['caption'] += ', all proposals.'
     else:
@@ -149,7 +152,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
 
 
 def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
-               ditherStacker=None, ditherkwargs=None):
+               ditherStacker=None, ditherkwargs=None, slicer=None, display_group='InterNight', subgroup='Night gaps'):
     """Generate a set of statistics about the spacing between nights with observations.
 
     Parameters
@@ -168,6 +171,9 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         Optional dither stacker to use to define ra/dec columns.
     ditherkwargs: dict, opt
         Optional dictionary of kwargs for the dither stacker.
+    slicer : slicer object (None)
+        Optinally use something other than a HealpixSlicer
+
     Returns
     -------
     metricBundleDict
@@ -185,9 +191,10 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                                             extraSql=extraSql,
                                                             extraMetadata=metadata)
 
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
+    if slicer is None:
+        slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
-    displayDict = {'group': 'InterNight', 'subgroup': 'Night gaps', 'caption': None, 'order': 0}
+    displayDict = {'group': display_group, 'subgroup': subgroup, 'caption': None, 'order': 0}
 
     # Histogram of the number of nights between visits.
     bins = np.arange(1, 20.5, 1)
@@ -214,7 +221,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     for f in filterlist:
         displayDict['caption'] = 'Median gap between nights with observations, %s.' % metadata[f]
         displayDict['order'] = orders[f]
-        plotDict = {'color': colors[f]}
+        plotDict = {'color': colors[f], 'percentileClip': 95.}
         bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
                                  displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
@@ -237,6 +244,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         b.setRunName(runName)
     plotBundles = None
     return mb.makeBundlesDictFromList(bundleList), plotBundles
+
 
 def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
             ditherStacker=None, ditherkwargs=None):

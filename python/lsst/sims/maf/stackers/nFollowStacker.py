@@ -138,6 +138,7 @@ class NFollowStacker(BaseStacker):
     def _run(self, simData, cols_present=False):
         if cols_present:
             return simData
+        simData['nObservatories'] = 0
         if self.degrees:
             ra = np.radians(simData[self.raCol])
             dec = np.radians(simData[self.decCol])
@@ -159,5 +160,4 @@ class NFollowStacker(BaseStacker):
                 obsGotIt[followed] = 1
             # If an observatory got an observation, count it in nObservatories.
             simData['nObservatories'] += obsGotIt
-
         return simData

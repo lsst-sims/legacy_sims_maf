@@ -499,6 +499,9 @@ class MetricBundleGroup(object):
         if self.saveEarly:
             for b in bDict.values():
                 b.write(outDir=self.outDir, resultsDb=self.resultsDb)
+        else:
+            for b in bDict.values():
+                b.writeDb(resultsDb=self.resultsDb)
 
     def reduceAll(self, updateSummaries=True):
         """Run the reduce methods for all metrics in bundleDict.
@@ -541,6 +544,8 @@ class MetricBundleGroup(object):
                     reduceBundleDict[name] = newmetricbundle
                     if self.saveEarly:
                         newmetricbundle.write(outDir=self.outDir, resultsDb=self.resultsDb)
+                    else:
+                        newmetricbundle.writeDb(resultsDb=self.resultsDb)
                 # Remove summaryMetrics from top level metricbundle if desired.
                 if updateSummaries:
                     b.summaryMetrics = []

@@ -8,7 +8,7 @@ __all__ = ['NightPointingPlotter']
 
 class NightPointingPlotter(BasePlotter):
 
-    def __init__(self, mjdCol='mjd', altCol='alt', azCol='az'):
+    def __init__(self, mjdCol='observationStartMJD', altCol='alt', azCol='az'):
 
         # Just call it Hourglass so it gets treated the same way
         self.plotType = 'Hourglass'

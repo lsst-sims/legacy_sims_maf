@@ -132,15 +132,13 @@ class TableFractionMetric(BaseMetric):
     12        1 < P
     Note the 1st and last elements do NOT obey the numpy histogram conventions.
     """
-    def __init__(self, col='metricdata',  nbins=10):
+    def __init__(self, col='metricdata',  nbins=10, maskVal=0.):
         """
         colname = the column name in the metric data (i.e. 'metricdata' usually).
         nbins = number of bins between 0 and 1. Should divide evenly into 100.
         """
-        super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
+        super(TableFractionMetric, self).__init__(col=col, maskVal=maskVal, metricDtype='float')
         self.nbins = nbins
-        # set this so runSliceMetric knows masked values should be set to zero and passed
-        self.maskVal = 0.
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
@@ -210,12 +208,11 @@ class TotalPowerMetric(BaseMetric):
     """
     Calculate the total power in the angular power spectrum between lmin/lmax.
     """
-    def __init__(self, col='metricdata', lmin=100., lmax=300., removeDipole=True, **kwargs):
+    def __init__(self, col='metricdata', lmin=100., lmax=300., removeDipole=True, maskVal=hp.UNSEEN, **kwargs):
         self.lmin = lmin
         self.lmax = lmax
         self.removeDipole = removeDipole
-        super(TotalPowerMetric, self).__init__(col=col, **kwargs)
-        self.maskVal = hp.UNSEEN
+        super(TotalPowerMetric, self).__init__(col=col, maskVal=maskVal, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate the power spectrum.
