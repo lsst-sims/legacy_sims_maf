@@ -171,16 +171,16 @@ class SummaryHistogram(BasePlotter):
         plt.grid(plotDict['grid'], alpha=0.3)
         # Set y and x limits, if provided.
         if plotDict['xMin'] is not None:
-            plt.xlim(xmin=plotDict['xMin'])
+            plt.xlim(left=plotDict['xMin'])
         elif bins[0] == 0:
-            plt.xlim(xmin=0)
+            plt.xlim(left=0)
         if plotDict['xMax'] is not None:
-            plt.xlim(xmax=plotDict['xMax'])
+            plt.xlim(right=plotDict['xMax'])
         if plotDict['yMin'] is not None:
-            plt.ylim(ymin=plotDict['yMin'])
+            plt.ylim(bottom=plotDict['yMin'])
         elif finalHist.min() == 0:
             plotDict['yMin'] = 0
         if plotDict['yMax'] is not None:
-            plt.ylim(ymax=plotDict['yMax'])
+            plt.ylim(top=plotDict['yMax'])
 
         return fig.number

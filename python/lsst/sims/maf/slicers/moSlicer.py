@@ -1,7 +1,5 @@
 import numpy as np
-import numpy.ma as ma
 import pandas as pd
-import warnings
 
 from .baseSlicer import BaseSlicer
 from lsst.sims.maf.plots.moPlotters import MetricVsH, MetricVsOrbit
@@ -87,7 +85,7 @@ class MoObjSlicer(BaseSlicer):
             The file containing the observation information.
         """
         # For now, just read all the observations (should be able to chunk this though).
-        self.allObs = pd.read_table(obsFile, delim_whitespace=True, comment='#')
+        self.allObs = pd.read_csv(obsFile, delim_whitespace=True, comment='#')
         self.obsFile = obsFile
         # We may have to rename the first column from '#objId' to 'objId'.
         if self.allObs.columns.values[0].startswith('#'):
@@ -137,6 +135,7 @@ class MoObjSlicer(BaseSlicer):
         else:
             Hvals = np.array([orb['H']], float)
         # Note that ssoObs / obs is a recarray not Dataframe!
+        # But that the orbit IS a Dataframe.
         return {'obs': obs.to_records(),
                 'orbit': orb,
                 'Hvals': Hvals}

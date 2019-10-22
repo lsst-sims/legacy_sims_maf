@@ -382,9 +382,9 @@ class BaseHistogram(BasePlotter):
                                label=plotDict['label'], color=plotDict['color'])
         hist_ylims = plt.ylim()
         if n.max() > hist_ylims[1]:
-            plt.ylim(ymax = n.max())
+            plt.ylim(top = n.max())
         if n.min() < hist_ylims[0] and not plotDict['logScale']:
-            plt.ylim(ymin = n.min())
+            plt.ylim(bottom = n.min())
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
 
@@ -396,13 +396,13 @@ class BaseHistogram(BasePlotter):
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set optional x, y limits.
         if 'xMin' in plotDict:
-            plt.xlim(xmin=plotDict['xMin'])
+            plt.xlim(left=plotDict['xMin'])
         if 'xMax' in plotDict:
-            plt.xlim(xmax=plotDict['xMax'])
+            plt.xlim(right=plotDict['xMax'])
         if 'yMin' in plotDict:
-            plt.ylim(ymin=plotDict['yMin'])
+            plt.ylim(bottom=plotDict['yMin'])
         if 'yMax' in plotDict:
-            plt.ylim(ymax=plotDict['yMax'])
+            plt.ylim(top=plotDict['yMax'])
         # Set/Add various labels.
         plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         plt.ylabel(plotDict['ylabel'], fontsize=plotDict['fontsize'])

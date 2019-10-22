@@ -70,12 +70,12 @@ class OneDBinnedData(BasePlotter):
 
         # Set y and x limits, if provided.
         if plotDict['yMin'] is not None:
-            plt.ylim(ymin=plotDict['yMin'])
+            plt.ylim(bottom=plotDict['yMin'])
         if plotDict['yMax'] is not None:
-            plt.ylim(ymax=plotDict['yMax'])
+            plt.ylim(top=plotDict['yMax'])
         if plotDict['xMin'] is not None:
-            plt.xlim(xmin=plotDict['xMin'])
+            plt.xlim(left=plotDict['xMin'])
         if plotDict['xMax'] is not None:
-            plt.xlim(xmax=plotDict['xMax'])
+            plt.xlim(right=plotDict['xMax'])
         plt.title(plotDict['title'])
         return fig.number

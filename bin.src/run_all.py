@@ -13,15 +13,19 @@ from run_generic import *
 
 
 def setBatches(opsdb, colmap, args):
-    # Set up WFD sql constraint
+    # Set up WFD sql constraint, if possible.
     propids, proptags, sqls, metadata = setSQL(opsdb, sqlConstraint=args.sqlConstraint)
+    if 'WFD' in sqls:
+        tags = ['All', 'WFD']
+    else:
+        tags = ['All']
     # Set up appropriate metadata - need to combine args.sqlConstraint
 
     # Some of these metrics are reproduced in other scripts - srd and cadence
     bdict = {}
     plotbundles = []
 
-    for tag in ['All', 'WFD']:
+    for tag in tags:
         fO = batches.fOBatch(colmap=colmap, runName=args.runName,
                              extraSql=sqls[tag], extraMetadata=metadata[tag],
                              ditherStacker=args.ditherStacker)
@@ -40,15 +44,16 @@ def setBatches(opsdb, colmap, args):
                                                ditherStacker=args.ditherStacker)
     bdict.update(intranight_all)
     plotbundles.append(plots)
-    sql = '(%s) or (%s)' % (sqls['WFD'], sqls['NES'])
-    md = 'WFD+' + metadata['NES']
-    intranight_wfdnes, plots = batches.intraNight(colmap, args.runName, extraSql=sql,
-                                                  extraMetadata=md, ditherStacker=args.ditherStacker)
-    bdict.update(intranight_wfdnes)
-    plotbundles.append(plots)
+    if ('WFD' in sqls) and ('NES' in sqls):
+        sql = '(%s) or (%s)' % (sqls['WFD'], sqls['NES'])
+        md = 'WFD+' + metadata['NES']
+        intranight_wfdnes, plots = batches.intraNight(colmap, args.runName, extraSql=sql,
+                                                      extraMetadata=md, ditherStacker=args.ditherStacker)
+        bdict.update(intranight_wfdnes)
+        plotbundles.append(plots)
 
     # Internight (nights between visits)
-    for tag in ['All', 'WFD']:
+    for tag in tags:
         internight, plots = batches.interNight(colmap, args.runName, extraSql=sqls[tag],
                                                extraMetadata=metadata[tag],
                                                ditherStacker=args.ditherStacker)
@@ -56,7 +61,7 @@ def setBatches(opsdb, colmap, args):
         plotbundles.append(plots)
 
     # Intraseason (length of season)
-    for tag in ['All', 'WFD']:
+    for tag in tags:
         season, plots = batches.seasons(colmap=colmap, runName=args.runName,
                                         extraSql=sqls[tag], extraMetadata=metadata[tag],
                                         ditherStacker=args.ditherStacker)
@@ -64,13 +69,13 @@ def setBatches(opsdb, colmap, args):
         plotbundles.append(plots)
 
     # Run all metadata metrics, All and just WFD.
-    for tag in ['All', 'WFD']:
+    for tag in tags:
         bdict.update(batches.allMetadata(colmap, args.runName, extraSql=sqls[tag],
                                          extraMetadata=metadata[tag],
                                          ditherStacker=args.ditherStacker))
 
     # Nvisits + m5 maps + Teff maps, All and just WFD.
-    for tag in ['All', 'WFD']:
+    for tag in tags:
         bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears,
                                            extraSql=sqls[tag], extraMetadata=metadata[tag],
                                            ditherStacker=args.ditherStacker))

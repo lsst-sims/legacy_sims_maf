@@ -6,6 +6,34 @@ __all__ = ['TemplateExistsMetric', 'UniformityMetric',
            'InterNightGapsMetric', 'VisitGapMetric', 'SeasonLengthMetric']
 
 
+class fSMetric(BaseMetric):
+    """Calculate the fS value (Nvisit-weighted delta(M5-M5srd)).
+    """
+    def __init__(self, filterCol='filter', metricName='fS', **kwargs):
+        self.filterCol = filterCol
+        cols = [self.filterCol]
+        super().__init__(cols=cols, metricName=metricName, units='fS', **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        """"Calculate the fS (reserve above/below the m5 values from the LSST throughputs)
+
+        Parameters
+        ----------
+        dataSlice : numpy.array
+            Numpy structured array containing the data related to the visits provided by the slicer.
+        slicePoint : dict, optional
+            Dictionary containing information about the slicepoint currently active in the slicer.
+
+        Returns
+        -------
+        float
+            The fS value.
+        """
+        # We could import this from the m5_flat_sed values, but it makes sense to calculate the m5
+        # directly from the throughputs. This is easy enough to do and will allow variation of
+        # the throughput curves and readnoise and visit length, etc.
+
+
 class TemplateExistsMetric(BaseMetric):
     """Calculate the fraction of images with a previous template image of desired quality.
     """

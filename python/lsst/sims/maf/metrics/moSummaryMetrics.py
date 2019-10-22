@@ -87,15 +87,18 @@ class MeanValueAtHMetric(BaseMoMetric):
 
 
 class MoCompletenessMetric(BaseMoMetric):
-    """Calculate the completeness (relative to the entire population), given the counts of discovery chances.
+    """Calculate the fraction of the population that meets `threshold` value or higher.
+    This is equivalent to calculating the completeness (relative to the entire population) given
+    the output of a Discovery_N_Chances metric, or the fraction of the population that meets a given cutoff
+    value for Color determination metrics.
 
-    Input values of the number of discovery chances can come from the DiscoveryChances metric or the
-    Discovery_N_Chances (child) metric.
+    Any moving object metric that outputs a float value can thus have the 'fraction of the population'
+    with greater than X value calculated here, as a summary statistic.
 
     Parameters
     ----------
-    requiredChances : int, opt
-        Require at least this many discovery opportunities before counting the object as 'found'. Default = 1.
+    threshold : int, opt
+        Count the fraction of the population that exceeds this value. Default = 1.
     nbins : int, opt
         If the H values for the metric are not a cloned distribution, then split up H into this many bins.
         Default 20.
@@ -103,13 +106,13 @@ class MoCompletenessMetric(BaseMoMetric):
         If the H values for the metric are not a cloned distribution, then split up H into at least this
         range (otherwise just use the min/max of the H values). Default 1.0
     cumulative : bool, opt
-        If True, calculate the cumulative completeness (completeness <= H).
-        If False, calculate the differential completeness (completeness @ H).
-        Default True.
+        If False, simply report the differential fractional value (or differential completeness).
+        If True, integrate over the H distribution (using IntegrateOverH) to report a cumulative fraction.
+        Default False.
     Hindex : float, opt
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
-    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.33, **kwargs):
+    def __init__(self, threshold=1, nbins=20, minHrange=1.0, cumulative=False, Hindex=0.33, **kwargs):
         if 'metricName' in kwargs:
             metricName = kwargs.pop('metricName')
             if metricName.startswith('Cumulative'):
@@ -127,21 +130,21 @@ class MoCompletenessMetric(BaseMoMetric):
                 metricName = 'DifferentialCompleteness'
                 units = '@ H'
         super(MoCompletenessMetric, self).__init__(metricName=metricName, units=units, **kwargs)
-        self.requiredChances = requiredChances
+        self.threshold = threshold
         # If H is not a cloned distribution, then we need to specify how to bin these values.
         self.nbins = nbins
         self.minHrange = minHrange
         self.Hindex = Hindex
 
-    def run(self, discoveryChances, Hvals):
-        nSsos = discoveryChances.shape[0]
+    def run(self, metricValues, Hvals):
+        nSsos = metricValues.shape[0]
         nHval = len(Hvals)
-        discoveriesH = discoveryChances.swapaxes(0, 1)
-        if nHval == discoveryChances.shape[1]:
+        metricValH = metricValues.swapaxes(0, 1)
+        if nHval == metricValues.shape[1]:
             # Hvals array is probably the same as the cloned H array.
             completeness = np.zeros(len(Hvals), float)
             for i, H in enumerate(Hvals):
-                completeness[i] = np.where(discoveriesH[i].filled(0) >= self.requiredChances)[0].size
+                completeness[i] = np.where(metricValH[i].filled(0) >= self.threshold)[0].size
             completeness = completeness / float(nSsos)
         else:
             # The Hvals are spread more randomly among the objects (we probably used one per object).
@@ -153,9 +156,9 @@ class MoCompletenessMetric(BaseMoMetric):
             stepsize = hrange / float(self.nbins)
             bins = np.arange(minH, minH + hrange + stepsize/2.0, stepsize)
             Hvals = bins[:-1]
-            n_all, b = np.histogram(discoveriesH[0], bins)
-            condition = np.where(discoveriesH[0] >= self.requiredChances)[0]
-            n_found, b = np.histogram(discoveriesH[0][condition], bins)
+            n_all, b = np.histogram(metricValH[0], bins)
+            condition = np.where(metricValH[0] >= self.requiredChances)[0]
+            n_found, b = np.histogram(metricValH[0][condition], bins)
             completeness = n_found.astype(float) / n_all.astype(float)
             completeness = np.where(n_all==0, 0, completeness)
         if self.cumulative:
@@ -208,9 +211,9 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         else:
             self.cumulative = cumulative
             if self.cumulative:
-                self.metricName = 'CumulativeCompleteness@Time'
+                self.metricName = 'CumulativeCompleteness@Time@H=%.2f' % self.Hval
             else:
-                self.metricName = 'DifferentialCompleteness@Time'
+                self.metricName = 'DifferentialCompleteness@Time@H=%.2f' % self.Hval
         self._setLabels()
         super(MoCompletenessAtTimeMetric, self).__init__(metricName=self.metricName, units=self.units,
                                                          **kwargs)

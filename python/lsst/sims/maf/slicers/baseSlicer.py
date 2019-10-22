@@ -349,46 +349,13 @@ class BaseSlicer(with_metaclass(SlicerRegistry, object)):
             containing header information (runName, metadata, etc.).
         """
         import lsst.sims.maf.slicers as slicers
-        # We have many old metric files saved with py2 and these need a bit of extra care to reload.
-        # First determine if this is the case:
-        restored = np.load(infilename)
-        py2_to_py3 = False
-        try:
-            restored['slicePoints']
-        except UnicodeError:
-            # Old metric data files saved by py2 stored the slicepoints with bytes.
-            restored = np.load(infilename, encoding='bytes')
-            py2_to_py3 = True
+        # Allowing pickles here is required, because otherwise we cannot restore data saved as objects.
+        restored = np.load(infilename, allow_pickle=True)
         # Get metadata and other simData info.
         header = restored['header'][()]
         slicer_init = restored['slicer_init'][()]
         slicerName = str(restored['slicerName'])
         slicePoints = restored['slicePoints'][()]
-        if py2_to_py3:
-            h = {}
-            for k, v in header.items():
-                newkey = str(k, 'utf-8')
-                if isinstance(v, bytes):
-                    value = str(v, 'utf-8')
-                else:
-                    value = v
-                h[newkey] = value
-            header = h
-            si = {}
-            for k, v in slicer_init.items():
-                newkey = str(k, 'utf-8')
-                if isinstance(v, bytes):
-                    value = str(v, 'utf-8')
-                else:
-                    value = v
-                si[newkey] = value
-            slicer_init = si
-            sp = {}
-            for k, v in slicePoints.items():
-                newkey = str(k, 'utf-8')
-                sp[newkey] = v
-            slicePoints = sp
-            slicerName = str(restored['slicerName'], 'utf-8')
         # Backwards compatibility issue - map 'spatialkey1/spatialkey2' to 'lonCol/latCol'.
         if 'spatialkey1' in slicer_init:
             slicer_init['lonCol'] = slicer_init['spatialkey1']
