@@ -13,6 +13,7 @@ import numpy as np
 import inspect
 from lsst.sims.maf.stackers.getColInfo import ColInfo
 from future.utils import with_metaclass
+import warnings
 
 __all__ = ['MetricRegistry', 'BaseMetric']
 
@@ -35,7 +36,7 @@ class MetricRegistry(type):
                 modname = modname + '.'
         metricname = modname + name
         if metricname in cls.registry:
-            raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' % (metricname))
+            warnings.warn('Redefining metric %s! (there are >1 metrics with the same name)' % (metricname))
         if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
             cls.registry[metricname] = cls
 
