@@ -21,7 +21,7 @@ if __name__ == '__main__':
                         help="Select only files matching this metadata string. Default None (all files).")
     parser.add_argument("--hMark", type=float, default=None,
                         help="H value at which to calculate cumulative/differential completeness, etc."
-                             "Default will be set to median of H range.")
+                             "Default (None) will be set to plotDict value or median of H range.")
     parser.add_argument("--nYearsMax", type=int, default=10,
                         help="Maximum number of years out to which to evaluate completeness."
                              "Default 10.")
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     times += args.startTime
 
     # Create a results Db.
-    resultsDb = db.ResultsDb(outDir=args.outDir)
+    resultsDb = db.ResultsDb(outDir=args.workDir)
 
     # Just read in all metrics in the (joint or single) directory, then run completeness and fraction
     # summaries, using the methods in the batches.
