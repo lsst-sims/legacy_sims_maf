@@ -42,7 +42,7 @@ if __name__ == '__main__':
     if args.metadata is None:
         matchstring = os.path.join(args.workDir, '*MOOB.npz')
     else:
-        matchstring = os.path.join(args.workDir, f'{args.metadata}*MOOB.npz')
+        matchstring = os.path.join(args.workDir, f'*{args.metadata}*MOOB.npz')
     metricfiles = glob.glob(matchstring)
     metricNames = []
     for m in metricfiles:
@@ -56,28 +56,28 @@ if __name__ == '__main__':
 
     first = bdict[metricNames[0]]
     figroot = f'{first.runName}'
-    if args.outDir is not '.':
-        figroot += f'_{args.outDir}'
+    if args.workDir is not '.':
+        figroot += f'_{args.workDir}'
 
     # Calculate completeness. This utility writes these to disk.
-    bdictCompleteness = batches.runCompletenessSummary(bdict, args.hMark, times, args.outDir, resultsDb)
+    bdictCompleteness = batches.runCompletenessSummary(bdict, args.hMark, times, args.workDir, resultsDb)
 
     # Plot some of the completeness results.
     batches.plotCompleteness(bdictCompleteness, figroot=figroot,
-                             resultsDb=resultsDb, outDir=args.outDir)
+                             resultsDb=resultsDb, outDir=args.workDir)
 
     # Calculate fractions of population for characterization. This utility writes these to disk.
-    bdictFractions = batches.runFractionSummary(bdict, args.hMark, args.outDir, resultsDb)
+    bdictFractions = batches.runFractionSummary(bdict, args.hMark, args.workDir, resultsDb)
     # Plot the fractions for colors and lightcurves.
     batches.plotFractions(bdictFractions, figroot=figroot,
-                          resultsDb=resultsDb, outDir=args.outDir)
+                          resultsDb=resultsDb, outDir=args.workDir)
 
     # Plot nObs and arcLength.
     for k in bdict:
         if 'NObs' in k:
-            batches.plotSingle(bdict[k], resultsDb=resultsDb, outDir=args.outDir)
+            batches.plotSingle(bdict[k], resultsDb=resultsDb, outDir=args.workDir)
         if 'ObsArc' in k:
-            batches.plotSingle(bdict[k], resultsDb=resultsDb, outDir=args.outDir)
+            batches.plotSingle(bdict[k], resultsDb=resultsDb, outDir=args.workDir)
 
     # Plot likelihood of detecting activity.
-    batches.plotActivity(bdict, figroot=figroot, resultsDb=resultsDb, outDir=args.outDir)
+    batches.plotActivity(bdict, figroot=figroot, resultsDb=resultsDb, outDir=args.workDir)
