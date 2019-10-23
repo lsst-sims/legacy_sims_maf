@@ -24,14 +24,16 @@ class PassMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return dataSlice
 
+
 class Coaddm5Metric(BaseMetric):
     """Calculate the coadded m5 value at this gridpoint.
     """
-    def __init__(self, m5Col = 'fiveSigmaDepth', metricName='CoaddM5', **kwargs):
+    def __init__(self, m5Col='fiveSigmaDepth', metricName='CoaddM5', **kwargs):
         """Instantiate metric.
 
         m5col = the column name of the individual visit m5 data."""
         super(Coaddm5Metric, self).__init__(col=m5Col, metricName=metricName, **kwargs)
+
     def run(self, dataSlice, slicePoint=None):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
 
