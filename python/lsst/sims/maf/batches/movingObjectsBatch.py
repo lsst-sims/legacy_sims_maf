@@ -997,7 +997,7 @@ def plotSingle(bundle, resultsDb=None, outDir='.', figformat='pdf'):
     plotDicts[0].update({'figsize': (8, 6), 'legendloc': 'upper right', 'yMin': 0})
     # Remove the Hmark line because these plots get complicated.
     for r in plotDicts:
-        del plotDicts[r]['Hmark']
+        r['Hmark'] = None
     ph.setMetricBundles(plotBundles)
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
 
