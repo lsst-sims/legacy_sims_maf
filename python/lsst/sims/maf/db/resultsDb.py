@@ -387,7 +387,8 @@ class ResultsDb(object):
             query = (self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid)
                      .filter(MetricRow.metricId == PlotRow.metricId))
             for m, p in query:
-                thumbfile = 'thumb.' + ''.join(p.plotFile.split('.')[:-1]) + '.png'
+                # The plotFile typically ends with .pdf (but the rest of name can have '.' or '_')
+                thumbfile = 'thumb.' + '.'.join(p.plotFile.split('.')[:-1]) + '.png'
                 plotFiles.append((m.metricId, m.metricName, m.metricMetadata,
                                   p.plotType, p.plotFile, thumbfile))
         # Convert to numpy array.
