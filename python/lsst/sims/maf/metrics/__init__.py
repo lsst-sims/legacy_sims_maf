@@ -24,4 +24,4 @@ from .pairMetric import *
 from .nightPointingMetric import *
 from .stringCountMetric import *
 from .areaSummaryMetrics import *
-from .weakLensingSystematicsMetirc import *
+from .weakLensingSystematicsMetric import *
