@@ -17,12 +17,13 @@ class WeakLensingNvisits(BaseMetric):
     def __init__(self,
                  maps,
                  depthlim=24.5,
+                 ebvlim=0.2,
                  metricName='WeakLensingNvisits',
                  **kwargs):
         """Weak Lensing systematics metric
 
         Computes the average number of visits per point on a HEALPix grid
-        after E(B-V) and co-added depth cuts.
+        after a maximum E(B-V) cut and a minimum co-added depth cut.
         """
         
         super().__init__(
@@ -33,6 +34,7 @@ class WeakLensingNvisits(BaseMetric):
             )
         self.ExgalM5 = ExgalM5()
         self.depthlim = depthlim
+        self.ebvlim = ebvlim
 
     def run(self, dataSlice, slicePoint=None):
         """runs the metric
@@ -43,7 +45,7 @@ class WeakLensingNvisits(BaseMetric):
         Returns:
             the number of visits that can observe this healpix point.
         """
-        if slicePoint['ebv'] > 0.2:
+        if slicePoint['ebv'] > self.ebvlim:
             return self.badval
         ExgalM5 = self.ExgalM5.run(dataSlice=dataSlice, slicePoint=slicePoint)
         if ExgalM5 < self.depthlim:
