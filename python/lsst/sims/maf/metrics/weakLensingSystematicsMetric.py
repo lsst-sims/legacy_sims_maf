@@ -3,9 +3,9 @@ from .exgalM5 import ExgalM5
 from ..maps import DustMap
 
 
-__all__ = ['NumberOfVisitsMetric']
+__all__ = ['WeakLensingNvisits']
 
-class NumberOfVisitsMetric(BaseMetric):
+class WeakLensingNvisits(BaseMetric):
     """Note:
         Should be run with the HealpixSlicer. If using dithering (which
         should be the case unless dithering is already implemented in the run)
@@ -17,7 +17,7 @@ class NumberOfVisitsMetric(BaseMetric):
     def __init__(self,
                  maps,
                  depthlim=24.5,
-                 metricName='NumberOfVisitsMetric',
+                 metricName='WeakLensingNvisits',
                  **kwargs):
         """Weak Lensing systematics metric
 
@@ -27,7 +27,7 @@ class NumberOfVisitsMetric(BaseMetric):
         
         super().__init__(
             metricName=metricName, 
-            col=['fieldId', 'fieldDec', 'fiveSigmaDepth'],
+            col=['fiveSigmaDepth'],
             maps=maps, 
             **kwargs
             )
