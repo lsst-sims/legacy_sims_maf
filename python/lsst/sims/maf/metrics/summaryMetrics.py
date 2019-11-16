@@ -1,11 +1,13 @@
 import numpy as np
 import healpy as hp
+from scipy import interpolate
 from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
 
 __all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
-           'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric']
+           'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric',
+           'FoMEmulatorMetric']
 
 
 class fONv(BaseMetric):
@@ -224,3 +226,90 @@ class TotalPowerMetric(BaseMetric):
         condition = np.where((ell <= self.lmax) & (ell >= self.lmin))[0]
         totalpower = np.sum(cl[condition]*(2*ell[condition]+1))
         return totalpower
+
+
+
+class FoMEmulatorMetric(BaseMetric):
+    def __init__(self, nside=128, year=10, col=None, **kwargs):
+        
+        """
+        Args:
+            nside (int): healpix resolution
+            year (int): year of the FoM emulated values, 
+                can be one of [1, 3, 6, 10]
+            col (str): column name of metric data.
+        """
+        self.nside = nside
+        super(FoMEmulatorMetric, self).__init__(metricName='FoMEmulatorMetric',
+                                                col=col, 
+                                                **kwargs
+                                               )
+        if col is None:
+            self.col = 'metricdata'
+        self.year = year
+    def run(self, dataSlice, slicePoint=None):
+        """
+        Args:
+            dataSlice (ndarray): Values passed to metric by the slicer, 
+                which the metric will use to calculate metric values 
+                at each slicePoint.
+            slicePoint (Dict): Dictionary of slicePoint metadata passed
+                to each metric.
+        Returns:
+             float: Interpolated static-probe statistical Figure-of-Merit.
+        Raises:
+             ValueError: If year is not one of the 4 for which a FoM is calculated
+        """
+        # Chop off any outliers
+        good_pix = np.where(dataSlice[self.col] > 0)[0]
+        
+        # Calculate area and med depth from
+        area = hp.nside2pixarea(self.nside, degrees=True) * np.size(good_pix)
+        median_depth = np.median(dataSlice[self.col][good_pix])
+
+        # FoM is calculated at the following values
+        if self.year == 1:
+            areas = [7500, 13000, 16000]
+            depths = [24.9, 25.2, 25.5]
+            fom_arr = [
+                [1.212257e+02, 1.462689e+02, 1.744913e+02],
+                [1.930906e+02, 2.365094e+02, 2.849131e+02],
+                [2.316956e+02, 2.851547e+02, 3.445717e+02]
+            ]
+        elif self.year == 3:
+            areas = [10000, 15000, 20000]
+            depths = [25.5, 25.8, 26.1]
+            fom_arr = [
+                [1.710645e+02, 2.246047e+02, 2.431472e+02],
+                [2.445209e+02, 3.250737e+02, 3.516395e+02],
+                [3.173144e+02, 4.249317e+02, 4.595133e+02]
+            ]
+
+        elif self.year == 6:
+            areas = [10000, 15000, 2000]
+            depths = [25.9, 26.1, 26.3]
+            fom_arr = [
+                [2.346060e+02, 2.414678e+02, 2.852043e+02],
+                [3.402318e+02, 3.493120e+02, 4.148814e+02],
+                [4.452766e+02, 4.565497e+02, 5.436992e+02]
+            ]
+
+        elif self.year == 10:
+            areas = [10000, 15000, 20000]
+            depths = [26.3, 26.5, 26.7]
+            fom_arr = [
+                [2.887266e+02, 2.953230e+02, 3.361616e+02],
+                [4.200093e+02, 4.292111e+02, 4.905306e+02],
+                [5.504419e+02, 5.624697e+02, 6.441837e+02]
+            ]
+        else:
+            raise ValueError('FoMEmulator is not defined for this year')
+            
+        
+        # Interpolate FoM to the actual values for this sim
+        areas = [[i]*3 for i in areas]
+        depths = [depths]*3
+        f = interpolate.interp2d(areas, depths, fom_arr, bounds_error=False)
+        fom = f(area, median_depth)[0]
+        return fom
+
