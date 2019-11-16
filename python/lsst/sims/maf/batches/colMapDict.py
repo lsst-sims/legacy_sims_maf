@@ -24,10 +24,38 @@ def getColMap(opsdb):
 def ColMapDict(dictName=None):
 
     if dictName is None:
-        dictName = 'opsimv4'
+        dictName = 'FBS'
     dictName = dictName.lower()
 
-    if dictName == 'opsimv4':
+    if dictName == 'fbs':
+        colMap = {}
+        colMap['ra'] = 'fieldRA'
+        colMap['dec'] = 'fieldDec'
+        colMap['raDecDeg'] = True
+        colMap['mjd'] = 'observationStartMJD'
+        colMap['exptime'] = 'visitExposureTime'
+        colMap['visittime'] = 'visitTime'
+        colMap['alt'] = 'altitude'
+        colMap['az'] = 'azimuth'
+        colMap['lst'] = 'observationStartLST'
+        colMap['filter'] = 'filter'
+        colMap['fiveSigmaDepth'] = 'fiveSigmaDepth'
+        colMap['night'] = 'night'
+        colMap['slewtime'] = 'slewTime'
+        colMap['slewdist'] = 'slewDistance'
+        colMap['seeingEff'] = 'seeingFwhmEff'
+        colMap['seeingGeom'] = 'seeingFwhmGeom'
+        colMap['skyBrightness'] = 'skyBrightness'
+        colMap['moonDistance'] = 'moonDistance'
+        colMap['fieldId'] = 'fieldId'
+        colMap['proposalId'] = 'proposalId'
+        colMap['slewactivities'] = {}
+        colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
+        colMap['metadataAngleList'] = ['rotSkyPos']
+        colMap['note'] = 'note'
+
+    elif dictName == 'opsimv4':
         colMap = {}
         colMap['ra'] = 'fieldRA'
         colMap['dec'] = 'fieldDec'
@@ -80,7 +108,6 @@ def ColMapDict(dictName=None):
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
                                   'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
         colMap['metadataAngleList'] = ['rotSkyPos']
-        colMap['note'] = 'note'
 
     elif dictName == 'opsimv3':
         colMap = {}

@@ -8,12 +8,15 @@ from .database import Database
 from lsst.sims.utils import Site
 from lsst.sims.maf.utils import getDateVersion
 
-__all__ = ['testOpsimVersion', 'OpsimDatabase', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
+__all__ = ['testOpsimVersion', 'OpsimDatabase', 'OpsimDatabaseFBS', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
 
 def testOpsimVersion(database, driver='sqlite', host=None, port=None):
     opsdb = Database(database, driver=driver, host=host, port=port)
     if 'SummaryAllProps' in opsdb.tableNames:
-        version = "V4"
+        if 'Field' in opsdb.tableNames:
+            version = "V4"
+        else:
+            version = "FBS"
     elif 'Summary' in opsdb.tableNames:
         version = "V3"
     else:
@@ -30,6 +33,9 @@ def OpsimDatabase(database, driver='sqlite', host=None, port=None,
     a simple method that will attempt to instantiate the correct type of OpsimDatabaseV3 or OpsimDatabaseV4.
     """
     version = testOpsimVersion(database)
+    if version == 'FBS':
+        opsdb = OpsimDatabaseFBS(database, driver=driver, host=host, port=port,
+                                 longstrings=longstrings, verbose=verbose)
     if version == 'V4':
         opsdb = OpsimDatabaseV4(database, driver=driver, host=host, port=port,
                                 longstrings=longstrings, verbose=verbose)
@@ -46,7 +52,7 @@ def OpsimDatabase(database, driver='sqlite', host=None, port=None,
 class BaseOpsimDatabase(Database):
     """Base opsim database class to gather common methods among different versions of the opsim schema.
 
-    Not intended to be used directly; use OpsimDatabaseV3 or OpsimDatabaseV4 instead."""
+    Not intended to be used directly; use OpsimDatabaseFBS, OpsimDatabaseV3 or OpsimDatabaseV4 instead."""
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
                  longstrings=False, verbose=False):
         super(BaseOpsimDatabase, self).__init__(database=database, driver=driver, host=host, port=port,
@@ -237,6 +243,143 @@ class BaseOpsimDatabase(Database):
             except ValueError:
                 pass
         return seeingcol
+
+
+class OpsimDatabaseFBS(BaseOpsimDatabase):
+    """
+    Database to class to interact with FBS versions of the opsim outputs.
+
+    Parameters
+    ----------
+    database : str
+        Name of the database or sqlite filename.
+    driver : str, opt
+        Name of the dialect + driver for sqlalchemy. Default 'sqlite'.
+    host : str, opt
+        Name of the database host. Default None (appropriate for sqlite files).
+    port : str, opt
+        String port number for the database. Default None (appropriate for sqlite files).
+    dbTables : dict, opt
+        Dictionary of the names of the tables in the database.
+        The dict should be key = table name, value = [table name, primary key].
+    """
+    def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable='SummaryAllProps',
+                 longstrings=False, verbose=False):
+        super().__init__(database=database, driver=driver, host=host, port=port,
+                         defaultTable=defaultTable, longstrings=longstrings,
+                         verbose=verbose)
+
+    def _colNames(self):
+        """
+        Set variables to represent the common column names used in this class directly.
+
+        This should make future schema changes a little easier to handle.
+        It is NOT meant to function as a general column map, just to abstract values
+        which are used *within this class*.
+        """
+        self.mjdCol = 'observationStartMJD'
+        self.raCol = 'fieldRA'
+        self.decCol = 'fieldDec'
+        self.propIdCol = 'proposalId'
+        # For config parsing.
+        self.versionCol = 'featureScheduler version'
+        self.dateCol = 'Date, ymd'
+        self.raDecInDeg = True
+        self.opsimVersion = 'FBS'
+
+    def fetchPropInfo(self):
+        """
+        There is no inherent proposal information or mapping in the FBS output.
+        An afterburner script does identify which visits may be counted as contributing toward WFD
+        and identifies these as such in the proposalID column (0 = general, 1 = WFD, 2+ = DD).
+                Returns dictionary of propID / propname, and dictionary of propTag / propID.
+        """
+        if 'Proposal' not in self.tables:
+            print('No proposal table available - no proposalIds have been assigned.')
+            return {}, {}
+
+        propIds = {}
+        # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
+        propTags = {'WFD': [], 'DD': [], 'NES': []}
+        propData = self.query_columns('Proposal', colnames =[self.propIdCol, 'proposalName', 'proposalType'],
+                                      sqlconstraint=None)
+        for propId, propName, propType in zip(propData[self.propIdCol],
+                                              propData['proposalName'],
+                                              propData['proposalType']):
+            propIds[propId] = propName
+            if propType == 'WFD':
+                propTags['WFD'].append(propId)
+            if propType == 'DD':
+                propTags['DD'].append(propId)
+        return propIds, propTags
+
+    def createSQLWhere(self, tag, propTags):
+        """
+        Create a SQL constraint to identify observations taken for a particular proposal,
+        using the information in the propTags dictionary.
+
+        Parameters
+        ----------
+        tag : str
+            The name of the proposal for which to create a SQLwhere clause (WFD or DD).
+        propTags : dict
+            A dictionary of {proposal name : [proposal ids]}
+            This can be created using OpsimDatabase.fetchPropInfo()
+
+        Returns
+        -------
+        str
+            The SQL constraint, such as '(proposalID = 1) or (proposalID = 2)'
+        """
+        if (tag not in propTags) or (len(propTags[tag]) == 0):
+            print('No %s proposals found' % (tag))
+            # Create a sqlWhere clause that will not return anything as a query result.
+            sqlWhere = 'proposalId like "NO PROP"'
+        elif len(propTags[tag]) == 1:
+            sqlWhere = "proposalId = %d" % (propTags[tag][0])
+        else:
+            sqlWhere = "(" + " or ".join(["proposalId = %d" % (propid) for propid in propTags[tag]]) + ")"
+        return sqlWhere
+
+    def fetchConfig(self):
+        """
+        Fetch config data from configTable, match proposal IDs with proposal names and some field data,
+        and do a little manipulation of the data to make it easier to add to the presentation layer.
+        """
+        # Check to see if we're dealing with a full database or not. If not, just return (no config info to fetch).
+        if 'info' not in self.tables:
+            warnings.warn('Cannot fetch FBS config info.')
+            return {}, {}
+        # Create two dictionaries: a summary dict that contains a summary of the run
+        configSummary = {}
+        configSummary['keyorder'] = ['Version', 'RunInfo' ]
+        #  and the other a general dict that contains all the details (by group) of the run.
+        config = {}
+        # Start to build up the summary.
+        # MAF version
+        mafdate, mafversion = getDateVersion()
+        configSummary['Version'] = {}
+        configSummary['Version']['MAFVersion'] = '%s' %(mafversion['__version__'])
+        configSummary['Version']['MAFDate'] = '%s' %(mafdate)
+        # Opsim date, version and runcomment info from config info table.
+        results = self.query_columns('info', ['Parameter', 'Value'],
+                                     sqlconstraint=f'Parameter like "{self.versionCol}"')
+        configSummary['Version']['OpsimVersion'] = 'FBS %s'  %(results['Value'][0])
+        results = self.query_columns('info', ['Parameter', 'Value'],
+                                     sqlconstraint=f'Parameter like "{self.dateCol}"')
+        opsimdate = '-'.join(results['Value'][0].split(',')).replace(' ', '')
+        configSummary['Version']['OpsimDate'] = '%s' %(opsimdate)
+        configSummary['RunInfo'] = {}
+        results = self.query_columns('info', ['Parameter', 'Value'],
+                                     sqlconstraint=f'Parameter like "exec command%"')
+        configSummary['RunInfo']['Exec'] = '%s' % (results['Value'][0])
+
+        # Echo info table into configDetails.
+        configDetails = {}
+        configs = self.query_columns('info', ['Parameter', 'Value'])
+        for name, value in zip(configs['Parameter'], configs['Value']):
+            configDetails[name] = value
+        return configSummary, configDetails
 
 
 class OpsimDatabaseV4(BaseOpsimDatabase):

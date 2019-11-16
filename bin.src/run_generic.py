@@ -30,6 +30,9 @@ def connectDb(dbfile):
     elif version == "V4":
         opsdb = db.OpsimDatabaseV4(dbfile)
         colmap = batches.ColMapDict('OpsimV4')
+    elif version == "FBS":
+        opsdb = db.OpsimDatabaseFBS(dbfile)
+        colmap = batches.ColMapDict('FBS')
     return opsdb, colmap
 
 
