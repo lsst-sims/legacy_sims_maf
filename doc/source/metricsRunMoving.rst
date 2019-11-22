@@ -1,9 +1,37 @@
 ================================================
 Metrics in run_moving.py script
 ================================================
-The `run_moving.py` script runs a number of solar system object oriented metrics,
-and requires an input SSO observation file to run (e.g. you must generate this
-observation file using something like sims_movingObjects `makeLSSTobs.py` first).
+
+Running moving object metrics has been set up as a multi-step process. 
+The reason for this change (from a single script) is that it is often most
+convenient (and faster!) to split a larger population into smaller subsets; 
+sims_movingObjects can be run on each of these subsets in parallel, the
+first step of metric calculation can be run in parallel - and then, with 
+these results in hand, the metric results can be joined back together and then 
+the summary metrics which require the full population can be calculated.
+
+Thus metric calculation can be most quickly done as follows: 
+* take a complete solar system population and split it into (ten) subsets, where each
+subset is a standard input file for makeLSSTobs.py (in sims_movingObjects). If the original complete
+population file is SSOpop, the individual subset files should be named SSOpop_N, where N 
+can range from 0-9 (this could be modified by changing run_moving_join.py later, but I chose 
+to standardize for 10 subsets as the cluster I usually run these on has 10 cpus per node). 
+* run makeLSSTobs.py for each of the subset populations. Here you only need to refer to the 
+subset file -- i.e. makeLSSTobs.py --orbitFile SSOpop_N ..
+* run the first step of metric calculation: run_moving_calc.py. The IMPORTANT thing to note here
+is that in each of the MAF metric steps, you should refer to the complete population file, not the subset.
+ie. run_moving_calc.py --orbitFile SSOpop --obsFile SSOpop_N_obs.txt
+By using the entire population file as the orbit file, the metric results will be stored in their
+proper places in a metric array. Make sure that the H-ranges specified are the same for all of the subsets.
+* run the second step to combine the outputs of each of the calculated metrics, into a single metric 
+output file that contains all of the subsets: run_moving_join.py. The script will automatically look
+for directories which match the expected pattern for subsets, and then create a single (new) output 
+directory that contains the joined files.
+* run the final step to calculate summary metrics across the entire population, using these joined
+metric output files.
+
+If you do not want to subset the input population file, it is still recommended to run each of the
+MAF evaluation steps .. the run_moving_join.py script will basically be a no-op.
 
 
 `QuickDiscoveryBatch <lsst.sims.maf.batches.html#module-lsst.sims.maf.batches.quickDiscoveryBatch>`_
