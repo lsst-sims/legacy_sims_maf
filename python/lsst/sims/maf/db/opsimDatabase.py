@@ -226,24 +226,6 @@ class BaseOpsimDatabase(Database):
             nslew = res['slewN'][0]
         return nslew
 
-    def fetchSeeingColName(self):
-        """
-        Check whether the seeing column is 'seeing' or 'finSeeing' or 'FWHMeff' (v2.x simulator vs v3.0 /4.0)
-        Returns the name of the seeing column.
-        This should go away eventually.
-        """
-        # Really this is just a bit of a hack to see whether we should be using seeing or finseeing.
-        # With time, this should probably just go away.
-        possibleSeeingColumns = ['seeing', 'finSeeing', 'FWHMeff', 'seeingFwhmEff']
-        seeingcol = None
-        for x in possibleSeeingColumns:
-            try:
-                self.query_columns(self.defaultTable, colnames=[x], numLimit=1)
-                seeingcol = x
-            except ValueError:
-                pass
-        return seeingcol
-
 
 class OpsimDatabaseFBS(BaseOpsimDatabase):
     """
