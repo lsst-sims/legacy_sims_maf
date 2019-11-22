@@ -229,7 +229,11 @@ class TotalPowerMetric(BaseMetric):
 
 
 
-class FoMEmulatorMetric(BaseMetric):
+class StaticProbesFoMEmulatorMetric(BaseMetric):
+    """This calculates the Figure of Merit for the combined
+    static probes (3x2pt, i.e., Weak Lensing, LSS, Clustering).
+    This FoM is purely statistical and does not factor in systematics.
+    """
     def __init__(self, nside=128, year=10, col=None, **kwargs):
         
         """
