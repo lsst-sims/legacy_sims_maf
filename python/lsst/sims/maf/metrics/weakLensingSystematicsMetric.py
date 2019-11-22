@@ -6,7 +6,10 @@ from ..maps import DustMap
 __all__ = ['WeakLensingNvisits']
 
 class WeakLensingNvisits(BaseMetric):
-    """Note:
+    """A proxy metric for WL systematics. Higher value indicated better 
+    systematics mitigation.
+    
+    Note:
         Should be run with the HealpixSlicer. If using dithering (which
         should be the case unless dithering is already implemented in the run)
         then should be run with a stacker and appropriate column names for 
