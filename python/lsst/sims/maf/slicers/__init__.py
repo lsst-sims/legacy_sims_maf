@@ -6,6 +6,7 @@ from .movieSlicer import *
 from .hourglassSlicer import *
 from .baseSpatialSlicer import *
 from .healpixSlicer import *
+from .healpixSubsetSlicer import *
 from .opsimFieldSlicer import *
 from .healpixSDSSSlicer import *
 from .userPointsSlicer import *

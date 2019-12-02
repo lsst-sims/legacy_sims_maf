@@ -1,9 +1,8 @@
-from __future__ import print_function
-# Class for HealpixSlicer (healpixel-based spatial slicer).
-# User can select resolution using 'NSIDE'
+"""A slicer that uses a Healpix grid to calculate metric values (at the center of each healpixel)."""
+
 # Requires healpy
 # See more documentation on healpy here http://healpy.readthedocs.org/en/latest/tutorial.html
-# Also requires numpy and pylab (for histogram and power spectrum plotting)
+# Also requires numpy (for histogram and power spectrum plotting)
 
 import numpy as np
 import healpy as hp
