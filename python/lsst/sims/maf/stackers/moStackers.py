@@ -5,7 +5,15 @@ import warnings
 __all__ = ['BaseMoStacker', 'AppMagStacker', 'CometAppMagStacker', 'SNRStacker', 'EclStacker']
 
 # Willmer 2018, ApJS 236, 47
+# VEGA V mag and AB mag of sun (LSST-equivalent bandpasses)
 VMAG_SUN = -26.76  # Vega mag
+AB_SUN = { 'u': -25.30,
+           'g': -26.52,
+           'r': -26.93,
+           'i': -27.05,
+           'z': -27.07,
+           'y': -27.07
+           }
 KM_PER_AU = 149597870.7
 
 
@@ -92,7 +100,10 @@ class CometAppMagStacker(BaseMoStacker):
     """
     colsAdded = ['appMag']
 
-    def __init__(self, cometType='oort', Ap=0.04, rhCol='helio_dist', deltaCol='geo_dist', phaseCol='phase'):
+    def __init__(self, cometType='oort', Ap=0.04,
+                 rhCol='helio_dist', deltaCol='geo_dist', phaseCol='phase',
+                 seeingCol='FWHMgeom', apScale=1, filterCol='filter',
+                 vMagCol='magV', colorCol='dmagColor', lossCol='dmagDetect'):
         self.units = ['mag']  # new column units
         # Set up k and Afrho1 constant values.
         cometTypes = {'short': {'k': -4, 'Afrho1_const': 100},
@@ -117,18 +128,42 @@ class CometAppMagStacker(BaseMoStacker):
         self.rhCol = rhCol
         self.deltaCol = deltaCol
         self.phaseCol = phaseCol
-        self.colsReq = [self.rhCol, self.deltaCol, self.phaseCol]  # names of required columns
-        
+        self.seeingCol = seeingCol
+        self.apScale = apScale
+        self.filterCol = filterCol
+        self.vMagCol = vMagCol
+        self.colorCol = colorCol
+        self.lossCol = lossCol
+        # names of required columns
+        self.colsReq = [self.rhCol, self.deltaCol, self.phaseCol, self.seeingCol, self.filterCol,
+                        self.vMagCol, self.colorCol, self.lossCol]
+
     def _run(self, ssObs, Href, Hval):
         # Calculate radius from the current H value (Hval).
         radius = 10 ** (0.2 * (VMAG_SUN - Hval)) / np.sqrt(self.Ap) * KM_PER_AU
-        # Calculate expected Afrho
+        # Calculate expected Afrho - this is a value that describes how the brightness of the coma changes
         afrho1 = self.Afrho1_const * radius**2
         phase_val = phase_HalleyMarcus(ssoObs[self.phaseCol])
+        # afrho is equivalent to a sort of 'absolute' magnitude of the coma
         afrho = afrho1 * ssoObs[self.rhCol]**self.k * phase_val
-        # comet apparent mag, use Href here and H-mag cloning will work later with MoMagStacker
-        ssObs['cometV'] = (Href + 5 * np.log10(ssObs[self.deltaCol]) 
-                           + (5 + self.k) * np.log10(ssObs[self.rhCol]))
+        # rho describes the projected area on the sky (project the aperture into cm on-sky)
+        # Using the seeing * apScale as the aperture
+        radius_aperture = ssoObs[self.seeingCol] * self.apScale
+        rho = 725e5 * ssoObs[self.deltaCol] * radius_aperture
+        # Calculate the expected apparent of the comet coma = sun + correction
+        delta = ssoObs[self.deltaCol] * KM_PER_AU * 1000  # delta in cm
+        dm = -2.5 * np.log10(afrho * rho / (2 * ssoObs[self.rhCol] * delta)**2)
+        coma = np.zeros(len(ssoObs), float)
+        # This calculates a coma mag that scales with the sun's color in each bandpass, but the coma
+        # modification is gray (i.e. it's just reflecting sunlight)
+        for f in ssoObs[self.filterCol]:
+            match = np.where(ssoObs[self.filterCol] == f)
+            coma[match] = AB_SUN[f] + dm[match]
+        # Calculate cometary nucleus magnitude -- we'll use the apparent V mag adapted from OOrb as well as
+        # the object's color - these are generally assumed to be D type (which was used in sims_movingObjects)
+        nucleus = ssoObs[self.vMagCol] + ssoObs[self.colorCol] + ssoObs[self.lossCol] + Hval - Href
+        # comet apparent mag - ready for calculation of SNR, etc.
+        ssObs['appMag'] = coma + nucleus
         return ssObs
 
 
