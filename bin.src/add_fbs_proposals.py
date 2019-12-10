@@ -145,6 +145,6 @@ if __name__ == '__main__':
     else:
         raise ValueError(f'This script understands wfd footprints of types {wfd_defaults}')
 
-    visits = get_visits(parser.dbfile)
+    visits = get_visits(args.dbfile)
     visits, propTags, propId = label_visits(visits, wfd_footprint)
-    update_database(parser.dbfile, visits, propTags, propId)
+    update_database(args.dbfile, visits, propTags, propId)
