@@ -126,7 +126,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Add approximate proposal id labels to FBS visits, '
                                                  'assuming standard WFD footprint.')
     parser.add_argument('dbfile', type=str, help='sqlite file of observations (full path).')
-    parser.add_argument('wfd', type=str, default='standard',
+    parser.add_argument('--wfd', type=str, default='standard',
                         help='Type of wfd footprint [standard, extended, dust]')
     args = parser.parse_args()
 
