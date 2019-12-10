@@ -1,4 +1,3 @@
-import os
 import sqlite3
 from sqlite3 import OperationalError, IntegrityError
 
@@ -6,18 +5,29 @@ import numpy as np
 import pandas as pd
 
 import healpy as hp
-import lsst.sims.featureScheduler as sched
+from lsst.sims.featureScheduler import utils as schedUtils
+
+__all__ = ['get_standard_wfd', 'get_extended_wfd', 'get_extended_wfd_dust',
+           'define_ddname', 'get_visits', 'label_visits', 'update_database']
 
 
-def get_standard_wfd():
-    # Get the standard survey footprint (in each bandpass)
-    nside = 64
-    standard_footprint = sched.utils.standard_goals(nside=nside)
-    # WFD is where footprint values = max
-    wfd_footprint = {}
-    for f in standard_footprint:
-        threshold = np.max(standard_footprint[f])
-        wfd_footprint[f] = np.where(standard_footprint[f] >= threshold, 1, 0)
+def get_standard_wfd(nside=64):
+    wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-62.5, dec_max=2.5,
+                                                    center_width=10., end_width=4.,
+                                                    gal_long1=290., gal_long2=70.)
+    return wfd_footprint
+
+
+def get_extended_wfd(nside=64):
+    wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-72.25, dec_max=12.4,
+                                                    center_width=15,
+                                                    gal_long1=0, gal_long2=360)
+    return wfd_footprint
+
+
+def get_extended_wfd_dust(nside=64):
+    wfd_footprint = schedUtils.WFD_no_dust_healpixels(nside, dec_min=-72.25, dec_max=12.4,
+                                                      dust_limit=0.19)
     return wfd_footprint
 
 
@@ -47,13 +57,19 @@ def label_visits(visits, wfd_footprint):
     vec = hp.dir2vec(visits['fieldRA'], visits['fieldDec'], lonlat=True)
     vec = vec.swapaxes(0, 1)
     radius = np.radians(1.75)  # fov radius
-    pointings = []
+    #pointings = []
     propId = np.zeros(len(visits), int)
     for i, (v, note) in enumerate(zip(vec, visits['note'])):
+        # Identify the healpixels which would be inside this pointing
         pointing_healpix = hp.query_disc(nside, v, radius, inclusive=False)
-        pointings.append(pointing_healpix)
-        in_wfd = wfd_footprint['r'][pointing_healpix].sum()
+        # This can be useful for debugging/plotting
+        #pointings.append(pointing_healpix)
+        # The wfd_footprint consists of values of 0/1 if out/in WFD footprint
+        in_wfd = wfd_footprint[pointing_healpix].sum()
+        # So in_wfd = the number of healpixels which were in the WFD footprint
+        # .. in the # in / total # > limit (0.4) then "yes" it's in WFD
         propId[i] = np.where(in_wfd / len(pointing_healpix) > 0.4, propTags['WFD'], 0)
+        # BUT override - if the visit was taken for DD, use that flag instead.
         if note.startswith('DD'):
             propId[i] = propTags[define_ddname(note)]
     return visits, propTags, propId
@@ -104,11 +120,25 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Add approximate proposal id labels to FBS visits, '
                                                  'assuming standard WFD footprint.')
     parser.add_argument('dbfile', type=str, help='sqlite file of observations (full path).')
+    parser.add_argument('wfd', type=str, default='standard',
+                        help='Type of wfd footprint [standard, extended, dust]')
     args = parseArgs()
 
-    # If you need a non-standard WFD footprint, you must modify the wfd_footprint.
-    # Have a look at how the run was set up, and use the footprint specified there.
-    wfd_footprint = get_standard_wfd()
+    # There are some standard WFD footprints: the standard version, the extendded version (with gal-lat cut),
+    # and an extended version with dust extinction cuts.
+    # If you're using something else (non-standard), this script will have to be modified.
+    # Note these "footprints" are standard (full) length healpix arrays for nside, but with values of 0/1
+    wfd_defaults = ['standard', 'extended', 'dust', 'extended with dust']
+
+    if args.wfd.lower() == 'standard':
+        wfd_footprint = get_standard_wfd()
+    elif args.wfd.lower() == 'extended':
+        wfd_footprint = get_extended_wfd()
+    elif args.wfd.lower() == 'dust' or args.wfd.lower() == 'extended with dust':
+        wfd_footprint = get_extended_wfd_dust()
+    else:
+        raise ValueError(f'This script understands wfd footprints of types {wfd_defaults}')
+
     visits = get_visits(parser.dbfile)
     visits, propTags, propId = label_visits(visits, wfd_footprint)
     update_database(parser.dbfile, visits, propTags, propId)
