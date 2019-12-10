@@ -128,7 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('dbfile', type=str, help='sqlite file of observations (full path).')
     parser.add_argument('wfd', type=str, default='standard',
                         help='Type of wfd footprint [standard, extended, dust]')
-    args = parseArgs()
+    args = parser.parse_args()
 
     # There are some standard WFD footprints: the standard version, the extendded version (with gal-lat cut),
     # and an extended version with dust extinction cuts.
