@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+
+import matplotlib
+matplotlib.use('Agg')
+
 import sqlite3
 from sqlite3 import OperationalError, IntegrityError
 
