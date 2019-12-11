@@ -49,7 +49,7 @@ def get_visits(opsimdb):
     return(visits)
 
 
-def label_visits(visits, wfd_footprint):
+def label_visits(visits, wfd_footprint, nside=64):
     # Set up DD names.
     d = set()
     for p in visits['note'].unique():
@@ -112,7 +112,7 @@ def update_database(opsimdb, visits, propTags, propId):
             sql = f'INSERT INTO Proposal (proposalId, proposalName, proposalType) VALUES ("{pId}", "{pName}", "{pType}")'
             cursor.execute(sql)
         except IntegrityError:
-            print(f'This proposal ID is already in the proposal table! {pId},{pName}')
+            print(f'This proposal ID is already in the proposal table {pId},{pName} (just reusing it)')
     # Add data to proposalID column.
     # 0 = general, 1 = WFD, 2 = DD.
     for obsid, pId in zip(visits.observationId, propId):
