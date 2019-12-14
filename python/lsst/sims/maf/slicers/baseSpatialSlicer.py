@@ -9,7 +9,6 @@ from builtins import range
 import warnings
 import numpy as np
 from functools import wraps
-from scipy.spatial import cKDTree as kdtree
 from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.

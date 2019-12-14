@@ -7,7 +7,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
            'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric',
-           'FoMEmulatorMetric']
+           'StaticProbesFoMEmulatorMetric']
 
 
 class fONv(BaseMetric):
@@ -228,7 +228,6 @@ class TotalPowerMetric(BaseMetric):
         return totalpower
 
 
-
 class StaticProbesFoMEmulatorMetric(BaseMetric):
     """This calculates the Figure of Merit for the combined
     static probes (3x2pt, i.e., Weak Lensing, LSS, Clustering).
@@ -244,13 +243,11 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
             col (str): column name of metric data.
         """
         self.nside = nside
-        super(FoMEmulatorMetric, self).__init__(metricName='FoMEmulatorMetric',
-                                                col=col, 
-                                                **kwargs
-                                               )
+        super().__init__(metricName='StaticProbesFoMEmulatorMetric', col=col, **kwargs)
         if col is None:
             self.col = 'metricdata'
         self.year = year
+
     def run(self, dataSlice, slicePoint=None):
         """
         Args:
@@ -308,8 +305,7 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
             ]
         else:
             raise ValueError('FoMEmulator is not defined for this year')
-            
-        
+
         # Interpolate FoM to the actual values for this sim
         areas = [[i]*3 for i in areas]
         depths = [depths]*3
