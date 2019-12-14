@@ -96,7 +96,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         # nside=256 gives about 13' resolution (~1 CCD)
         # nside=1024 gives about 3' resolution
         # Check validity of nside:
-        if not(hp.isnsideok(nside, nest=True)):
+        if not(hp.isnsideok(nside)):
             raise ValueError('Valid values of nside are powers of 2.')
         self.nside = int(nside)
         self.pixArea = hp.nside2pixarea(self.nside)
