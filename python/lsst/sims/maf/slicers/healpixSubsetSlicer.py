@@ -125,7 +125,7 @@ class HealpixSubsetSlicer(BaseSpatialSlicer):
         """Evaluate if two slicers are equivalent."""
         # If the two slicers are both healpix slicers, check nsides value.
         result = False
-        if isinstance(otherSlicer, HealpixSlicer):
+        if isinstance(otherSlicer, HealpixSubsetSlicer):
             if otherSlicer.nside == self.nside:
                 if np.all(otherSlicer.hpid == self.hpid):
                     if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
