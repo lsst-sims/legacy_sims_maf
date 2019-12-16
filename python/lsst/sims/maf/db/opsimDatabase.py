@@ -36,7 +36,7 @@ def OpsimDatabase(database, driver='sqlite', host=None, port=None,
     if version == 'FBS':
         opsdb = OpsimDatabaseFBS(database, driver=driver, host=host, port=port,
                                  longstrings=longstrings, verbose=verbose)
-    if version == 'V4':
+    elif version == 'V4':
         opsdb = OpsimDatabaseV4(database, driver=driver, host=host, port=port,
                                 longstrings=longstrings, verbose=verbose)
     elif version == 'V3':
