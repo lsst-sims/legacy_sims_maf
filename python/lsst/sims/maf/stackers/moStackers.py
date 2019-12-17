@@ -36,6 +36,28 @@ class BaseMoStacker(BaseStacker):
         return self._run(ssoObs, Href, Hval)
 
 
+class AppMagNullStacker(BaseMoStacker):
+    """Do nothing to calculate an apparent magnitude.
+
+    This assumes an apparent magnitude was part of the input data and does not need to be modified (no
+    cloning, color terms, trailing losses, etc). Just return the appMag column.
+
+    This would not be necessary in general, but appMag is treated as a special column (because we must have an
+    apparent magnitude for most of the basic moving object metrics, and it must be calculated before SNR
+    if that is also needed).
+    """
+    colsAdded = ['appMag']
+
+    def __init__(self, appMagCol='appMag'):
+        self.appMagCol = appMagCol
+        self.units = ['mag',]
+        self.colsReq = [self.appMagCol]
+
+    def _run(self, ssoObs, Href, Hval):
+        ssoObs['appMag'] = ssoObs[self.appMagCol]
+        return ssoObs
+
+
 class AppMagStacker(BaseMoStacker):
     """Add apparent magnitude of an object for the current Hval (compared to Href in the orbit file),
     incorporating the magnitude losses due to trailing/detection, as well as the color of the object.
