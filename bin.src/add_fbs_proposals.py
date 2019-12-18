@@ -18,7 +18,7 @@ __all__ = ['get_standard_wfd', 'get_extended_wfd', 'get_extended_wfd_dust',
 
 
 def get_standard_wfd(nside=64):
-    wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-62.5, dec_max=2.5,
+    wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-62.5, dec_max=3.6,
                                                     center_width=10., end_width=4.,
                                                     gal_long1=290., gal_long2=70.)
     return wfd_footprint
@@ -26,7 +26,7 @@ def get_standard_wfd(nside=64):
 
 def get_extended_wfd(nside=64):
     wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-72.25, dec_max=12.4,
-                                                    center_width=15,
+                                                    center_width=14.9,
                                                     gal_long1=0, gal_long2=360)
     return wfd_footprint
 
