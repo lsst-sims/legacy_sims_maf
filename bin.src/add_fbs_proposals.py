@@ -13,28 +13,7 @@ import pandas as pd
 import healpy as hp
 from lsst.sims.featureScheduler import utils as schedUtils
 
-__all__ = ['get_standard_wfd', 'get_extended_wfd', 'get_extended_wfd_dust',
-           'define_ddname', 'get_visits', 'label_visits', 'update_database']
-
-
-def get_standard_wfd(nside=64):
-    wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-62.5, dec_max=3.6,
-                                                    center_width=10., end_width=4.,
-                                                    gal_long1=290., gal_long2=70.)
-    return wfd_footprint
-
-
-def get_extended_wfd(nside=64):
-    wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside, dec_min=-72.25, dec_max=12.4,
-                                                    center_width=14.9,
-                                                    gal_long1=0, gal_long2=360)
-    return wfd_footprint
-
-
-def get_extended_wfd_dust(nside=64):
-    wfd_footprint = schedUtils.WFD_no_dust_healpixels(nside, dec_min=-72.25, dec_max=12.4,
-                                                      dust_limit=0.19)
-    return wfd_footprint
+__all__ = ['define_ddname', 'get_visits', 'label_visits', 'update_database']
 
 
 def define_ddname(note):
@@ -135,13 +114,14 @@ if __name__ == '__main__':
     # If you're using something else (non-standard), this script will have to be modified.
     # Note these "footprints" are standard (full) length healpix arrays for nside, but with values of 0/1
     wfd_defaults = ['standard', 'extended', 'dust', 'extended with dust']
+    nside = 64
 
     if args.wfd.lower() == 'standard':
-        wfd_footprint = get_standard_wfd()
+        wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside)
     elif args.wfd.lower() == 'extended':
-        wfd_footprint = get_extended_wfd()
+        wfd_footprint = schedUtils.WFD_bigsky_healpixels(nside)
     elif args.wfd.lower() == 'dust' or args.wfd.lower() == 'extended with dust':
-        wfd_footprint = get_extended_wfd_dust()
+        wfd_footprint = schedUtils.WFD_no_dust_healpixels(nside)
     else:
         raise ValueError(f'This script understands wfd footprints of types {wfd_defaults}')
 
