@@ -327,7 +327,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
 
     # Look for any multi-proposal groups that we should include.
     for tag in proptags:
-        if len(proptags[tag]) > 1 or tag in ('WFD', 'DD'):
+        if len(proptags[tag]) > 1:
             pids = proptags[tag]
             sql = '('
             for pid in pids[:-1]:
