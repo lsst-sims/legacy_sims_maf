@@ -48,7 +48,7 @@ class CrowdingM5Metric(BaseMetric):
     """Return the magnitude at which the photometric error exceeds crowding_error threshold.
     """
     def __init__(self, crowding_error=0.1, filtername='r', seeingCol='seeingFwhmGeom',
-                 metricName=None, **kwargs):
+                 metricName=None, maps=['StellarDensityMap'], **kwargs):
         """
         Parameters
         ----------
@@ -68,8 +68,8 @@ class CrowdingM5Metric(BaseMetric):
         float
         The magnitude of a star which has a photometric error of `crowding_error`
         """
-        maps = ['StellarDensityMap']
-        cols=[seeingCol]
+
+        cols = [seeingCol]
         units = 'mag'
         self.crowding_error = crowding_error
         self.filtername = filtername
@@ -101,7 +101,7 @@ class CrowdingMagUncertMetric(BaseMetric):
     Given a stellar magnitude, calculate the mean uncertainty on the magnitude from crowding.
     """
     def __init__(self, rmag=20., seeingCol='seeingFwhmGeom', units='mag',
-                 metricName=None, **kwargs):
+                 metricName=None, filtername='r', maps=['StellarDensityMap'], **kwargs):
         """
         Parameters
         ----------
@@ -113,11 +113,13 @@ class CrowdingMagUncertMetric(BaseMetric):
         float
             The uncertainty in magnitudes caused by crowding for a star of rmag.
         """
-        maps = ['StellarDensityMap']
+
+        self.filtername = filtername
+        self.seeingCol = seeingCol
         self.rmag = rmag
         if 'metricName' is not None:
             metricName = 'CrowdingError at %.2f' % (rmag)
-        super().__init__(seeingCol=seeingCol, maps=maps, units=units,
+        super().__init__(col=[seeingCol], maps=maps, units=units,
                          metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
