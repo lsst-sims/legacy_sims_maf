@@ -27,7 +27,7 @@ def ColMapDict(dictName=None):
         dictName = 'FBS'
     dictName = dictName.lower()
 
-    if dictName == 'fbs':
+    if dictName == 'fbs' or dictName == 'opsimfbs':
         colMap = {}
         colMap['ra'] = 'fieldRA'
         colMap['dec'] = 'fieldDec'
@@ -183,6 +183,6 @@ def ColMapDict(dictName=None):
         colMap['metadataAngleList'] = ['rotSkyPos']
 
     else:
-        raise ValueError('No built in column dict with that name.')
+        raise ValueError(f'No built in column dict with name {dictMap}')
 
     return colMap
