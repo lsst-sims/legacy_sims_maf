@@ -33,7 +33,7 @@ class TrilegalDensityMap(BaseMap):
         # note, the trilegal maps are in galactic coordinates, and nested healpix.
         gal_l, gal_b = _hpid2RaDec(self.nside, np.arange(hp.nside2npix(self.nside)), nest=True)
 
-        # Maybe just convert that to RA,dec. Then do nearest neighbor lookup?
+        # Convert that to RA,dec. Then do nearest neighbor lookup.
         ra, dec = _equatorialFromGalactic(gal_l, gal_b)
         self.tree = _buildTree(ra, dec)
 
