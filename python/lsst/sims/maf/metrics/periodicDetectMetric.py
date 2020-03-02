@@ -10,7 +10,7 @@ __all__ = ['PeriodicDetectMetric']
 class PeriodicDetectMetric(BaseMetric):
     """Determine if we would be able to classify an object as periodic/non-uniform, using an F-test
     The idea here is that if a periodic source is aliased, it will be indistinguishable from a constant source,
-    so we can find the best-fit constant, and if the reduced chi-squared is ~1, we know we are aliased.
+    so we can find a best-fit constant, and if the reduced chi-squared is ~1, we know we are aliased.
 
     Parameters
     ----------

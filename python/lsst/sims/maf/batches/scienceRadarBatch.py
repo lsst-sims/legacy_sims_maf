@@ -74,6 +74,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     bundleList.append(bundle)
     displayDict['order'] += 1
 
+    # XXX--is this actually part of the SRD? I thought is was only fast revisit (which we should add)
     displayDict = {'group': 'SRD', 'subgroup': 'Gaps', 'order': 0, 'caption': None}
     plotDict = {'percentileClip': 95.}
     for filtername in 'ugrizy':
@@ -118,7 +119,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     displayDict['subgroup'] = 'SNe Ia'
     metadata = ''
     # XXX-- use the light curves from PLASTICC here
-    displayDict['Caption'] = 'Fraction of normal SNe Ia'
+    displayDict['caption'] = 'Fraction of normal SNe Ia'
     sql = ''
     slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42, badval=0)
     metric = Plasticc_metric(metricName='SNIa')
@@ -138,19 +139,21 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     displayDict = {'group': 'Variables and Transients', 'subgroup': 'Periodic Stars',
                    'order': 0, 'caption': None}
     periods = [0.1, 0.5, 1., 2., 5., 10., 20.]  # days
+    amplitudes = [.05]*len(periods)
+    starMags = [20]*len(periods)
 
     plotDict = {}
     metadata = ''
     sql = extraSql
-    displayDict['Caption'] = 'Measure of how well a periodic signal can be measured combining amplitude and phase coverage. 1 is perfect, 0 is no way to fit'
-    for period in periods:
-        summary = metrics.PercentileMetric(percentile=10., metricName='10th %%-ile Periodic Quality, Period=%.1f days' % period)
-        metric = metrics.PeriodicQualityMetric(period=period, starMag=20., metricName='Periodic Stars, P=%.1f d' % period)
-        bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
-                                 displayDict=displayDict, plotDict=plotDict,
-                                 plotFuncs=subsetPlots, summaryMetrics=summary)
-        bundleList.append(bundle)
-        displayDict['order'] += 1
+    displayDict['caption'] = 'Measure if a periodic signal can be detected for an r=%i star with amplitude of %.2f mags and variety of periods' % (max(starMags), max(amplitudes))
+
+    summary = metrics.MeanMetric()
+    metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags, amplitudes=amplitudes)
+    bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
+                             displayDict=displayDict, plotDict=plotDict,
+                             plotFuncs=subsetPlots, summaryMetrics=summary)
+    bundleList.append(bundle)
+    displayDict['order'] += 1
 
     # XXX add some PLASTICC metrics for kilovnova and tidal disruption events.
     displayDict['subgroup'] = 'KN'
@@ -237,16 +240,6 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         displayDict = {'group': 'DDF depths', 'subgroup': None,
                        'order': 0, 'caption': None}
 
-        # Run the inter and intra gaps at the center of the DDFs
-        for survey in ddf_surveys:
-            slicer = slicers.UserPointsSlicer(ra=np.degrees(survey.ra), dec=np.degrees(survey.dec), useCamera=False)
-            ddf_time_bundleDicts.append(interNight(colmap=colmap, slicer=slicer,
-                                                   runName=runName, nside=64, extraSql='note="%s"' % survey.survey_name,
-                                                   subgroup=survey.survey_name)[0])
-            ddf_time_bundleDicts.append(intraNight(colmap=colmap, slicer=slicer,
-                                                   runName=runName, nside=64, extraSql='note="%s"' % survey.survey_name,
-                                                   subgroup=survey.survey_name)[0])
-
         for survey in ddf_surveys:
             displayDict['subgroup'] = survey.survey_name
             # Crop off the u-band only DDF
@@ -287,13 +280,6 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     bundleDict = mb.makeBundlesDictFromList(bundleList)
 
-    intraDict = intraNight(colmap=colmap, runName=runName, nside=nside,
-                           extraSql=extraSql, extraMetadata=extraMetadata)[0]
-    interDict = interNight(colmap=colmap, runName=runName, nside=nside,
-                           extraSql=extraSql, extraMetadata=extraMetadata)[0]
-
-    bundleDict.update(intraDict)
-    bundleDict.update(interDict)
     for ddf_time in ddf_time_bundleDicts:
         bundleDict.update(ddf_time)
 
