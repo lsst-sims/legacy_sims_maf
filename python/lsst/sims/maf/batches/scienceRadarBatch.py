@@ -37,6 +37,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         joiner = ' and '
 
     bundleList = []
+    filters = 'ugrizy'
 
     healslicer = slicers.HealpixSlicer(nside=nside)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
@@ -67,6 +68,14 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         metricb.displayDict['subgroup'] = metricb.displayDict['group']
         metricb.displayDict['group'] = 'SRD'
     bundleList.extend(temp_list)
+
+    displayDict = {'group': 'SRD', 'subgroup': 'Coverage', 'order': 0, 'caption': 'Number of years with observations.'}
+    slicer = slicers.HealpixSlicer(nside=nside)
+    metric = metrics.CoverageMetric()
+    plotDict = {'colorMin': 7, 'colorMax': 10}
+    for filtername in filters:
+        sql = 'filter="%s"' % filtername
+        bundleList.append(mb.MetricBundle(metric, slicer, sql, plotDict=plotDict))
 
     #########################
     # Solar System
