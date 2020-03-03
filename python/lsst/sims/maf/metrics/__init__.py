@@ -25,3 +25,4 @@ from .nightPointingMetric import *
 from .stringCountMetric import *
 from .areaSummaryMetrics import *
 from .weakLensingSystematicsMetric import *
+from .periodicDetectMetric import *
