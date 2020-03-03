@@ -81,13 +81,12 @@ class PeriodicDetectMetric(BaseMetric):
                     weighted_mean = np.sum(weights*lc)/np.sum(weights)
                     chi_sq_1 += np.sum(((lc - weighted_mean)**2/delta_m**2))
                 # Yes, I'm fitting magnitudes rather than flux. At least I feel kinda bad about it.
-                # F-test for nested models:  https://en.wikipedia.org/wiki/F-test
-                # https://stackoverflow.com/questions/21494141/how-do-i-do-a-f-test-in-python/21503346
+                # F-test for nested models Regression problems:  https://en.wikipedia.org/wiki/F-test
                 f_numerator = (chi_sq_1 - chi_sq_2)/(p2-p1)
-                f_denom = chi_sq_2/(n_pts-p2)
+                f_denom = 1.  # This is just reduced chi-squared for the more complicated model, so should be 1.
                 f_val = f_numerator/f_denom
-
                 # Has DoF (p2-p1, n-p2)
+                # https://stackoverflow.com/questions/21494141/how-do-i-do-a-f-test-in-python/21503346
                 p_value = scipy.stats.f.sf(f_val, p2-p1, n_pts-p2)
                 if np.isfinite(p_value):
                     if p_value < self.sig_level:

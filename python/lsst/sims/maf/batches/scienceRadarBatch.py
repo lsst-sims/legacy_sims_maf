@@ -6,6 +6,7 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from lsst.sims.maf.batches import intraNight, interNight
 from .colMapDict import ColMapDict
+from .srdBatch import fOBatch, astrometryBatch, rapidRevisitBatch
 import numpy as np
 from lsst.sims.utils import hpid2RaDec, angularSeparation
 
@@ -49,42 +50,23 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
     # SRD, DM, etc
     #########################
-    sql = extraSql
-    displayDict = {'group': 'SRD', 'subgroup': 'fO', 'order': 0, 'caption': None}
-    metric = metrics.CountMetric(col=colmap['mjd'], metricName='fO')
-    plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkArea,
-                'Nvisit': benchmarkNvisits, 'xMin': 0, 'xMax': 1500}
-    summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea',
-                                     Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fOArea(nside=nside, norm=True, metricName='fOArea/benchmark',
-                                     Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fONv(nside=nside, norm=False, metricName='fONv',
-                                   Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fONv(nside=nside, norm=True, metricName='fONv/benchmark',
-                                   Asky=benchmarkArea, Nvisit=benchmarkNvisits)]
-    caption = 'The FO metric evaluates the overall efficiency of observing. '
-    caption += ('foNv: out of %.2f sq degrees, the area receives at least X and a median of Y visits '
-                '(out of %d, if compared to benchmark). ' % (benchmarkArea, benchmarkNvisits))
-    caption += ('fOArea: this many sq deg (out of %.2f sq deg if compared '
-                'to benchmark) receives at least %d visits. ' % (benchmarkArea, benchmarkNvisits))
-    displayDict['caption'] = caption
-    bundle = mb.MetricBundle(metric, healslicer, sql, plotDict=plotDict,
-                             displayDict=displayDict, summaryMetrics=summaryMetrics,
-                             plotFuncs=[plots.FOPlot()])
-    bundleList.append(bundle)
-    displayDict['order'] += 1
+    f0b = fOBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata,
+                  benchmarkArea=benchmarkArea, benchmarkNvisits=benchmarkNvisits)
+    astromb = astrometryBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata)
+    rapidb = rapidRevisitBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata)
 
-    # XXX--is this actually part of the SRD? I thought is was only fast revisit (which we should add)
-    displayDict = {'group': 'SRD', 'subgroup': 'Gaps', 'order': 0, 'caption': None}
-    plotDict = {'percentileClip': 95.}
-    for filtername in 'ugrizy':
-        sql = extraSql + joiner + 'filter ="%s"' % filtername
-        metric = metrics.MaxGapMetric()
-        summaryMetrics = [metrics.PercentileMetric(percentile=95, metricName='95th percentile of Max gap, %s' % filtername)]
-        bundle = mb.MetricBundle(metric, healslicer, sql, plotFuncs=subsetPlots,
-                                 summaryMetrics=summaryMetrics, displayDict=displayDict, plotDict=plotDict)
-        bundleList.append(bundle)
-        displayDict['order'] += 1
+    # loop through and modify the display dicts if needed
+    temp_list = []
+    for key in f0b:
+        temp_list.append(f0b[key])
+    for key in astromb:
+        temp_list.append(astromb[key])
+    for key in rapidb:
+        temp_list.append(rapidb[key])
+    for metricb in temp_list:
+        metricb.displayDict['subgroup'] = metricb.displayDict['group']
+        metricb.displayDict['group'] = 'SRD'
+    bundleList.extend(temp_list)
 
     #########################
     # Solar System
@@ -176,52 +158,8 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     # Milky Way
     #########################
 
-    # Let's do the proper motion, parallax, and DCR degen of a 20nd mag star
-    rmag = 20.
-    displayDict = {'group': 'Milky Way', 'subgroup': 'Astrometry',
+    displayDict = {'group': 'Milky Way', 'subgroup': '',
                    'order': 0, 'caption': None}
-
-    sql = extraSql
-    metadata = ''
-    plotDict = {'percentileClip': 95.}
-    metric = metrics.ParallaxMetric(metricName='Parallax Error r=%.1f' % (rmag), rmag=rmag,
-                                    seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
-                                    m5Col=colmap['fiveSigmaDepth'], normalize=False)
-    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=False, metricName='Median Parallax Error (WFD)')]
-    summary.append(metrics.PercentileMetric(percentile=95, metricName='95th Percentile Parallax Error'))
-    bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
-                             displayDict=displayDict, plotDict=plotDict,
-                             plotFuncs=subsetPlots, summaryMetrics=summary)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
-
-    metric = metrics.ProperMotionMetric(metricName='Proper Motion Error r=%.1f' % rmag,
-                                        rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
-                                        mjdCol=colmap['mjd'], filterCol=colmap['filter'],
-                                        seeingCol=colmap['seeingGeom'], normalize=False)
-    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=False, metricName='Median Proper Motion Error (WFD)')]
-    summary.append(metrics.PercentileMetric(metricName='95th Percentile Proper Motion Error'))
-    bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
-                             displayDict=displayDict, plotDict=plotDict,
-                             summaryMetrics=summary, plotFuncs=subsetPlots)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
-
-    metric = metrics.ParallaxDcrDegenMetric(metricName='Parallax-DCR degeneracy r=%.1f' % (rmag),
-                                            rmag=rmag, seeingCol=colmap['seeingEff'],
-                                            filterCol=colmap['filter'], m5Col=colmap['fiveSigmaDepth'])
-    caption = 'Correlation between parallax offset magnitude and hour angle for a r=%.1f star.' % (rmag)
-    caption += ' (0 is good, near -1 or 1 is bad).'
-    # XXX--not sure what kind of summary to do here
-    summary = [metrics.MeanMetric(metricName='Mean DCR Degeneracy')]
-    bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
-                             displayDict=displayDict, summaryMetrics=summary,
-                             plotFuncs=subsetPlots)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
-
-    for b in bundleList:
-        b.setRunName(runName)
 
     #########################
     # DDF
