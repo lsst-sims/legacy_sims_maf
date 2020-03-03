@@ -7,7 +7,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
            'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric',
-           'StaticProbesFoMEmulatorMetric']
+           'StaticProbesFoMEmulatorMetricSimple']
 
 
 class fONv(BaseMetric):
@@ -228,10 +228,17 @@ class TotalPowerMetric(BaseMetric):
         return totalpower
 
 
-class StaticProbesFoMEmulatorMetric(BaseMetric):
+class StaticProbesFoMEmulatorMetricSimple(BaseMetric):
     """This calculates the Figure of Merit for the combined
     static probes (3x2pt, i.e., Weak Lensing, LSS, Clustering).
     This FoM is purely statistical and does not factor in systematics.
+    
+    This version of the emulator was used to generate the results in
+    https://ui.adsabs.harvard.edu/abs/2018arXiv181200515L/abstract
+    
+    A newer version is being created. This version has been renamed 
+    Simple in anticipation of the newer, more sophisticated metric
+    replacing it.
     """
     def __init__(self, nside=128, year=10, col=None, **kwargs):
         
