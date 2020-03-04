@@ -74,8 +74,9 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     metric = metrics.CoverageMetric()
     plotDict = {'colorMin': 7, 'colorMax': 10}
     for filtername in filters:
+        summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.mean, decreasing=True, metricName='N Seasons (WFD) %s' % filtername)]
         sql = 'filter="%s"' % filtername
-        bundleList.append(mb.MetricBundle(metric, slicer, sql, plotDict=plotDict))
+        bundleList.append(mb.MetricBundle(metric, slicer, sql, plotDict=plotDict, displayDict=displayDict, summaryMetrics=summary))
 
     #########################
     # Solar System
