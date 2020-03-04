@@ -363,7 +363,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
               % (nOne, dTmin, dTmax)
     caption += 'with at least %d of those visits falling between %.3f and %.1f minutes. ' \
                % (nTwo, dTmin, dTpairs)
-    caption += 'Summary statistic "Area" indicates the area on the sky which meets this requirement.'
+    caption += 'Summary statistic "Area" indicates the area on the sky which meets this requirement. (SRD design spec is 2,000 sq degrees)'
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
                              stackerList=[ditherStacker],
