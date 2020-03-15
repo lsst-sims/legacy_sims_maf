@@ -8,7 +8,7 @@ __all__ = ['PassMetric', 'Coaddm5Metric', 'MaxMetric', 'AbsMaxMetric', 'MeanMetr
            'CountUniqueMetric', 'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
            'MaxPercentMetric', 'AbsMaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
            'PercentileMetric', 'NoutliersNsigmaMetric', 'UniqueRatioMetric',
-           'MeanAngleMetric', 'RmsAngleMetric', 'FullRangeAngleMetric']
+           'MeanAngleMetric', 'RmsAngleMetric', 'FullRangeAngleMetric', 'CountExplimMetric']
 
 twopi = 2.0*np.pi
 
@@ -119,6 +119,23 @@ class CountMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname])
+
+
+class CountExplimMetric(BaseMetric):
+    """Count the number of x second visits.  Useful for rejecting very short exposures
+    and counting 60s exposures as 2 visits."""
+    def __init__(self, col=None, minExp=20., expectedExp=30., expCol='visitExposureTime', **kwargs):
+        self.minExp = minExp
+        self.expectedExp = expectedExp
+        self.expCol = expCol
+        super(CountExplimMetric, self).__init__(col=[col, expCol], **kwargs)
+        self.metricDtype = 'int'
+
+    def run(self, dataSlice, slicePoint=None):
+        nv = dataSlice[self.expCol] / self.expectedExp
+        nv[np.where(dataSlice[self.expCol] < self.minExp)[0]] = 0
+        nv = np.round(nv)
+        return int(np.sum(nv))
 
 class CountRatioMetric(BaseMetric):
     """Count the length of a simData column slice, then divide by 'normVal'. 
