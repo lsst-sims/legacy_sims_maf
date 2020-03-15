@@ -65,7 +65,7 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
     displayDict = {'group': 'FO metrics', 'subgroup': subgroup, 'order': 0}
 
     # Configure the count metric which is what is used for f0 slicer.
-    metric = metrics.CountMetric(col=colmap['mjd'], metricName='fO')
+    metric = metrics.CountExplimMetric(col=colmap['mjd'], metricName='fO')
     plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkArea,
                 'Nvisit': benchmarkNvisits, 'xMin': 0, 'xMax': 1500}
     summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea',
