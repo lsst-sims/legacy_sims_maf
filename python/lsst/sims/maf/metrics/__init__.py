@@ -28,3 +28,4 @@ from .weakLensingSystematicsMetric import *
 from .periodicDetectMetric import *
 from .coverageMetric import *
 from .dcrMetric import *
+from .kuiperMetrics import *

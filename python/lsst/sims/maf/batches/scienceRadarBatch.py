@@ -9,6 +9,7 @@ from .colMapDict import ColMapDict
 from .srdBatch import fOBatch, astrometryBatch, rapidRevisitBatch
 import numpy as np
 from lsst.sims.utils import hpid2RaDec, angularSeparation
+from .common import standardSummary
 
 __all__ = ['scienceRadarBatch']
 
@@ -38,6 +39,8 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     bundleList = []
     filters = 'ugrizy'
+
+    standardStats = standardSummary()
 
     healslicer = slicers.HealpixSlicer(nside=nside)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
@@ -77,6 +80,18 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.mean, decreasing=True, metricName='N Seasons (WFD) %s' % filtername)]
         sql = 'filter="%s"' % filtername
         bundleList.append(mb.MetricBundle(metric, slicer, sql, plotDict=plotDict, displayDict=displayDict, summaryMetrics=summary))
+
+    displayDict = {'group': 'SRD', 'subgroup': 'Camera Rotator', 'order': 1, 'caption': 'Kuiper statistic of camera rotator angle (0 is uniform, 1 is delta function)'}
+    slicer = slicers.HealpixSlicer(nside=nside)
+    metric1 = metrics.KuiperMetric('rotSkyPos')
+    metric2 = metrics.KuiperMetric('rotTelPos')
+    plotDict = {}
+    for filtername in filters:
+        sql = 'filter="%s"' % filtername
+        bundleList.append(mb.MetricBundle(metric1, slicer, sql, plotDict=plotDict, displayDict=displayDict,
+                                          summaryMetrics=standardStats, plotFuncs=subsetPlots))
+        bundleList.append(mb.MetricBundle(metric2, slicer, sql, plotDict=plotDict, displayDict=displayDict,
+                                          summaryMetrics=standardStats, plotFuncs=subsetPlots))
 
     #########################
     # Solar System
