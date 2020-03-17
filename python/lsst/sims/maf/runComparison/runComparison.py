@@ -43,25 +43,25 @@ class RunComparison(object):
     ----------
     baseDir : str
         The root directory containing all of the underlying runs and their subdirectories.
-    runlist : list
-        A list of runs to compare.
+    runNames : list of str
+        The names to label different runs.
     rundirs : list
         A list of directories (relative to baseDir) where the runs in runlist reside.
         Optional - if not provided, assumes directories are simply the names in runlist.
-        Must have same length as runlist (note that runlist can contain duplicate entries).
+        Must have same length as runlist (note that runNames can contain duplicate entries).
     """
-    def __init__(self, baseDir, runlist, rundirs=None,
+    def __init__(self, baseDir, runNames, rundirs=None,
                  defaultResultsDb='resultsDb_sqlite.db', verbose=False):
         self.baseDir = baseDir
-        self.runlist = runlist
+        self.runlist = runNames
         self.verbose = verbose
         self.defaultResultsDb = defaultResultsDb
         if rundirs is not None:
-            if len(rundirs) != len(runlist):
+            if len(rundirs) != len(runNames):
                 raise ValueError('runlist and rundirs must be the same length')
             self.rundirs = rundirs
         else:
-            self.rundirs = runlist
+            self.rundirs = runNames
         self._connect_to_results()
         # Class attributes to store the stats data:
         self.parameters = None        # Config parameters varied in each run
@@ -186,7 +186,7 @@ class RunComparison(object):
             self.parameters = self.parameters.join(tempDFList)
 
     def buildMetricDict(self, metricNameLike=None, metricMetadataLike=None,
-                       slicerNameLike=None, subdir=None):
+                        slicerNameLike=None, subdir=None):
         """Return a metric dictionary based on finding all metrics which match 'like' the various parameters.
 
         Parameters
@@ -349,7 +349,7 @@ class RunComparison(object):
     def addSummaryStats(self, metricDict=None, verbose=False):
         """
         Combine the summary statistics of a set of metrics into a pandas
-        dataframe that is indexed by the opsim run name.
+        dataframe that is indexed by the opsim run name.and
 
         Parameters
         ----------
