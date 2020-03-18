@@ -128,7 +128,7 @@ class CountExplimMetric(BaseMetric):
         self.minExp = minExp
         self.expectedExp = expectedExp
         self.expCol = expCol
-        super(CountExplimMetric, self).__init__(col=[col, expCol], **kwargs)
+        super().__init__(col=[col, expCol], **kwargs)
         self.metricDtype = 'int'
 
     def run(self, dataSlice, slicePoint=None):

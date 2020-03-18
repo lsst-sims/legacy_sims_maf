@@ -28,7 +28,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc
 
     if colmap is None:
-        colmap = ColMapDict('opsimV4')
+        colmap = ColMapDict('fbs')
 
     if extraSql is None:
         extraSql = ''
@@ -72,9 +72,10 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         metricb.displayDict['group'] = 'SRD'
     bundleList.extend(temp_list)
 
-    displayDict = {'group': 'SRD', 'subgroup': 'Coverage', 'order': 0, 'caption': 'Number of years with observations.'}
+    displayDict = {'group': 'SRD', 'subgroup': 'Coverage', 'order': 0,
+                   'caption': 'Number of years with observations.'}
     slicer = slicers.HealpixSlicer(nside=nside)
-    metric = metrics.CoverageMetric()
+    metric = metrics.YearCoverageMetric()
     plotDict = {'colorMin': 7, 'colorMax': 10}
     for filtername in filters:
         summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.mean, decreasing=True, metricName='N Seasons (WFD) %s' % filtername)]
