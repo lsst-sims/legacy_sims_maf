@@ -162,7 +162,7 @@ def astrometryBatch(colmap=None, runName='opsim',
     summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=False,
                                          metricName='Median Parallax Error (WFD)')]
     summary.append(metrics.PercentileMetric(percentile=95, metricName='95th Percentile Parallax Error'))
-    summary.append(standardSummary())
+    summary.extend(standardSummary())
     for rmag, plotmax in zip(rmags_para, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ParallaxMetric(metricName='Parallax Error @ %.1f' % (rmag), rmag=rmag,
@@ -222,7 +222,7 @@ def astrometryBatch(colmap=None, runName='opsim',
     summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=False,
                                          metricName='Median Proper Motion Error (WFD)')]
     summary.append(metrics.PercentileMetric(metricName='95th Percentile Proper Motion Error'))
-    summary.append(standardSummary())
+    summary.extend(standardSummary())
     for rmag, plotmax in zip(rmags_pm, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ProperMotionMetric(metricName='Proper Motion Error @ %.1f' % rmag,
