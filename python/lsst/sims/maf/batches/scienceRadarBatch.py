@@ -193,8 +193,14 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     ddf_time_bundleDicts = []
     if DDF:
         # Hide this import to avoid adding a dependency.
-        from lsst.sims.featureScheduler.surveys import generate_dd_surveys
+        from lsst.sims.featureScheduler.surveys import generate_dd_surveys, Deep_drilling_survey
         ddf_surveys = generate_dd_surveys()
+
+        # Add on the Euclid fields
+        # XXX--to update. Should have a spot where all the DDF locations are stored.
+        ddf_surveys.append(Deep_drilling_survey([], 58.97, -49.28, survey_name='DD:EDFSa'))
+        ddf_surveys.append(Deep_drilling_survey([], 63.6, -47.60, survey_name='DD:EDFSb'))
+
         # For doing a high-res sampling of the DDF for co-adds
         ddf_radius = 1.8  # Degrees
         ddf_nside = 512
