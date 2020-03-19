@@ -25,7 +25,7 @@ class SNSLMetric(metrics.BaseMetric):
 
         where:
         survey_area: survey area (in deg2)
-        cumulative_season_length: cumulative season length (in days)
+        cumulative_season_length: cumulative season length (in years)
         gap_median_all_filter: median gap (all filters)
 
         Parameters
@@ -160,7 +160,7 @@ class SNSLMetric(metrics.BaseMetric):
         res = np.rec.fromrecords([r], names=names)
 
         # estimate the number of lensed supernovae
-        N_lensed_SNe_Ia = 45.7 * res['area'] / 20000. * res['cumul_season_length'] / \
+        N_lensed_SNe_Ia = 45.7 * res['area'] / 20000. * (res['cumul_season_length']/12.*60.) / \
             2.5 / (2.15 * np.exp(0.37 * res['gap_median']))
 
         return N_lensed_SNe_Ia.item()
