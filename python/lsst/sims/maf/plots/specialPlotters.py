@@ -69,10 +69,11 @@ class FOPlot(BasePlotter):
         # Add lines for Nvis_median and fOArea: note if these are -666 (badval),
         # the default xMin/yMin values will just leave them off the edges of the plot.
         Nvis_median = fONv['value'][np.where(fONv['name'] == 'MedianNvis')]
-        plt.axhline(y=Nvis_median / 1000., linewidth=plotDict['reflinewidth'], color='b',
-                    alpha=.5, label=r'f$_0$ Median Nvisits=%.3g' % Nvis_median)
-        plt.axvline(x=fOArea, linewidth=plotDict['reflinewidth'], color='r',
-                    alpha=.5, label='f$_0$ Area=%.3g' % fOArea)
+        # Note that Nvis is the number of visits (it's not an area) - so goes on number axis
+        plt.axvline(x=Nvis_median, linewidth=plotDict['reflinewidth'], color='b',
+                    alpha=.5, linestyle=':', label=r'f$_0$ Median Nvisits=%.0f' % Nvis_median)
+        plt.axhline(y=fOArea / 1000., linewidth=plotDict['reflinewidth'], color='r',
+                    alpha=.5, linestyle=':', label='f$_0$ Area=%.0f' % fOArea)
         plt.legend(loc='lower left', fontsize='small', numpoints=1)
 
         plt.xlabel(plotDict['xlabel'])
