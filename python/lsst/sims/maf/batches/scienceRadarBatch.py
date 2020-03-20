@@ -146,22 +146,25 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
     displayDict = {'group': 'Variables and Transients', 'subgroup': 'Periodic Stars',
                    'order': 0, 'caption': None}
-    periods = [0.1, 0.5, 1., 2., 5., 10., 20.]  # days
-    amplitudes = [.05]*len(periods)
-    starMags = [20]*len(periods)
 
-    plotDict = {}
-    metadata = ''
-    sql = extraSql
-    displayDict['caption'] = 'Measure if a periodic signal can be detected for an r=%i star with amplitude of %.2f mags and variety of periods' % (max(starMags), max(amplitudes))
+    for amplitude in [.05, .02, .01]:
+        for magnitude in [21., 24.]:
+            periods = [0.1, 0.5, 1., 2., 5., 10.]  # days
+            amplitudes = [amplitude]*len(periods)
+            starMags = [21]*len(periods)
 
-    summary = metrics.MeanMetric()
-    metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags, amplitudes=amplitudes)
-    bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
-                             displayDict=displayDict, plotDict=plotDict,
-                             plotFuncs=subsetPlots, summaryMetrics=summary)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
+            plotDict = {}
+            metadata = ''
+            sql = extraSql
+            displayDict['caption'] = 'Measure if a periodic signal can be detected for an r=%i star with amplitude of %.2f mags and variety of periods' % (max(starMags), max(amplitudes))
+
+            summary = metrics.MeanMetric()
+            metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags, amplitudes=amplitudes)
+            bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
+                                     displayDict=displayDict, plotDict=plotDict,
+                                     plotFuncs=subsetPlots, summaryMetrics=summary)
+            bundleList.append(bundle)
+            displayDict['order'] += 1
 
     # XXX add some PLASTICC metrics for kilovnova and tidal disruption events.
     displayDict['subgroup'] = 'KN'
