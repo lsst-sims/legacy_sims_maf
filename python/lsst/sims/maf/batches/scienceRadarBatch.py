@@ -25,7 +25,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     """
     # Hide dependencies
     from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
-    from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc
+    from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc, TDEsAsciiMetric
 
     if colmap is None:
         colmap = ColMapDict('fbs')
@@ -176,6 +176,41 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     metric = Plasticc_metric(metricName='KN')
     summary_stats = [metrics.MeanMetric(maskVal=0)]
     plotFuncs = [plots.HealpixSkyMap()]
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
+                             plotFuncs=plotFuncs, metadata=metadata,
+                             displayDict=displayDict)
+    bundleList.append(bundle)
+
+    displayDict['order'] += 1
+
+    # Tidal Disruption Events
+    displayDict['subgroup'] = 'TDE'
+    displayDict['caption'] = 'Fraction of Kilonova (from PLASTICC)'
+    detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
+
+    # light curve parameters
+    epochStart = -22
+    peakEpoch = 0
+    nearPeakT = 10
+    postPeakT = 14  # two weeks
+    nPhaseCheck = 1
+
+    # condition parameters
+    nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nObsPrePeak = 1
+    nObsNearPeak = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nFiltersNearPeak = 3
+    nObsPostPeak = 0
+    nFiltersPostPeak = 2
+
+    metric = TDEsAsciiMetric(asciifile=None,
+                             detectSNR=detectSNR, epochStart=epochStart, peakEpoch=peakEpoch,
+                             nearPeakT=nearPeakT, postPeakT=postPeakT, nPhaseCheck=nPhaseCheck,
+                             nObsTotal=nObsTotal, nObsPrePeak=nObsPrePeak,
+                             nObsNearPeak=nObsNearPeak, nFiltersNearPeak=nFiltersNearPeak,
+                             nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
+    slicer = slicers.HealpixSlicer(nside=32)
+    sql = ''
     bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
                              plotFuncs=plotFuncs, metadata=metadata,
                              displayDict=displayDict)
