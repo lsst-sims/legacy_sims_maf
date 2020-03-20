@@ -108,6 +108,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside': nside, 'lonCol': lonCol, 'latCol': latCol,
                             'radius': radius}
+        self.useCache = useCache
         if useCache:
             # useCache set the size of the cache for the memoize function in sliceMetric.
             binRes = hp.nside2resol(nside)  # Pixel size in radians
@@ -132,7 +133,8 @@ class HealpixSlicer(BaseSpatialSlicer):
                             if otherSlicer.chipsToUse == self.chipsToUse:
                                 if otherSlicer.rotSkyPosColName == self.rotSkyPosColName:
                                     if np.all(otherSlicer.shape == self.shape):
-                                        result = True
+                                        if otherSlicer.useCache == self.useCache:
+                                            result = True
         return result
 
     def _pix2radec(self, islice):
