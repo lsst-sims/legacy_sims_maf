@@ -146,7 +146,6 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
     displayDict = {'group': 'Variables and Transients', 'subgroup': 'Periodic Stars',
                    'order': 0, 'caption': None}
-
     for amplitude in [.05, .02, .01]:
         for magnitude in [21., 24.]:
             periods = [0.1, 0.5, 1., 2., 5., 10.]  # days
@@ -185,7 +184,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     # Tidal Disruption Events
     displayDict['subgroup'] = 'TDE'
-    displayDict['caption'] = 'Fraction of Kilonova (from PLASTICC)'
+    displayDict['caption'] = 'TDE recovery'
     detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
 
     # light curve parameters
@@ -216,7 +215,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                              displayDict=displayDict)
     bundleList.append(bundle)
 
-    displayDict['order'] += 1
+
 
     # XXX -- would be good to add some microlensing events, for both MW and LMC/SMC.
 
