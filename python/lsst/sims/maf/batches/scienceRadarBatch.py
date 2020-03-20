@@ -151,7 +151,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         for magnitude in [21., 24.]:
             periods = [0.1, 0.5, 1., 2., 5., 10.]  # days
             amplitudes = [amplitude]*len(periods)
-            starMags = [21]*len(periods)
+            starMags = [magnitude]*len(periods)
 
             plotDict = {}
             metadata = ''
@@ -159,7 +159,9 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
             displayDict['caption'] = 'Measure if a periodic signal can be detected for an r=%i star with amplitude of %.2f mags and variety of periods' % (max(starMags), max(amplitudes))
 
             summary = metrics.MeanMetric()
-            metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags, amplitudes=amplitudes)
+            metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags,
+                                                  amplitudes=amplitudes,
+                                                  metricName='Periodic_amp_%.2f_mag_%i' % (amplitude, magnitude))
             bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
                                      displayDict=displayDict, plotDict=plotDict,
                                      plotFuncs=subsetPlots, summaryMetrics=summary)
