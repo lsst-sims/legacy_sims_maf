@@ -146,7 +146,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
     displayDict = {'group': 'Variables and Transients', 'subgroup': 'Periodic Stars',
                    'order': 0, 'caption': None}
-    for amplitude in [.05, .02, .01]:
+    for amplitude in [1.0, 0.1, 0.05]:
         for magnitude in [21., 24.]:
             periods = [0.1, 0.5, 1., 2., 5., 10.]  # days
             amplitudes = [amplitude]*len(periods)
@@ -163,7 +163,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                                                   metricName='Periodic_amp_%.2f_mag_%i' % (amplitude, magnitude))
             bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
                                      displayDict=displayDict, plotDict=plotDict,
-                                     plotFuncs=subsetPlots, summaryMetrics=summary)
+                                     plotFuncs=subsetPlots, summaryMetrics=standardStats)
             bundleList.append(bundle)
             displayDict['order'] += 1
 
@@ -173,9 +173,8 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     sql = ''
     slicer = plasticc_slicer(plcs=plasticc_models_dict['KN'], seed=43, badval=0)
     metric = Plasticc_metric(metricName='KN')
-    summary_stats = [metrics.MeanMetric(maskVal=0)]
     plotFuncs = [plots.HealpixSkyMap()]
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
                              plotFuncs=plotFuncs, metadata=metadata,
                              displayDict=displayDict)
     bundleList.append(bundle)
@@ -210,7 +209,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                              nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
     slicer = slicers.HealpixSlicer(nside=32)
     sql = ''
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
                              plotFuncs=plotFuncs, metadata=metadata,
                              displayDict=displayDict)
     bundleList.append(bundle)
