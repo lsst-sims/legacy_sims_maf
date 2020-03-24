@@ -53,13 +53,13 @@ class MetricBundleGroup(object):
 
     Parameters
     ----------
-    bundleDict : dict of MetricBundles
+    bundleDict : dict or list of MetricBundles
         Individual MetricBundles should be placed into a dictionary, and then passed to
         the MetricBundleGroup. The dictionary keys can then be used to identify MetricBundles
         if needed -- and to identify new MetricBundles which could be created if 'reduce'
         functions are run on a particular MetricBundle.
         A bundleDict can be conveniently created from a list of MetricBundles using
-        makeBundlesDictFromList
+        makeBundlesDictFromList (done automatically if a list is passed in)
     dbObj : Database
         The database object (typically an :class:`OpsimDatabase`) connected to the data to be used to
         calculate metrics.
@@ -83,6 +83,8 @@ class MetricBundleGroup(object):
                  saveEarly=True, dbTable=None):
         """Set up the MetricBundleGroup.
         """
+        if type(bundleDict) is list:
+            bundleDict = makeBundlesDictFromList(bundleDict)
         # Print occasional messages to screen.
         self.verbose = verbose
         # Save metric results as soon as possible (in case of crash).
