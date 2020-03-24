@@ -85,7 +85,7 @@ class SNSLMetric(metrics.BaseMetric):
 
         super(SNSLMetric, self).__init__(
             col=cols, metricName=metricName, **kwargs)
-
+        self.badVal = 0
         # get area of the pixels
         self.area = hp.nside2pixarea(self.nside, degrees=True)
         self.season = season
@@ -115,12 +115,12 @@ class SNSLMetric(metrics.BaseMetric):
 
         """
 
+        if len(dataSlice) == 0:
+            return self.badVal
+
         # stack data (if necessary)
         if self.stacker is not None:
             dataSlice = self.stacker._run(dataSlice)
-
-        if len(dataSlice) == 0:
-            return None
 
         seasons = self.season
 
@@ -130,7 +130,7 @@ class SNSLMetric(metrics.BaseMetric):
         # get infos on seasons
         info_season = self.seasonInfo(dataSlice, seasons)
         if info_season is None:
-            return None
+            return self.badVal
 
         # get the cumulative season length
 
@@ -160,10 +160,18 @@ class SNSLMetric(metrics.BaseMetric):
         res = np.rec.fromrecords([r], names=names)
 
         # estimate the number of lensed supernovae
-        N_lensed_SNe_Ia = 45.7 * res['area'] / 20000. * (res['cumul_season_length']/12.*60.) / \
+        cumul_season = res['cumul_season_length']/(12.*30.)
+
+        if cumul_season <= 0:
+            print('problem here', cumul_season)
+        N_lensed_SNe_Ia = 45.7 * res['area'] / 20000. * cumul_season /\
             2.5 / (2.15 * np.exp(0.37 * res['gap_median']))
 
-        return N_lensed_SNe_Ia.item()
+        res = N_lensed_SNe_Ia.item()
+        if res <= 0 or np.isnan(res):
+            print('Problem here', cumul_season, res)
+
+        return res
 
     def seasonInfo(self, dataSlice, seasons):
         """
