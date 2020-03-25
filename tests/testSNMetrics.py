@@ -201,9 +201,9 @@ class TestSNmetrics(unittest.TestCase):
 
         # and the result should be
 
-        nSL_ref = 0.045543386518177596
+        nSL_ref = 0.00012650940
 
-        assert(np.abs(nSL-nSL_ref) < 1.e-5)
+        assert(np.abs(nSL-nSL_ref) < 1.e-8)
 
 
 def setup_module(module):
