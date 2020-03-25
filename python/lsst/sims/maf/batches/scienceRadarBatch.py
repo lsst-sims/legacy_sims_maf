@@ -214,8 +214,6 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                              displayDict=displayDict)
     bundleList.append(bundle)
 
-
-
     # XXX -- would be good to add some microlensing events, for both MW and LMC/SMC.
 
     #########################
@@ -224,6 +222,19 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     displayDict = {'group': 'Milky Way', 'subgroup': '',
                    'order': 0, 'caption': None}
+
+    displayDict['subgroup'] = 'N stars'
+    slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
+    sum_stats = metrics.SumMetric()
+    for filtername in 'ugrizy':
+        displayDict['caption'] = 'Number of stars in %s filter with an error less than 0.1 mag' % filtername
+        sql = 'filter="%s"' % filtername
+        metric = metrics.NstarsMetric()
+        bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=sum_stats,
+                                 plotFuncs=subsetPlots,
+                                 displayDict=displayDict)
+        bundleList.append(bundle)
+        displayDict['order'] += 1
 
     #########################
     # DDF
