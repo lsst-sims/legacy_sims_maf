@@ -108,28 +108,39 @@ class MoCompletenessMetric(BaseMoMetric):
     cumulative : bool, opt
         If False, simply report the differential fractional value (or differential completeness).
         If True, integrate over the H distribution (using IntegrateOverH) to report a cumulative fraction.
-        Default False.
+        Default None which becomes True;
+        if metricName is set and starts with 'Differential' this will then set to False.
     Hindex : float, opt
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
-    def __init__(self, threshold=1, nbins=20, minHrange=1.0, cumulative=False, Hindex=0.33, **kwargs):
-        if 'metricName' in kwargs:
-            metricName = kwargs.pop('metricName')
-            if metricName.startswith('Cumulative'):
-                self.cumulative=True
-                units = '<= H'
-            else:
-                self.cumulative=False
-                units = '@ H'
-        else:
-            self.cumulative = cumulative
-            if self.cumulative:
+    def __init__(self, threshold=1, nbins=20, minHrange=1.0, cumulative=None, Hindex=0.33, **kwargs):
+        if cumulative is None:  # if metricName does not start with 'differential', then cumulative->True
+            if 'metricName' not in kwargs:
+                self.cumulative = True
                 metricName = 'CumulativeCompleteness'
                 units = '<= H'
+            else:  #  'metricName' in kwargs:
+                metricName = kwargs.pop('metricName')
+                if metricName.lower().startswith('differential'):
+                    self.cumulative=False
+                    units = '@ H'
+                else:
+                    self.cumulative=True
+                    units = '<= H'
+        else: # cumulative was set
+            self.cumulative = cumulative
+            if 'metricName' in kwargs:
+                metricName = kwargs.pop('metricName')
+                if metricName.lower().startswith('differential') and self.cumulative:
+                    warnings.warn(f'Completeness metricName is {metricName} but cumulative is True')
             else:
-                metricName = 'DifferentialCompleteness'
-                units = '@ H'
-        super(MoCompletenessMetric, self).__init__(metricName=metricName, units=units, **kwargs)
+                if self.cumulative:
+                    metricName = 'CumulativeCompleteness'
+                    units = '<= H'
+                else:
+                    metricName = 'DifferentialCompleteness'
+                    units = '@ H'
+        super().__init__(metricName=metricName, units=units, **kwargs)
         self.threshold = threshold
         # If H is not a cloned distribution, then we need to specify how to bin these values.
         self.nbins = nbins
@@ -157,7 +168,7 @@ class MoCompletenessMetric(BaseMoMetric):
             bins = np.arange(minH, minH + hrange + stepsize/2.0, stepsize)
             Hvals = bins[:-1]
             n_all, b = np.histogram(metricValH[0], bins)
-            condition = np.where(metricValH[0] >= self.requiredChances)[0]
+            condition = np.where(metricValH[0] >= self.threshold)[0]
             n_found, b = np.histogram(metricValH[0][condition], bins)
             completeness = n_found.astype(float) / n_all.astype(float)
             completeness = np.where(n_all==0, 0, completeness)
@@ -191,32 +202,38 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
     cumulative : bool, opt
         If True, calculate the cumulative completeness (completeness <= H).
         If False, calculate the differential completeness (completeness @ H).
-        Default True.
+        Default None which becomes 'True' unless metricName starts with 'differential'.
     Hindex : float, opt
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
 
-    def __init__(self, times, Hval=None, cumulative=True, Hindex=0.33, **kwargs):
+    def __init__(self, times, Hval=None, cumulative=None, Hindex=0.33, **kwargs):
         self.Hval = Hval
         self.times = times
         self.Hindex = Hindex
-        if 'metricName' in kwargs:
-            metricName = kwargs.pop('metricName')
-            if metricName.startswith('Differential'):
-                self.cumulative = False
-                self.metricName = metricName
-            else:
+        if cumulative is None:  # if metricName does not start with 'differential', then cumulative->True
+            if 'metricName' not in kwargs:
                 self.cumulative = True
-                self.metricName = metricName
-        else:
+                metricName = 'CumulativeCompleteness@Time@H=%.2f' % self.Hval
+            else:  #  'metricName' in kwargs:
+                metricName = kwargs.pop('metricName')
+                if metricName.lower().startswith('differential'):
+                    self.cumulative=False
+                else:
+                    self.cumulative=True
+        else: # cumulative was set
             self.cumulative = cumulative
-            if self.cumulative:
-                self.metricName = 'CumulativeCompleteness@Time@H=%.2f' % self.Hval
+            if 'metricName' in kwargs:
+                metricName = kwargs.pop('metricName')
+                if metricName.lower().startswith('differential') and self.cumulative:
+                    warnings.warn(f'Completeness metricName is {metricName} but cumulative is True')
             else:
-                self.metricName = 'DifferentialCompleteness@Time@H=%.2f' % self.Hval
+                if self.cumulative:
+                    metricName = 'CumulativeCompleteness@Time@H=%.2f' % self.Hval
+                else:
+                    metricName = 'DifferentialCompleteness@Time@H=%.2f' % self.Hval
         self._setLabels()
-        super(MoCompletenessAtTimeMetric, self).__init__(metricName=self.metricName, units=self.units,
-                                                         **kwargs)
+        super().__init__(metricName=metricName, units=self.units, **kwargs)
 
     def _setLabels(self):
         if self.Hval is not None:
