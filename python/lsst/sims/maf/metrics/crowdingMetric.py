@@ -100,10 +100,11 @@ class CrowdingM5Metric(BaseMetric):
 
 
 class NstarsMetric(BaseMetric):
-    """Return the magnitude at which the photometric error exceeds crowding_error threshold.
+    """Return the number of stars visible above some uncertainty limit,
+    taking image depth and crowding into account.
     """
     def __init__(self, crowding_error=0.1, filtername='r', seeingCol='seeingFwhmGeom',
-                 m5Col = 'fiveSigmaDepth',
+                 m5Col='fiveSigmaDepth',
                  metricName=None, maps=['StellarDensityMap'], **kwargs):
         """
         Parameters
@@ -122,7 +123,7 @@ class NstarsMetric(BaseMetric):
         Returns
         -------
         float
-        The magnitude of a star which has a photometric error of `crowding_error`
+        The number of stars above the error limit
         """
 
         cols = [seeingCol, m5Col]
@@ -165,7 +166,6 @@ class NstarsMetric(BaseMetric):
                            slicePoint[f'starLumFunc_{self.filtername}']) * pix_area
 
         return result
-
 
 
 class CrowdingMagUncertMetric(BaseMetric):
