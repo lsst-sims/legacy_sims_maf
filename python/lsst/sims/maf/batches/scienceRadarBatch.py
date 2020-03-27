@@ -174,7 +174,8 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     slicer = plasticc_slicer(plcs=plasticc_models_dict['KN'], seed=43, badval=0)
     metric = Plasticc_metric(metricName='KN')
     plotFuncs = [plots.HealpixSkyMap()]
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
+    summary_stats = [metrics.MeanMetric(maskVal=0)]
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
                              plotFuncs=plotFuncs, metadata=metadata,
                              displayDict=displayDict)
     bundleList.append(bundle)
