@@ -211,9 +211,12 @@ class RunComparison(object):
         else:
             getAll = False
         mDict = {}
+
+        # Track this here, so that if directories have different subdirectories, this will still work.
+        insubdir = subdir
         for r in self.runlist:
-            if subdir is not None:
-                subdirs = [subdir]
+            if insubdir is not None:
+                subdirs = [insubdir]
             else:
                 subdirs = list(self.runresults[r].keys())
             for subdir in subdirs:
