@@ -346,17 +346,19 @@ class RunComparison(object):
         stats = pd.concat(tempDFList)
         return header, stats
 
-    def addSummaryStats(self, metricDict, verbose=False):
+    def addSummaryStats(self, metricDict=None, verbose=False):
         """
         Combine the summary statistics of a set of metrics into a pandas
         dataframe that is indexed by the opsim run name.
 
         Parameters
         ----------
-        metricDict: dict
+        metricDict: dict, opt
             A dictionary of metrics with all of the information needed to query
             a results database.  The metric/metadata/slicer/summary values referred to
             by a metricDict value could be unique but don't have to be.
+            If None (default), then fetches all metric results.
+            (This can be slow if there are a lot of metrics.)
         verbose : bool, opt
             Issue warnings resulting from not finding the summary stat information
             (such as if it was never calculated) will not be issued.   Default False.
@@ -372,6 +374,8 @@ class RunComparison(object):
             <run_123>    <metricValue1>  <metricValue2>
             <run_124>    <metricValue1>  <metricValue2>
         """
+        if metricDict is None:
+            metricDict = self.buildMetricDict()
         for mName, metric in metricDict.items():
             if 'summaryName' not in metric:
                 metric['summaryName'] = None
