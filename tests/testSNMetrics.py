@@ -8,11 +8,56 @@ import lsst.utils.tests
 from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
 from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
 from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
+from lsst.sims.maf.metrics.snSLMetric import SNSLMetric
 import os
 import warnings
 
 m5_ref = dict(
     zip('ugrizy', [23.60, 24.83, 24.38, 23.92, 23.35, 22.44]))
+
+
+def fakeData(band, season=1):
+
+    # Define fake data
+    names = ['observationStartMJD', 'fieldRA', 'fieldDec',
+             'fiveSigmaDepth', 'visitExposureTime',
+             'numExposures', 'visitTime', 'season',
+             'seeingFwhmEff', 'seeingFwhmGeom',
+             'airmass', 'sky', 'moonPhase', 'pixRA', 'pixDec']
+
+    types = ['f8']*len(names)
+    names += ['night']
+    types += ['i2']
+    names += ['healpixID']
+    types += ['i2']
+    names += ['filter']
+    types += ['O']
+
+    dayobs = [59948.31957176, 59959.2821412, 59970.26134259,
+              59973.25978009, 59976.26383102, 59988.20670139, 59991.18412037,
+              60004.1853588, 60032.08975694, 60045.11981481, 60047.98747685,
+              60060.02083333, 60071.986875, 60075.96452546]
+    day0 = np.min(dayobs)
+    npts = len(dayobs)
+    data = np.zeros(npts, dtype=list(zip(names, types)))
+    data['observationStartMJD'] = dayobs
+    data['night'] = np.floor(data['observationStartMJD']-day0+1)
+    data['fiveSigmaDepth'] = m5_ref[band]
+    data['visitExposureTime'] = 15.
+    data['numExposures'] = 2
+    data['visitTime'] = 2.*15.
+    data['season'] = season
+    data['filter'] = band
+    data['seeingFwhmEff'] = 0.
+    data['seeingFwhmGeom'] = 0.
+    data['airmass'] = 1.2
+    data['sky'] = 20.0
+    data['moonPhase'] = 0.5
+    data['pixRA'] = 0.0
+    data['pixDec'] = 0.0
+    data['healpixID'] = 1
+
+    return data
 
 
 class TestSNmetrics(unittest.TestCase):
@@ -130,6 +175,35 @@ class TestSNmetrics(unittest.TestCase):
         else:
             warnings.warn(
                 "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
+
+    def testSNSLMetric(self):
+        """Test the SN SNR metric """
+
+        # load some fake data
+        data = None
+        bands = 'griz'
+        cadence = dict(zip(bands, [2, 1, 2, 1]))
+        for band in bands:
+            for i in range(cadence[band]):
+                fakes = fakeData(band)
+                if data is None:
+                    data = fakes
+                else:
+                    data = np.concatenate((data, fakes))
+
+        # metric instance
+        coadd = True
+
+        metric = SNSLMetric(coadd=coadd)
+
+        # run the metric
+        nSL = metric.run(data)
+
+        # and the result should be
+
+        nSL_ref = 0.00012650940
+
+        assert(np.abs(nSL-nSL_ref) < 1.e-8)
 
 
 def setup_module(module):

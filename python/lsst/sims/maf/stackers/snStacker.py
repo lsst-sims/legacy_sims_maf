@@ -18,8 +18,8 @@ class CoaddStacker(BaseStacker):
     """
     colsAdded = ['coadd']
 
-    def __init__(self, RaCol='fieldRA', DecCol='fieldDec', m5Col='fiveSigmaDepth', nightcol='night', filterCol='filter', nightCol='night', numExposuresCol='numExposures', visitTimeCol='visitTime', visitExposureTimeCol='visitExposureTime'):
-        self.colsReq = [RaCol, DecCol, m5Col, filterCol, nightCol,
+    def __init__(self, mjdCol='observationStartMJD', RaCol='fieldRA', DecCol='fieldDec', m5Col='fiveSigmaDepth', nightcol='night', filterCol='filter', nightCol='night', numExposuresCol='numExposures', visitTimeCol='visitTime', visitExposureTimeCol='visitExposureTime'):
+        self.colsReq = [mjdCol, RaCol, DecCol, m5Col, filterCol, nightCol,
                         numExposuresCol, visitTimeCol, visitExposureTimeCol]
         self.RaCol = RaCol
         self.DecCol = DecCol
