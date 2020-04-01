@@ -176,6 +176,7 @@ class TestSNmetrics(unittest.TestCase):
             warnings.warn(
                 "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
+    #@unittest.skip("Skipping while fixing coadd kwarg")
     def testSNSLMetric(self):
         """Test the SN SNR metric """
 
@@ -192,9 +193,9 @@ class TestSNmetrics(unittest.TestCase):
                     data = np.concatenate((data, fakes))
 
         # metric instance
-        coadd = True
+        night_collapse = True
 
-        metric = SNSLMetric(coadd=coadd)
+        metric = SNSLMetric(night_collapse=night_collapse)
 
         # run the metric
         nSL = metric.run(data, slicePoint={'nside': 64})
