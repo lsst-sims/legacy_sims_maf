@@ -414,12 +414,41 @@ class ResultsDb(object):
                 dataFiles.append(m.metricDataFile)
         return dataFiles
 
+    def getMetricInfo(self, metricId=None):
+        """Get the simple metric info, without display information.
+        """
+        if metricId is None:
+            metricId = self.getAllMetricIds()
+        if not hasattr(metricId, '__iter__'):
+            metricId = [metricId,]
+        metricInfo = []
+        for mId in metricId:
+            # Query for all rows in metrics and displays that match any of the metricIds.
+            query = (self.session.query(MetricRow).filter(MetricRow.metricId==mId))
+            for m in query:
+                baseMetricName = m.metricName.split('_')[0]
+                mInfo = (m.metricId, m.metricName, baseMetricName, m.slicerName,
+                        m.sqlConstraint, m.metricMetadata, m.metricDataFile)
+                metricInfo.append(mInfo)
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
+                          ('baseMetricNames', np.str_, self.slen),
+                          ('slicerName', np.str_, self.slen),
+                          ('sqlConstraint', np.str_, self.slen),
+                          ('metricMetadata', np.str_, self.slen),
+                          ('metricDataFile', np.str_, self.slen)])
+        metricInfo = np.array(metricInfo, dtype)
+        return metricInfo
 
     def getMetricDisplayInfo(self, metricId=None):
         """
         Get the contents of the metrics and displays table, together with the 'basemetricname'
         (optionally, for metricId list).
         Returns a numpy array of the metric information + display information.
+
+        One underlying assumption here is that all metrics have some display info.
+        In newer batches, this may not be the case, as the display info gets auto-generated when the
+        metric is plotted.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()

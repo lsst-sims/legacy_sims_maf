@@ -227,7 +227,7 @@ class RunComparison(object):
                                                                       metricMetadataLike=metricMetadataLike,
                                                                       slicerNameLike=slicerNameLike)
                 for mId in mIds:
-                    info = self.runresults[r][subdir].getMetricDisplayInfo(mId)
+                    info = self.runresults[r][subdir].getMetricInfo(mId)
                     metricName = info['metricName'][0]
                     metricMetadata = info['metricMetadata'][0]
                     slicerName = info['slicerName'][0]
@@ -253,7 +253,7 @@ class RunComparison(object):
         return name
 
     def _findSummaryStats(self, metricName, metricMetadata=None, slicerName=None, summaryName=None,
-                          colName=None):
+                          colName=None, verbose=False):
         """
         Look for summary metric values matching metricName (and optionally metricMetadata, slicerName
         and summaryName) among the results databases for each run.
@@ -271,6 +271,9 @@ class RunComparison(object):
         colName : str, opt
             Name of the column header for the dataframe. If more than one summary stat is
             returned from the database, then this will be ignored.
+        verbose : bool, opt
+            Issue warnings resulting from not finding the summary stat information
+            (such as if it was never calculated) will not be issued.   Default False.
 
         Results
         -------
@@ -303,7 +306,7 @@ class RunComparison(object):
                                                           stats['summaryName'][i])
                             summaryValues[r][name] = stats['summaryValue'][i]
                             summaryNames[r][name] = stats['summaryName'][i]
-            if len(summaryValues[r]) == 0:
+            if len(summaryValues[r]) == 0 and verbose:
                 warnings.warn("Warning: Found no metric results for %s %s %s %s in run %s"
                               % (metricName, metricMetadata, slicerName, summaryName, r))
         # Make DataFrame.
@@ -343,7 +346,7 @@ class RunComparison(object):
         stats = pd.concat(tempDFList)
         return header, stats
 
-    def addSummaryStats(self, metricDict):
+    def addSummaryStats(self, metricDict, verbose=False):
         """
         Combine the summary statistics of a set of metrics into a pandas
         dataframe that is indexed by the opsim run name.
@@ -354,6 +357,9 @@ class RunComparison(object):
             A dictionary of metrics with all of the information needed to query
             a results database.  The metric/metadata/slicer/summary values referred to
             by a metricDict value could be unique but don't have to be.
+        verbose : bool, opt
+            Issue warnings resulting from not finding the summary stat information
+            (such as if it was never calculated) will not be issued.   Default False.
 
         Returns
         -------
@@ -373,7 +379,7 @@ class RunComparison(object):
                                                                metricMetadata=metric['metricMetadata'],
                                                                slicerName=metric['slicerName'],
                                                                summaryName=metric['summaryName'],
-                                                               colName=mName)
+                                                               colName=mName, verbose=verbose)
             if self.summaryStats is None:
                 self.summaryStats = tempStats
                 self.headerStats = tempHeader
