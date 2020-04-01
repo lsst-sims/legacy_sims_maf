@@ -2,6 +2,7 @@ import numpy as np
 import lsst.sims.maf.metrics as metrics
 import healpy as hp
 from lsst.sims.maf.stackers import snStacker
+import numpy.lib.recfunctions as rf
 
 __all__ = ['SNSLMetric']
 
@@ -11,8 +12,7 @@ class SNSLMetric(metrics.BaseMetric):
                  mjdCol='observationStartMJD', RaCol='fieldRA', DecCol='fieldDec',
                  filterCol='filter', exptimeCol='visitExposureTime',
                  nightCol='night', obsidCol='observationId', nexpCol='numExposures',
-                 vistimeCol='visitTime', m5Col='fiveSigmaDepth', season=[-1],
-                 nside=64, coadd=False,
+                 vistimeCol='visitTime', m5Col='fiveSigmaDepth', season=[-1], coadd=False,
                  uniqueBlocks=False, **kwargs):
         """
         Strongly Lensed SN metric
@@ -62,8 +62,6 @@ class SNSLMetric(metrics.BaseMetric):
          Default : visitTime
         season: int (list) or -1, opt
          season to process (default: -1: all seasons)
-        nside: int, opt
-         healpix parameter nside (default: 64)
 
 
         """
@@ -78,16 +76,13 @@ class SNSLMetric(metrics.BaseMetric):
         self.vistimeCol = vistimeCol
         self.seasonCol = 'season'
         self.m5Col = m5Col
-        self.nside = nside
 
         cols = [self.nightCol, self.filterCol, self.mjdCol, self.obsidCol,
-                self.nexpCol, self.vistimeCol, self.exptimeCol, self.seasonCol]
+                self.nexpCol, self.vistimeCol, self.exptimeCol]
 
         super(SNSLMetric, self).__init__(
-            col=cols, metricName=metricName, **kwargs)
+            col=cols, metricName=metricName, units='N SL', **kwargs)
         self.badVal = 0
-        # get area of the pixels
-        self.area = hp.nside2pixarea(self.nside, degrees=True)
         self.season = season
         self.bands = 'ugrizy'
 
@@ -115,9 +110,13 @@ class SNSLMetric(metrics.BaseMetric):
 
         """
 
+        # get the pixel area
+        area = hp.nside2pixarea(slicePoint['nside'], degrees=True)
+
         if len(dataSlice) == 0:
             return self.badVal
 
+        dataSlice = self.seasonCalc(dataSlice)
         # stack data (if necessary)
         if self.stacker is not None:
             dataSlice = self.stacker._run(dataSlice)
@@ -146,15 +145,7 @@ class SNSLMetric(metrics.BaseMetric):
         r.append(np.mean(info_season['gap_max']))
         names.append('gap_max')
 
-        """
-        for band in self.bands:
-            r.append(np.mean(info_season['gap_median_{}'.format(band)]))
-            r.append(np.mean(info_season['gap_max_{}'.format(band)]))
-            names.append('gap_median_{}'.format(band))
-            names.append('gap_max_{}'.format(band))
-
-        """
-        r.append(self.area)
+        r.append(area)
         names.append('area')
 
         res = np.rec.fromrecords([r], names=names)
@@ -209,19 +200,6 @@ class SNSLMetric(metrics.BaseMetric):
             rg = [float(season), np.mean(cadence), season_length,
                   mjd_min, mjd_max, Nvisits, median_gap, mean_gap, max_gap]
 
-            # night gaps per band
-            """
-            for band in self.bands:
-                idb = slice_sel['filter'] == band
-                selb = slice_sel[idb]
-                if len(selb) >= 2:
-                    gaps = selb[self.mjdCol][1:]-selb[self.mjdCol][:-1]
-                    # print('alors',band,gaps,np.median(gaps),np.max(gaps))
-                    rg += [np.median(gaps), np.mean(gaps), np.max(gaps)]
-
-                else:
-                    rg += [0.0, 0.0, 0.0]
-            """
             rv.append(tuple(rg))
 
         info_season = None
@@ -229,13 +207,53 @@ class SNSLMetric(metrics.BaseMetric):
                  'MJD_min', 'MJD_max', 'Nvisits']
         names += ['gap_median', 'gap_mean', 'gap_max']
 
-        """
-        for band in self.bands:
-            names += ['gap_median_{}'.format(band), 'gap_mean_{}'.format(
-                band), 'gap_max_{}'.format(band)]
-        """
         if len(rv) > 0:
             info_season = np.rec.fromrecords(
                 rv, names=names)
 
         return info_season
+
+    def seasonCalc(self, obs, season_gap=80., mjdCol='observationStartMJD'):
+        """
+        Method to estimate seasons
+
+        Parameters
+        --------------
+       obs: numpy array
+          array of observations
+        season_gap: float, opt
+          minimal gap required to define a season (default: 80 days)
+        mjdCol: str, opt
+          col name for MJD infos (default: observationStartMJD)
+
+        Returns
+        ----------
+        original numpy array with season appended
+
+        """
+
+        # check wether season has already been estimated
+        if 'season' in obs.dtype.names:
+            return obs
+
+        obs.sort(order=mjdCol)
+
+        if len(obs) == 1:
+            obs = np.atleast_1d(obs)
+            obs = rf.append_fields([obs], 'season', [1.])
+            return obs
+        diff = obs[mjdCol][1:]-obs[mjdCol][:-1]
+
+        flag = np.argwhere(diff > season_gap)
+        if len(flag) > 0:
+            seas = np.zeros((len(obs),), dtype=int)
+            flag += 1
+            seas[0:flag[0][0]] = 1
+            for iflag in range(len(flag)-1):
+                seas[flag[iflag][0]:flag[iflag+1][0]] = iflag+2
+            seas[flag[-1][0]:] = len(flag)+1
+            obs = rf.append_fields(obs, 'season', seas)
+        else:
+            obs = rf.append_fields(obs, 'season', [1]*len(obs))
+
+        return obs
