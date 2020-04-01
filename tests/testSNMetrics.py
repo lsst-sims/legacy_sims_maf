@@ -104,7 +104,7 @@ class TestSNmetrics(unittest.TestCase):
             data['filter'] = band
 
             # Run the metric with these fake data
-            slicePoint = [0]
+            slicePoint = {'nside': 64}
             metric = SNCadenceMetric(lim_sn=lim_sn, coadd=False)
             result = metric.run(data, slicePoint)
 
@@ -162,7 +162,7 @@ class TestSNmetrics(unittest.TestCase):
             data['filter'] = band
 
             # Run the metric with these fake data
-            slicePoint = [0]
+            slicePoint = {'nside': 64}
             metric = SNSNRMetric(
                 lim_sn=lim_sn, coadd=coadd, names_ref=names_ref, season=season, z=z)
 
@@ -197,7 +197,7 @@ class TestSNmetrics(unittest.TestCase):
         metric = SNSLMetric(coadd=coadd)
 
         # run the metric
-        nSL = metric.run(data)
+        nSL = metric.run(data, slicePoint={'nside': 64})
 
         # and the result should be
 
