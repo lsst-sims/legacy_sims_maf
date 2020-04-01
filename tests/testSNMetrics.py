@@ -176,7 +176,6 @@ class TestSNmetrics(unittest.TestCase):
             warnings.warn(
                 "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
-    #@unittest.skip("Skipping while fixing coadd kwarg")
     def testSNSLMetric(self):
         """Test the SN SNR metric """
 

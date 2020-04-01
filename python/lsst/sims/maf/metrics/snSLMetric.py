@@ -117,6 +117,8 @@ class SNSLMetric(metrics.BaseMetric):
             u_key, indx = np.unique(key, return_index=True)
             # Normally we would want to co-add depths, increase the number of exposures, average mjdCol. But none of that gets used later.
             dataSlice = dataSlice[indx]
+            # Need to resort I think
+            dataSlice.sort(order=self.mjdCol)
 
         dataSlice, season_id = self.seasonCalc(dataSlice)
 
