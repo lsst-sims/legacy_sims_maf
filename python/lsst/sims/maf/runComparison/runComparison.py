@@ -33,22 +33,26 @@ class RunComparison(object):
     and stores results in DataFrames in class.
 
     Set up the runs to compare and opens connections to all resultsDb_sqlite directories under
-    baseDir/runlist[1-N] and their subdirectories.
-    Expects a directory structure like:
+    baseDir/runNames[1-N] and their subdirectories.
+    There are two ways to approach the storage and access to the MAF outputs:
+    EITHER the outputs can be stored directly in the runNames directories or subdirectories of these:
     baseDir -> run1  -> subdirectory1 (e.g. 'scheduler', containing a resultsDb_sqlite.db file)
     ................ -> subdirectoryN
     ....... -> runN -> subdirectoryX
+    OR the outputs can be stored in a variety of different locations, and the names/locations
+    then would be provided by [runNames][rundirs] -- having a one-to-one correlation. In this case, you might
+    expect the runNames to contain duplicates if there is more than one MAF output directory per run.
 
     Parameters
     ----------
     baseDir : str
         The root directory containing all of the underlying runs and their subdirectories.
     runNames : list of str
-        The names to label different runs.
+        The names to label different runs. Can contain duplicate entries.
     rundirs : list
-        A list of directories (relative to baseDir) where the runs in runlist reside.
-        Optional - if not provided, assumes directories are simply the names in runlist.
-        Must have same length as runlist (note that runNames can contain duplicate entries).
+        A list of directories (relative to baseDir) where the MAF outputs in runNames reside.
+        Optional - if not provided, assumes directories are simply the names in runNames.
+        Must have same length as runNames (note that runNames can contain duplicate entries).
     """
     def __init__(self, baseDir, runNames, rundirs=None,
                  defaultResultsDb='resultsDb_sqlite.db', verbose=False):
@@ -57,11 +61,11 @@ class RunComparison(object):
         self.verbose = verbose
         self.defaultResultsDb = defaultResultsDb
         if rundirs is not None:
-            if len(rundirs) != len(runNames):
-                raise ValueError('runlist and rundirs must be the same length')
+            if len(rundirs) != len(self.runlist):
+                raise ValueError('runNames and rundirs must be the same length')
             self.rundirs = rundirs
         else:
-            self.rundirs = runNames
+            self.rundirs = self.runlist
         self._connect_to_results()
         # Class attributes to store the stats data:
         self.parameters = None        # Config parameters varied in each run
@@ -101,6 +105,7 @@ class RunComparison(object):
             if len(self.runresults[r]) == 0:
                 warnings.warn('Warning: could not find any results databases for run %s'
                               % (os.path.join(self.baseDir, r)))
+        # Now de-duplicate the runlist (we don't need to loop over extra items).
         self.runlist = list(self.runresults.keys())
 
     def close(self):
@@ -349,7 +354,7 @@ class RunComparison(object):
     def addSummaryStats(self, metricDict=None, verbose=False):
         """
         Combine the summary statistics of a set of metrics into a pandas
-        dataframe that is indexed by the opsim run name.and
+        dataframe that is indexed by the opsim run name.
 
         Parameters
         ----------
