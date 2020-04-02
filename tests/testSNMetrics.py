@@ -192,9 +192,9 @@ class TestSNmetrics(unittest.TestCase):
                     data = np.concatenate((data, fakes))
 
         # metric instance
-        coadd = True
+        night_collapse = True
 
-        metric = SNSLMetric(coadd=coadd)
+        metric = SNSLMetric(night_collapse=night_collapse)
 
         # run the metric
         nSL = metric.run(data, slicePoint={'nside': 64})
