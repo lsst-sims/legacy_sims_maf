@@ -281,7 +281,7 @@ class RunComparison(object):
     def addSummaryStats(self, metricDict=None, verbose=False):
         """
         Combine the summary statistics of a set of metrics into a pandas
-        dataframe that is indexed by the opsim run name.
+        dataframe that is indexed by the opsim run name.and
 
         Parameters
         ----------
