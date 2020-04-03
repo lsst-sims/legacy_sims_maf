@@ -233,7 +233,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
                                  'of less than 0.1 mag' % f
         metric = metrics.NstarsMetric()
-        plotDict = {'nTicks': 5}
+        plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
         bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
                                  summaryMetrics=sum_stats,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
