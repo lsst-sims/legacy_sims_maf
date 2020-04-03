@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import pandas as pd
 from lsst.sims.maf.db import ResultsDb
-from lsst.sims.maf.db import OpsimDatabase
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.plots as plots
 
@@ -33,38 +32,41 @@ class RunComparison(object):
     and stores results in DataFrames in class.
 
     Set up the runs to compare and opens connections to all resultsDb_sqlite directories under
-    baseDir/runlist[1-N] and their subdirectories.
-    Expects a directory structure like:
+    baseDir/runNames[1-N] and their subdirectories.
+    There are two ways to approach the storage and access to the MAF outputs:
+    EITHER the outputs can be stored directly in the runNames directories or subdirectories of these:
     baseDir -> run1  -> subdirectory1 (e.g. 'scheduler', containing a resultsDb_sqlite.db file)
     ................ -> subdirectoryN
     ....... -> runN -> subdirectoryX
+    OR the outputs can be stored in a variety of different locations, and the names/locations
+    then would be provided by [runNames][rundirs] -- having a one-to-one correlation. In this case, you might
+    expect the runNames to contain duplicates if there is more than one MAF output directory per run.
 
     Parameters
     ----------
     baseDir : str
         The root directory containing all of the underlying runs and their subdirectories.
-    runlist : list
-        A list of runs to compare.
+    runNames : list of str
+        The names to label different runs. Can contain duplicate entries.
     rundirs : list
-        A list of directories (relative to baseDir) where the runs in runlist reside.
-        Optional - if not provided, assumes directories are simply the names in runlist.
-        Must have same length as runlist (note that runlist can contain duplicate entries).
+        A list of directories (relative to baseDir) where the MAF outputs in runNames reside.
+        Optional - if not provided, assumes directories are simply the names in runNames.
+        Must have same length as runNames (note that runNames can contain duplicate entries).
     """
-    def __init__(self, baseDir, runlist, rundirs=None,
+    def __init__(self, baseDir, runNames, rundirs=None,
                  defaultResultsDb='resultsDb_sqlite.db', verbose=False):
         self.baseDir = baseDir
-        self.runlist = runlist
+        self.runlist = runNames
         self.verbose = verbose
         self.defaultResultsDb = defaultResultsDb
         if rundirs is not None:
-            if len(rundirs) != len(runlist):
-                raise ValueError('runlist and rundirs must be the same length')
+            if len(rundirs) != len(self.runlist):
+                raise ValueError('runNames and rundirs must be the same length')
             self.rundirs = rundirs
         else:
-            self.rundirs = runlist
+            self.rundirs = self.runlist
         self._connect_to_results()
         # Class attributes to store the stats data:
-        self.parameters = None        # Config parameters varied in each run
         self.headerStats = None       # Save information on the summary stat values
         self.summaryStats = None      # summary stats
         self.normalizedStats = None   # normalized (to baselineRun) version of the summary stats
@@ -101,6 +103,7 @@ class RunComparison(object):
             if len(self.runresults[r]) == 0:
                 warnings.warn('Warning: could not find any results databases for run %s'
                               % (os.path.join(self.baseDir, r)))
+        # Now de-duplicate the runlist (we don't need to loop over extra items).
         self.runlist = list(self.runresults.keys())
 
     def close(self):
@@ -114,80 +117,9 @@ class RunComparison(object):
             for s in self.runresults[r]:
                 self.runresults[r][s].close()
 
-    def variedParameters(self, paramNameLike=None, dbDir=None):
-        """
-        Query the opsim configuration table for a set of user defined
-        configuration parameters for a set of runs.
-
-        Parameters
-        ----------
-        paramNameLike : list, opt
-            A list of of opsim configuration parameters to pull out of the
-            configuration table.
-        Results
-        -------
-        pandas DataFrame
-            A pandas dataframe containing a column for each of the configuration
-            parameters given in paramName like. The resulting dataframe is
-            indexed the name of the opsim runs.
-            runName      parameter1         parameter2
-            <run_123>   <parameterValues1>  <parameterValues1>
-
-        Notes
-        -----
-        This method will use the sqlite 'like' function to query the
-        configuration table. Below is an example of how the items in
-        paramNameLike need to be formatted:
-        ["%WideFastDeep%hour_angle_bonus%", "%WideFastDeep%airmass_bonus%"].
-        """
-        if paramNameLike is None:
-            paramNameLike = ["%WideFastDeep%airmass_bonus%",
-                             "%WideFastDeep%hour_angle_bonus%"]
-        sqlconstraints = []
-        parameterNames = []
-        for p in paramNameLike:
-            name = p.rstrip('%').lstrip('%').replace('%', ' ')
-            parameterNames.append(name)
-            sql = 'paramName like "%s"' % (p)
-            sqlconstraints.append(sql)
-
-        # Connect to original databases and grab configuration parameters.
-        opsdb = {}
-        for r in self.runlist:
-            # Check if file exists XXXX
-            if dbDir is None:
-                opsdb[r] = OpsimDatabase(os.path.join(r, 'data', r + '.db'))
-            else:
-                opsdb[r] = OpsimDatabase(os.path.join(dbDir, r + '.db'))
-                # try also sqlite.db
-        parameterValues = {}
-        for i, r in enumerate(self.runlist):
-            parameterValues[r] = {}
-            for pName, sql in zip(parameterNames, sqlconstraints):
-                val = opsdb[r].query_columns('Config', colnames=['paramValue'],
-                                             sqlconstraint=sql)
-                if len(val) > 1.0:
-                    warnings.warn(sql + ' returned more than one value.' +
-                                  ' Add additional information such as the proposal name' +
-                                  '\n' + 'Example: ' + '%WideFastDeep%hour_angle_bonus%')
-                    parameterValues[r][pName] = -666
-                else:
-                    parameterValues[r][pName] = val['paramValue'][0]
-                if self.verbose:
-                    print('Queried Config Parameters with: ' + sql +
-                          '\n' + 'found value: ' + str(parameterValues[r][pName]))
-        tempDFList = []
-        for r in self.runlist:
-            tempDFList.append(pd.DataFrame(parameterValues[r], index=[r]))
-        # Concatenate dataframes for each run.
-        if self.parameters is None:
-            self.parameters = pd.concat(tempDFList)
-        else:
-            self.parameters = self.parameters.join(tempDFList)
-
     def buildMetricDict(self, metricNameLike=None, metricMetadataLike=None,
-                       slicerNameLike=None, subdir=None):
-        """Return a metric dictionary based on finding all metrics which match 'like' the various parameters.
+                        slicerNameLike=None, subdir=None):
+        """Return a metric dictionary based on finding all metrics which match 'like' the various kwargs.
 
         Parameters
         ----------
@@ -349,7 +281,7 @@ class RunComparison(object):
     def addSummaryStats(self, metricDict=None, verbose=False):
         """
         Combine the summary statistics of a set of metrics into a pandas
-        dataframe that is indexed by the opsim run name.
+        dataframe that is indexed by the opsim run name.and
 
         Parameters
         ----------
@@ -366,10 +298,9 @@ class RunComparison(object):
         Returns
         -------
         pandas DataFrame
-            A pandas dataframe containing a column for each of the configuration
-            parameters given in paramName like and a column for each of the
-            dictionary keys in the metricDict. The resulting dataframe is
-            indexed the name of the opsim runs.
+            A pandas dataframe containing a column for each of the
+            dictionary keys and related summary stats in the metricDict.
+            The resulting dataframe is indexed by runNames.
             index      metric1         metric2
             <run_123>    <metricValue1>  <metricValue2>
             <run_124>    <metricValue1>  <metricValue2>
@@ -513,10 +444,6 @@ class RunComparison(object):
                         filepaths[r] = os.path.join(r, s, filename[0])
         return filepaths
 
-    def plotSummaryStats(self):
-        # We'll fix this asap
-        pass
-
     # Plot actual metric values (skymaps or histograms or power spectra) (values not stored in class).
     def readMetricData(self, metricName, metricMetadata, slicerName):
         # Get the names of the individual files for all runs.
@@ -529,18 +456,8 @@ class RunComparison(object):
             bundleDict[r].read(filenames[r])
         return bundleDict, mname
 
-    def _parameterTitles(self, run, paramCols=None):
-        tempDict = self.parameters.loc[run].to_dict()
-        tempTitle = run
-        if paramCols is None:
-            paramCols = self.parameters.columns
-        for col in paramCols:
-            tempTitle = tempTitle  + '\n' + col + ' ' + str(tempDict[col])
-        return tempTitle
-
-
     def plotMetricData(self, bundleDict, plotFunc, runlist=None, userPlotDict=None,
-                       layout=None, outDir=None, paramTitles=False, paramCols=None, savefig=False):
+                       layout=None, outDir=None, savefig=False):
         if runlist is None:
             runlist = self.runlist
         if userPlotDict is None:
@@ -589,10 +506,7 @@ class RunComparison(object):
                     ncols = layout[0]
                     nrows = layout[1]
                 pdict['subplot'] = int(str(nrows) + str(ncols) + str(i + 1))
-                if paramTitles is False:
-                    pdict['title'] = runlist[i]
-                else:
-                    pdict['title'] = self._parameterTitles(runlist[i], paramCols=paramCols)
+                pdict['title'] = runlist[i]
                 # For the subplots we do not need the label
                 pdict['label'] = ''
                 if 'suptitle' not in userPlotDict:
@@ -721,7 +635,6 @@ class RunComparison(object):
 
         columns = []
 
-
         for col in dataframe.columns:
 
             if col not in ['FullName', 'BaseName','MetricName',
@@ -792,7 +705,6 @@ class RunComparison(object):
         MetricMetadata_select = Select(title="MetricMetadata:",
                                     value=MetricMetadata_list[0],
                                     options=MetricMetadata_list)
-
 
         generic_callback = CustomJS(args=dict(source=source,
                                               original_source=original_source,

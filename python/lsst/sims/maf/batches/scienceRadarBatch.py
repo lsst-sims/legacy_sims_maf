@@ -1,19 +1,19 @@
+import numpy as np
 import healpy as hp
+from lsst.sims.utils import hpid2RaDec, angularSeparation
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from lsst.sims.maf.batches import intraNight, interNight
+from .common import standardSummary, filterList, combineMetadata
 from .colMapDict import ColMapDict
 from .srdBatch import fOBatch, astrometryBatch, rapidRevisitBatch
-import numpy as np
-from lsst.sims.utils import hpid2RaDec, angularSeparation
 
 __all__ = ['scienceRadarBatch']
 
 
-def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None, nside=64,
+def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
                       benchmarkArea=18000, benchmarkNvisits=825, DDF=True):
     """A batch of metrics for looking at survey performance relative to the SRD and the main
     science drivers of LSST.
@@ -24,10 +24,10 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     """
     # Hide dependencies
     from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
-    from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc
+    from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc, TDEsAsciiMetric
 
     if colmap is None:
-        colmap = ColMapDict('opsimV4')
+        colmap = ColMapDict('fbs')
 
     if extraSql is None:
         extraSql = ''
@@ -37,6 +37,12 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         joiner = ' and '
 
     bundleList = []
+    # Get some standard per-filter coloring and sql constraints
+    filterlist, colors, filterorders, filtersqls, filtermetadata = filterList(all=False,
+                                                                              extraSql=None,
+                                                                              extraMetadata=None)
+
+    standardStats = standardSummary(withCount=False)
 
     healslicer = slicers.HealpixSlicer(nside=nside)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
@@ -50,48 +56,57 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
     # SRD, DM, etc
     #########################
-    f0b = fOBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata,
+    fOb = fOBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata,
                   benchmarkArea=benchmarkArea, benchmarkNvisits=benchmarkNvisits)
     astromb = astrometryBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata)
     rapidb = rapidRevisitBatch(runName=runName, colmap=colmap, extraSql=extraSql, extraMetadata=extraMetadata)
 
-    # loop through and modify the display dicts if needed
+    # loop through and modify the display dicts - set SRD as group and their previous 'group' as the subgroup
     temp_list = []
-    for key in f0b:
-        temp_list.append(f0b[key])
+    for key in fOb:
+        temp_list.append(fOb[key])
     for key in astromb:
         temp_list.append(astromb[key])
     for key in rapidb:
         temp_list.append(rapidb[key])
     for metricb in temp_list:
-        metricb.displayDict['subgroup'] = metricb.displayDict['group']
+        metricb.displayDict['subgroup'] = metricb.displayDict['group'].replace('SRD', '').lstrip(' ')
         metricb.displayDict['group'] = 'SRD'
     bundleList.extend(temp_list)
+
+    displayDict = {'group': 'SRD', 'subgroup': 'Year Coverage', 'order': 0,
+                   'caption': 'Number of years with observations.'}
+    slicer = slicers.HealpixSlicer(nside=nside)
+    metric = metrics.YearCoverageMetric()
+    for f in filterlist:
+        plotDict = {'colorMin': 7, 'colorMax': 10, 'color': colors[f]}
+        summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.mean, decreasing=True,
+                                             metricName='N Seasons (18k) %s' % f)]
+        bundleList.append(mb.MetricBundle(metric, slicer, filtersqls[f],
+                                          plotDict=plotDict, metadata=filtermetadata[f],
+                                          displayDict=displayDict, summaryMetrics=summary))
 
     #########################
     # Solar System
     #########################
-
-    # XXX -- may want to do Solar system seperatly
-
-    # XXX--fraction of NEOs detected (assume some nominal size and albido)
-    # XXX -- fraction of MBAs detected
-    # XXX -- fraction of KBOs detected
-    # XXX--any others? Planet 9s? Comets? Neptune Trojans?
+    # Generally, we need to run Solar System metrics separately; they're a multi-step process.
 
     #########################
     # Cosmology
     #########################
 
-    displayDict = {'group': 'Cosmology', 'subgroup': 'galaxy counts', 'order': 0, 'caption': None}
-    plotDict = {'percentileClip': 95.}
+    displayDict = {'group': 'Cosmology', 'subgroup': 'Galaxy Counts', 'order': 0, 'caption': None}
+    plotDict = {'percentileClip': 95., 'nTicks': 5}
     sql = extraSql + joiner + 'filter="i"'
+    metadata = combineMetadata(extraMetadata, 'i band')
     metric = GalaxyCountsMetric_extended(filterBand='i', redshiftBin='all', nside=nside)
-    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.sum, decreasing=True, metricName='N Galaxies (WFD)')]
+    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.sum, decreasing=True,
+                                         metricName='N Galaxies (18k)')]
     summary.append(metrics.SumMetric(metricName='N Galaxies (all)'))
     # make sure slicer has cache off
     slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
+                             metadata=metadata,
                              displayDict=displayDict, summaryMetrics=summary,
                              plotFuncs=subsetPlots)
     bundleList.append(bundle)
@@ -99,58 +114,108 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     # let's put Type Ia SN in here
     displayDict['subgroup'] = 'SNe Ia'
-    metadata = ''
     # XXX-- use the light curves from PLASTICC here
     displayDict['caption'] = 'Fraction of normal SNe Ia'
-    sql = ''
+    sql = extraSql
     slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42, badval=0)
     metric = Plasticc_metric(metricName='SNIa')
     # Set the maskval so that we count missing objects as zero.
     summary_stats = [metrics.MeanMetric(maskVal=0)]
     plotFuncs = [plots.HealpixSkyMap()]
     bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
-                             plotFuncs=plotFuncs, metadata=metadata, displayDict=displayDict)
+                             plotFuncs=plotFuncs, metadata=extraMetadata, displayDict=displayDict)
     bundleList.append(bundle)
     displayDict['order'] += 1
 
-    # XXX--need some sort of metric for weak lensing and camera rotation.
+    displayDict['subgroup'] = 'Camera Rotator'
+    displayDict['caption'] = 'Kuiper statistic (0 is uniform, 1 is delta function) of the '
+    slicer = slicers.HealpixSlicer(nside=nside)
+    metric1 = metrics.KuiperMetric('rotSkyPos')
+    metric2 = metrics.KuiperMetric('rotTelPos')
+    for f in filterlist:
+        for m in [metric1, metric2]:
+            plotDict = {'color': colors[f]}
+            displayDict['order'] = filterorders[f]
+            displayDict['caption'] += f"{m.colname} for visits in {f} band."
+            bundleList.append(mb.MetricBundle(m, slicer, filtersqls[f], plotDict=plotDict,
+                                              displayDict=displayDict, summaryMetrics=standardStats,
+                                              plotFuncs=subsetPlots))
+
+    # XXX--need some sort of metric for weak lensing
 
     #########################
     # Variables and Transients
     #########################
-    displayDict = {'group': 'Variables and Transients', 'subgroup': 'Periodic Stars',
+    displayDict = {'group': 'Variables/Transients',
+                   'subgroup': 'Periodic Stars',
                    'order': 0, 'caption': None}
-    periods = [0.1, 0.5, 1., 2., 5., 10., 20.]  # days
-    amplitudes = [.05]*len(periods)
-    starMags = [20]*len(periods)
+    for period in [0.5, 1, 2,]:
+        for magnitude in [21., 24.]:
+            amplitudes = [0.05, 0.1, 1.0]
+            periods = [period] * len(amplitudes)
+            starMags = [magnitude] * len(amplitudes)
 
-    plotDict = {}
-    metadata = ''
-    sql = extraSql
-    displayDict['caption'] = 'Measure if a periodic signal can be detected for an r=%i star with amplitude of %.2f mags and variety of periods' % (max(starMags), max(amplitudes))
-
-    summary = metrics.MeanMetric()
-    metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags, amplitudes=amplitudes)
-    bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
-                             displayDict=displayDict, plotDict=plotDict,
-                             plotFuncs=subsetPlots, summaryMetrics=summary)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
+            plotDict = {'nTicks': 3, 'colorMin': 0, 'colorMax': 3, 'xMin': 0, 'xMax': 3}
+            metadata = combineMetadata('P_%.1f_Mag_%.0f_Amp_0.05-0.1-1' % (period, magnitude),
+                                       extraMetadata)
+            sql = None
+            displayDict['caption'] = 'Metric evaluates if a periodic signal of period %.1f days could ' \
+                                     'be detected for an r=%i star. A variety of amplitudes of periodicity ' \
+                                     'are tested: [1, 0.1, and 0.5] magnitudes, which correspond to metric ' \
+                                     'values of [1, 2, or 3]. ' % (max(starMags), max(amplitudes))
+            metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags,
+                                                  amplitudes=amplitudes,
+                                                  metricName='PeriodDetection')
+            bundle = mb.MetricBundle(metric, healslicer, sql, metadata=metadata,
+                                     displayDict=displayDict, plotDict=plotDict,
+                                     plotFuncs=subsetPlots, summaryMetrics=standardStats)
+            bundleList.append(bundle)
+            displayDict['order'] += 1
 
     # XXX add some PLASTICC metrics for kilovnova and tidal disruption events.
     displayDict['subgroup'] = 'KN'
     displayDict['caption'] = 'Fraction of Kilonova (from PLASTICC)'
-    sql = ''
+    displayDict['order'] = 0
     slicer = plasticc_slicer(plcs=plasticc_models_dict['KN'], seed=43, badval=0)
     metric = Plasticc_metric(metricName='KN')
-    summary_stats = [metrics.MeanMetric(maskVal=0)]
     plotFuncs = [plots.HealpixSkyMap()]
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
-                             plotFuncs=plotFuncs, metadata=metadata,
+    summary_stats = [metrics.MeanMetric(maskVal=0)]
+    bundle = mb.MetricBundle(metric, slicer, extraSql, runName=runName, summaryMetrics=summary_stats,
+                             plotFuncs=plotFuncs, metadata=extraMetadata,
                              displayDict=displayDict)
     bundleList.append(bundle)
 
-    displayDict['order'] += 1
+    # Tidal Disruption Events
+    displayDict['subgroup'] = 'TDE'
+    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified.'
+    detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
+
+    # light curve parameters
+    epochStart = -22
+    peakEpoch = 0
+    nearPeakT = 10
+    postPeakT = 14  # two weeks
+    nPhaseCheck = 1
+
+    # condition parameters
+    nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nObsPrePeak = 1
+    nObsNearPeak = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nFiltersNearPeak = 3
+    nObsPostPeak = 0
+    nFiltersPostPeak = 2
+
+    metric = TDEsAsciiMetric(asciifile=None,
+                             detectSNR=detectSNR, epochStart=epochStart, peakEpoch=peakEpoch,
+                             nearPeakT=nearPeakT, postPeakT=postPeakT, nPhaseCheck=nPhaseCheck,
+                             nObsTotal=nObsTotal, nObsPrePeak=nObsPrePeak,
+                             nObsNearPeak=nObsNearPeak, nFiltersNearPeak=nFiltersNearPeak,
+                             nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
+    slicer = slicers.HealpixSlicer(nside=32)
+    bundle = mb.MetricBundle(metric, slicer, extraSql, runName=runName, summaryMetrics=standardStats,
+                             plotFuncs=plotFuncs, metadata=extraMetadata,
+                             displayDict=displayDict)
+    bundleList.append(bundle)
 
     # XXX -- would be good to add some microlensing events, for both MW and LMC/SMC.
 
@@ -158,25 +223,43 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     # Milky Way
     #########################
 
-    displayDict = {'group': 'Milky Way', 'subgroup': '',
-                   'order': 0, 'caption': None}
+    displayDict = {'group': 'Milky Way', 'subgroup': ''}
+
+    displayDict['subgroup'] = 'N stars'
+    slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
+    sum_stats = [metrics.SumMetric(metricName='Total N Stars')]
+    for f in filterlist:
+        displayDict['order'] = filterorders[f]
+        displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
+                                 'of less than 0.1 mag' % f
+        metric = metrics.NstarsMetric()
+        plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
+        bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
+                                 summaryMetrics=sum_stats,
+                                 plotFuncs=subsetPlots, plotDict=plotDict,
+                                 displayDict=displayDict)
+        bundleList.append(bundle)
 
     #########################
     # DDF
     #########################
-    ddf_time_bundleDicts = []
     if DDF:
         # Hide this import to avoid adding a dependency.
-        from lsst.sims.featureScheduler.surveys import generate_dd_surveys
+        from lsst.sims.featureScheduler.surveys import generate_dd_surveys, Deep_drilling_survey
         ddf_surveys = generate_dd_surveys()
+
+        # Add on the Euclid fields
+        # XXX--to update. Should have a spot where all the DDF locations are stored.
+        ddf_surveys.append(Deep_drilling_survey([], 58.97, -49.28, survey_name='DD:EDFSa'))
+        ddf_surveys.append(Deep_drilling_survey([], 63.6, -47.60, survey_name='DD:EDFSb'))
+
         # For doing a high-res sampling of the DDF for co-adds
         ddf_radius = 1.8  # Degrees
         ddf_nside = 512
 
         ra, dec = hpid2RaDec(ddf_nside, np.arange(hp.nside2npix(ddf_nside)))
 
-        displayDict = {'group': 'DDF depths', 'subgroup': None,
-                       'order': 0, 'caption': None}
+        displayDict = {'group': 'DDF depths', 'subgroup': None}
 
         for survey in ddf_surveys:
             displayDict['subgroup'] = survey.survey_name
@@ -185,40 +268,39 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                 dist_to_ddf = angularSeparation(ra, dec, np.degrees(survey.ra), np.degrees(survey.dec))
                 goodhp = np.where(dist_to_ddf <= ddf_radius)
                 slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=False)
-                for filtername in ['u', 'g', 'r', 'i', 'z', 'y']:
-                    metric = metrics.Coaddm5Metric(metricName=survey.survey_name+', ' + filtername)
-                    summary = [metrics.MedianMetric(metricName='median depth ' + survey.survey_name+', ' + filtername)]
-                    sql = extraSql + joiner + 'filter = "%s"' % filtername
-                    bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                for f in filterlist:
+                    metric = metrics.Coaddm5Metric(metricName=survey.survey_name + ', ' + f)
+                    summary = [metrics.MedianMetric(metricName='Median depth ' + survey.survey_name+', ' + f)]
+                    plotDict = {'color': colors[f]}
+                    sql = filtersqls[f]
+                    displayDict['order'] = filterorders[f]
+                    displayDict['caption'] = 'Coadded m5 depth in %s band.' % (f)
+                    bundle = mb.MetricBundle(metric, slicer, sql, metadata=filtermetadata[f],
                                              displayDict=displayDict, summaryMetrics=summary,
-                                             plotFuncs=[])
+                                             plotFuncs=[], plotDict=plotDict)
                     bundleList.append(bundle)
-                    displayDict['order'] += 1
 
-        displayDict = {'group': 'DDF Transients', 'subgroup': None,
-                       'order': 0, 'caption': None}
+        displayDict = {'group': 'DDF Transients', 'subgroup': None}
         for survey in ddf_surveys:
             displayDict['subgroup'] = survey.survey_name
             if survey.survey_name[0:4] != 'DD:u':
                 slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42,
-                                         ra_cen=survey.ra, dec_cen=survey.dec, radius=np.radians(3.), useCamera=False)
+                                         ra_cen=survey.ra, dec_cen=survey.dec, radius=np.radians(3.),
+                                         useCamera=False)
                 metric = Plasticc_metric(metricName=survey.survey_name+' SNIa')
-                sql = ''
+                sql = extraSql
                 summary_stats = [metrics.MeanMetric(maskVal=0)]
                 plotFuncs = [plots.HealpixSkyMap()]
-                bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
-                                         plotFuncs=plotFuncs, metadata=metadata,
+                bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
+                                         summaryMetrics=summary_stats,
+                                         plotFuncs=plotFuncs, metadata=extraMetadata,
                                          displayDict=displayDict)
                 bundleList.append(bundle)
+                displayDict['order'] = 10
 
-    displayDict['order'] += 1
-
+    # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
         b.setRunName(runName)
-
     bundleDict = mb.makeBundlesDictFromList(bundleList)
-
-    for ddf_time in ddf_time_bundleDicts:
-        bundleDict.update(ddf_time)
 
     return bundleDict

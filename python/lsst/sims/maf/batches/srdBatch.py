@@ -1,5 +1,6 @@
 """Sets of metrics to look at the SRD metrics.
 """
+import numpy as np
 import healpy as hp
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
@@ -38,7 +39,7 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
     metricBundleDict
     """
     if colmap is None:
-        colmap = ColMapDict('opsimV4')
+        colmap = ColMapDict('fbs')
 
     bundleList = []
 
@@ -62,10 +63,10 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
     # Set up fO metric.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
 
-    displayDict = {'group': 'FO metrics', 'subgroup': subgroup, 'order': 0}
+    displayDict = {'group': 'SRD FO metrics', 'subgroup': subgroup, 'order': 0}
 
     # Configure the count metric which is what is used for f0 slicer.
-    metric = metrics.CountMetric(col=colmap['mjd'], metricName='fO')
+    metric = metrics.CountExplimMetric(col=colmap['mjd'], metricName='fO', expCol=colmap['exptime'])
     plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkArea,
                 'Nvisit': benchmarkNvisits, 'xMin': 0, 'xMax': 1500}
     summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea',
@@ -120,7 +121,7 @@ def astrometryBatch(colmap=None, runName='opsim',
     metricBundleDict
     """
     if colmap is None:
-        colmap = ColMapDict('opsimV4')
+        colmap = ColMapDict('fbs')
     bundleList = []
 
     sql = ''
@@ -154,10 +155,14 @@ def astrometryBatch(colmap=None, runName='opsim',
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
-    displayDict = {'group': 'Parallax', 'subgroup': subgroup,
+    displayDict = {'group': 'SRD Parallax', 'subgroup': subgroup,
                    'order': 0, 'caption': None}
     # Expected error on parallax at 10 AU.
     plotmaxVals = (2.0, 15.0)
+    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=False,
+                                         metricName='Median Parallax Error (18k)')]
+    summary.append(metrics.PercentileMetric(percentile=95, metricName='95th Percentile Parallax Error'))
+    summary.extend(standardSummary())
     for rmag, plotmax in zip(rmags_para, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ParallaxMetric(metricName='Parallax Error @ %.1f' % (rmag), rmag=rmag,
@@ -166,7 +171,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
                                  stackerList=[parallaxStacker, ditherStacker],
                                  displayDict=displayDict, plotDict=plotDict,
-                                 summaryMetrics=standardSummary(),
+                                 summaryMetrics=summary,
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
         displayDict['order'] += 1
@@ -211,9 +216,13 @@ def astrometryBatch(colmap=None, runName='opsim',
         displayDict['order'] += 1
 
     # Proper Motion metrics.
-    displayDict = {'group': 'Proper Motion', 'subgroup': subgroup, 'order': 0, 'caption': None}
+    displayDict = {'group': 'SRD Proper Motion', 'subgroup': subgroup, 'order': 0, 'caption': None}
     # Proper motion errors.
     plotmaxVals = (1.0, 5.0)
+    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=False,
+                                         metricName='Median Proper Motion Error (18k)')]
+    summary.append(metrics.PercentileMetric(metricName='95th Percentile Proper Motion Error'))
+    summary.extend(standardSummary())
     for rmag, plotmax in zip(rmags_pm, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ProperMotionMetric(metricName='Proper Motion Error @ %.1f' % rmag,
@@ -223,7 +232,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
                                  stackerList=[ditherStacker],
                                  displayDict=displayDict, plotDict=plotDict,
-                                 summaryMetrics=standardSummary(),
+                                 summaryMetrics=summary,
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
         displayDict['order'] += 1
@@ -273,7 +282,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     metricBundleDict
     """
     if colmap is None:
-        colmap = ColMapDict('opsimV4')
+        colmap = ColMapDict('fbs')
     bundleList = []
 
     sql = ''
@@ -296,55 +305,27 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
-    displayDict = {'group': 'Rapid Revisits', 'subgroup': subgroup,
+    displayDict = {'group': 'SRD Rapid Revisits', 'subgroup': subgroup,
                    'order': 0, 'caption': None}
 
-    """
-    # Calculate the uniformity (KS test) of the quick revisits.
-    dTmin = 40.0  # seconds
-    dTmax = 30.0  # minutes
-    minNvisit = 100
-    pixArea = float(hp.nside2pixarea(nside, degrees=True))
-    scale = pixArea * hp.nside2npix(nside)
-    m1 = metrics.RapidRevisitUniformityMetric(metricName='RapidRevisitUniformity', mjdCol=colmap['mjd'],
-                                              dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
-                                              minNvisits=minNvisit)
-    plotDict = {'xMin': 0, 'xMax': 1}
-    cutoff1 = 0.20
-    summaryStats = [metrics.FracBelowMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
-    summaryStats.extend(standardSummary())
-    caption = 'Deviation from uniformity for short revisit timescales, between %s seconds and %s minutes, ' \
-              % (dTmin, dTmax)
-    caption += 'for pointings with at least %d visits in this time range. ' % (minNvisit)
-    caption += 'Summary statistic "Area" indicates the area on the sky which has a '
-    caption += 'deviation from uniformity of < %.2f.' % (cutoff1)
-    displayDict['caption'] = caption
-    bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
-                             stackerList=[ditherStacker],
-                             metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
-
-    # Calculate the actual number of quick revisits.
-    dTmax = dTmax   # time in minutes
-    m2 = metrics.NRevisitsMetric(dT=dTmax, mjdCol=colmap['mjd'], normed=False, metricName='RapidRevisitN')
-    plotDict = {'xMin': 600, 'xMax': 1500, 'logScale': False}
-    cutoff2 = 800
-    summaryStats = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
-    summaryStats.extend(standardSummary())
+    # Calculate the actual number of revisits within 30 minutes.
+    dTmax = 30   # time in minutes
+    m2 = metrics.NRevisitsMetric(dT=dTmax, mjdCol=colmap['mjd'], normed=False,
+                                 metricName='NumberOfQuickRevisits')
+    plotDict = {'colorMin': 400, 'colorMax': 2000, 'xMin': 400, 'xMax': 2000}
     caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % (dTmax)
     caption += 'in any filter, all proposals. '
-    caption += 'Summary statistic "Area" indicates the area on the sky which has more than '
-    caption += '%d revisits within this time window.' % (cutoff2)
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m2, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
                              stackerList=[ditherStacker],
-                             metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
+                             metadata=metadata, displayDict=displayDict,
+                             summaryMetrics=standardSummary(withCount=False))
     bundleList.append(bundle)
     displayDict['order'] += 1
-    """
 
-    # Calculate whether a healpix gets enough rapid revisits in the right windows.
+    # Better version of the rapid revisit requirements: require a minimum number of visits between
+    # dtMin and dtMax, but also a minimum number of visits between dtMin and dtPair (the typical pair time).
+    # 1 means the healpix met the requirements (0 means did not).
     dTmin = 40.0/60.0  # (minutes) 40s minumum for rapid revisit range
     dTpairs = 20.0  # minutes (time when pairs should start kicking in)
     dTmax = 30.0  # 30 minute maximum for rapid revisit range
@@ -358,12 +339,12 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     plotDict = {'xMin': 0, 'xMax': 1, 'colorMin': 0, 'colorMax': 1, 'logScale': False}
     cutoff1 = 0.9
     summaryStats = [metrics.FracAboveMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
-    summaryStats.extend(standardSummary())
-    caption = 'Area that receives at least %d visits between %.3f and %.1f minutes, ' \
+    caption = 'Rapid Revisit: area that receives at least %d visits between %.3f and %.1f minutes, ' \
               % (nOne, dTmin, dTmax)
     caption += 'with at least %d of those visits falling between %.3f and %.1f minutes. ' \
                % (nTwo, dTmin, dTpairs)
-    caption += 'Summary statistic "Area" indicates the area on the sky which meets this requirement.'
+    caption += 'Summary statistic "Area" indicates the area on the sky which meets this requirement.' \
+               ' (SRD design specification is 2000 sq deg).'
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
                              stackerList=[ditherStacker],

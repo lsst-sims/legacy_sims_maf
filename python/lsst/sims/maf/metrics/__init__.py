@@ -26,3 +26,6 @@ from .stringCountMetric import *
 from .areaSummaryMetrics import *
 from .weakLensingSystematicsMetric import *
 from .periodicDetectMetric import *
+from .coverageMetric import *
+from .dcrMetric import *
+from .kuiperMetrics import *
