@@ -108,17 +108,18 @@ def radecCols(ditherStacker, colmap, ditherkwargs=None):
     return raCol, decCol, degrees, stacker, ditherMeta
 
 
-def standardSummary():
+def standardSummary(withCount=True):
     """A set of standard summary metrics, to calculate Mean, RMS, Median, #, Max/Min, and # 3-sigma outliers.
     """
     standardSummary = [metrics.MeanMetric(),
                        metrics.RmsMetric(),
                        metrics.MedianMetric(),
-                       metrics.CountMetric(),
                        metrics.MaxMetric(),
                        metrics.MinMetric(),
                        metrics.NoutliersNsigmaMetric(metricName='N(+3Sigma)', nSigma=3),
                        metrics.NoutliersNsigmaMetric(metricName='N(-3Sigma)', nSigma=-3.)]
+    if withCount:
+        standardSummary += [metrics.CountMetric()]
     return standardSummary
 
 

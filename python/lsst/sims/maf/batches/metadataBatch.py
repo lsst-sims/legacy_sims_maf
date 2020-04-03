@@ -57,7 +57,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
     metricBundleDict
     """
     if colmap is None:
-        colmap = ColMapDict('opsimV4')
+        colmap = ColMapDict('fbs')
     bundleList = []
 
     if valueName is None:
