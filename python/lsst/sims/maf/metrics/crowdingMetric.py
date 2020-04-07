@@ -105,7 +105,7 @@ class NstarsMetric(BaseMetric):
     """
     def __init__(self, crowding_error=0.1, filtername='r', seeingCol='seeingFwhmGeom',
                  m5Col='fiveSigmaDepth',
-                 metricName=None, maps=['StellarDensityMap'], **kwargs):
+                 metricName=None, maps=['StellarDensityMap'], ignore_crowding=False, **kwargs):
         """
         Parameters
         ----------
@@ -119,6 +119,8 @@ class NstarsMetric(BaseMetric):
             The name of the m5 depth column.
         maps : list of str, opt
             Names of maps required for the metric.
+        ignore_crowding : bool (False)
+            Ignore the cowding limit.
 
         Returns
         -------
@@ -132,6 +134,7 @@ class NstarsMetric(BaseMetric):
         self.m5Col = m5Col
         self.filtername = filtername
         self.seeingCol = seeingCol
+        self.ignore_crowding = ignore_crowding
         if metricName is None:
             metricName = 'N stars to Precision %.2f' % (crowding_error)
         super().__init__(col=cols, maps=maps, units=units, metricName=metricName, **kwargs)
@@ -159,7 +162,10 @@ class NstarsMetric(BaseMetric):
         mag_limit = 2.5*np.log10(self.crowding_error/(1.09*5))+coadded_depth
 
         # Use the shallower depth, crowding or coadded
-        min_mag = np.min([crowdMag, mag_limit])
+        if self.ignore_crowding:
+            min_mag = mag_limit
+        else:
+            min_mag = np.min([crowdMag, mag_limit])
 
         # Interpolate to the number of stars
         result = np.interp(min_mag, slicePoint[f'starMapBins_{self.filtername}'][1:],
