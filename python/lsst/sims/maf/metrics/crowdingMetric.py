@@ -159,7 +159,7 @@ class NstarsMetric(BaseMetric):
 
         # Compute the coadded depth, and the mag where that depth hits the error specified
         coadded_depth = 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.m5Col])))
-        mag_limit = 2.5*np.log10(self.crowding_error/(1.09*5))+coadded_depth
+        mag_limit = -2.5*np.log10(1./(self.crowding_error*(1.09*5)))+coadded_depth
 
         # Use the shallower depth, crowding or coadded
         if self.ignore_crowding:
