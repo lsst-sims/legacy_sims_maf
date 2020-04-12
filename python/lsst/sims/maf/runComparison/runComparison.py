@@ -310,11 +310,11 @@ class RunComparison(object):
         for mName, metric in metricDict.items():
             if 'summaryName' not in metric:
                 metric['summaryName'] = None
-                tempHeader, tempStats = self._findSummaryStats(metricName=metric['metricName'],
-                                                               metricMetadata=metric['metricMetadata'],
-                                                               slicerName=metric['slicerName'],
-                                                               summaryName=metric['summaryName'],
-                                                               colName=mName, verbose=verbose)
+            tempHeader, tempStats = self._findSummaryStats(metricName=metric['metricName'],
+                                                           metricMetadata=metric['metricMetadata'],
+                                                           slicerName=metric['slicerName'],
+                                                           summaryName=metric['summaryName'],
+                                                           colName=mName, verbose=verbose)
             if self.summaryStats is None:
                 self.summaryStats = tempStats
                 self.headerStats = tempHeader
