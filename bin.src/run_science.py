@@ -13,7 +13,7 @@ from run_generic import *
 
 
 def setBatches(opsdb, colmap, args):
-    bdict = batches.scienceRadarBatch(colmap=None, runName=args.runName,
+    bdict = batches.scienceRadarBatch(colmap=colmap, runName=args.runName,
                                       extraSql=args.sqlConstraint, extraMetadata=None,
                                       nside=64, benchmarkArea=18000, benchmarkNvisits=825, DDF=True)
     return bdict
