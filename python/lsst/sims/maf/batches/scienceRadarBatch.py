@@ -39,8 +39,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     bundleList = []
     # Get some standard per-filter coloring and sql constraints
     filterlist, colors, filterorders, filtersqls, filtermetadata = filterList(all=False,
-                                                                              extraSql=None,
-                                                                              extraMetadata=None)
+                                                                              extraSql=extraSql,
+                                                                              extraMetadata=extraMetadata)
 
     standardStats = standardSummary(withCount=False)
 
@@ -161,7 +161,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
             sql = None
             displayDict['caption'] = 'Metric evaluates if a periodic signal of period %.1f days could ' \
                                      'be detected for an r=%i star. A variety of amplitudes of periodicity ' \
-                                     'are tested: [1, 0.1, and 0.5] magnitudes, which correspond to metric ' \
+                                     'are tested: [1, 0.1, and 0.05] magnitudes, which correspond to metric ' \
                                      'values of [1, 2, or 3]. ' % (max(starMags), max(amplitudes))
             metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags,
                                                   amplitudes=amplitudes,
@@ -212,7 +212,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
                              nObsNearPeak=nObsNearPeak, nFiltersNearPeak=nFiltersNearPeak,
                              nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
     slicer = slicers.HealpixSlicer(nside=32)
-    bundle = mb.MetricBundle(metric, slicer, extraSql, runName=runName, summaryMetrics=standardStats,
+    sql = extraSql + joiner + "note not like '%DD%'"
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
                              plotFuncs=plotFuncs, metadata=extraMetadata,
                              displayDict=displayDict)
     bundleList.append(bundle)
@@ -232,7 +233,9 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
         displayDict['order'] = filterorders[f]
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
                                  'of less than 0.1 mag' % f
-        metric = metrics.NstarsMetric()
+        # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
+        metric = metrics.NstarsMetric(crowding_error=0.1, filtername='r',
+                                      seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'])
         plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
         bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
                                  summaryMetrics=sum_stats,
