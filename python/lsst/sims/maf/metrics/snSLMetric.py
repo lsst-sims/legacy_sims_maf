@@ -188,6 +188,6 @@ class SNSLMetric(metrics.BaseMetric):
         diff = obs[self.mjdCol][1:]-obs[self.mjdCol][:-1]
         flag = np.where(diff > self.season_gap)[0]
         for i, indx in enumerate(flag):
-            season[indx:] = i+1
+            season[indx+1:] = i+1
 
         return obs, season
