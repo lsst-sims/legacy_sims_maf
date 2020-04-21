@@ -141,12 +141,16 @@ if __name__ == '__main__':
                         help="Column to use for Dec values (can be a stacker dither column)." +
                         " Default=fieldDec.")
     parser.add_argument('--night', type=int, default=1)
+    parser.add_argument('--runName', type=str, default='runName')
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
     bundleDict = makeBundleList(args.dbFile, nside=args.nside, lonCol=args.lonCol, latCol=args.latCol,
                                 night=args.night)
+
+    for key in bundleDict:
+        bundleDict[key].setRunName(args.runName)
 
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
