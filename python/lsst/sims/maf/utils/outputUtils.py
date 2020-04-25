@@ -10,7 +10,7 @@ __all__ = ['nameSanitize', 'printDict', 'printSimpleDict']
 
 def nameSanitize(inString):
     """
-    Convert a string to a more file name friendly format.
+    Convert a string to a more file name (and web) friendly format.
 
     Parameters
     ----------
@@ -32,6 +32,8 @@ def nameSanitize(inString):
     outString = outString.replace('(', '').replace(')', '')
     # Remove ':' and ';"
     outString = outString.replace(':', '_').replace(';', '_')
+    # Replace '%' and #
+    outString = outString.replace('%', '_').replace('#', '_')
     # Remove '__'
     while '__' in outString:
         outString = outString.replace('__', '_')
