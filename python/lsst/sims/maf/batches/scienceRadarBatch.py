@@ -186,7 +186,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     # Tidal Disruption Events
     displayDict['subgroup'] = 'TDE'
-    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified, outside of DD fields';o.'
+    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified, outside of DD fields'
     detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
 
     # light curve parameters
