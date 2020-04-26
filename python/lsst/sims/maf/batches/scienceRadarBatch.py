@@ -160,8 +160,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
             sql = None
             displayDict['caption'] = 'Metric evaluates if a periodic signal of period %.1f days could ' \
                                      'be detected for an r=%i star. A variety of amplitudes of periodicity ' \
-                                     'are tested: [1, 0.1, and 0.05] magnitudes, which correspond to metric ' \
-                                     'values of [1, 2, or 3]. ' % (max(period), max(magnitude))
+                                     'are tested: [1, 0.1, and 0.05] mag amplitudes, which correspond to ' \
+                                     'metric values of [1, 2, or 3]. ' % (period, magnitude)
             metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags,
                                                   amplitudes=amplitudes,
                                                   metricName='PeriodDetection')
@@ -186,7 +186,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     # Tidal Disruption Events
     displayDict['subgroup'] = 'TDE'
-    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified, outside of DD fields.'
+    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified, outside of DD fields';o.'
     detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
 
     # light curve parameters
