@@ -9,6 +9,7 @@ from .common import standardSummary, filterList, combineMetadata
 from .colMapDict import ColMapDict
 from .srdBatch import fOBatch, astrometryBatch, rapidRevisitBatch
 
+
 __all__ = ['scienceRadarBatch']
 
 
@@ -23,7 +24,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     """
     # Hide dependencies
     from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
-    from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc, TDEsAsciiMetric
+    from mafContrib import (Plasticc_metric, plasticc_slicer, load_plasticc_lc,
+                            TDEsAsciiMetric, microlensingSlicer, MicrolensingMetric)
 
     if colmap is None:
         colmap = ColMapDict('fbs')
@@ -222,7 +224,27 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
                              displayDict=displayDict)
     bundleList.append(bundle)
 
-    # XXX -- would be good to add some microlensing events, for both MW and LMC/SMC.
+    # Tidal Disruption Events
+    displayDict['subgroup'] = 'Microlensing'
+    displayDict['caption'] = 'Fast microlensing events'
+
+    # Microlensing events
+    plotDict = {'nside': 128}
+    sql = ''
+    slicer = microlensingSlicer(min_crossing_time=1, max_crossing_time=10)
+    metric = MicrolensingMetric(metricName='Fast Microlensing')
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.MeanMetric()],
+                             plotFuncs=[plots.HealpixSkyMap()], metadata=extraMetadata,
+                             displayDict=displayDict, plotDict=plotDict)
+    bundleList.append(bundle)
+
+    displayDict['caption'] = 'Slow microlensing events'
+    slicer = microlensingSlicer(min_crossing_time=100, max_crossing_time=1500)
+    metric = MicrolensingMetric(metricName='Slow Microlensing')
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.MeanMetric()],
+                             plotFuncs=[plots.HealpixSkyMap()], metadata=extraMetadata,
+                             displayDict=displayDict, plotDict=plotDict)
+    bundleList.append(bundle)
 
     #########################
     # Milky Way
