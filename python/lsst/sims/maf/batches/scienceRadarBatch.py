@@ -5,7 +5,6 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
-from lsst.sims.maf.batches import intraNight, interNight
 from .common import standardSummary, filterList, combineMetadata
 from .colMapDict import ColMapDict
 from .srdBatch import fOBatch, astrometryBatch, rapidRevisitBatch
@@ -161,8 +160,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
             sql = None
             displayDict['caption'] = 'Metric evaluates if a periodic signal of period %.1f days could ' \
                                      'be detected for an r=%i star. A variety of amplitudes of periodicity ' \
-                                     'are tested: [1, 0.1, and 0.05] magnitudes, which correspond to metric ' \
-                                     'values of [1, 2, or 3]. ' % (max(starMags), max(amplitudes))
+                                     'are tested: [1, 0.1, and 0.05] mag amplitudes, which correspond to ' \
+                                     'metric values of [1, 2, or 3]. ' % (period, magnitude)
             metric = metrics.PeriodicDetectMetric(periods=periods, starMags=starMags,
                                                   amplitudes=amplitudes,
                                                   metricName='PeriodDetection')
@@ -187,7 +186,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     # Tidal Disruption Events
     displayDict['subgroup'] = 'TDE'
-    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified.'
+    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified, outside of DD fields'
     detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
 
     # light curve parameters
@@ -213,8 +212,13 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
                              nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
     slicer = slicers.HealpixSlicer(nside=32)
     sql = extraSql + joiner + "note not like '%DD%'"
+    md = extraMetadata
+    if md is None:
+        md = " NonDD"
+    else:
+        md += 'NonDD'
     bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
-                             plotFuncs=plotFuncs, metadata=extraMetadata,
+                             plotFuncs=plotFuncs, metadata=md,
                              displayDict=displayDict)
     bundleList.append(bundle)
 

@@ -272,6 +272,32 @@ class TestCadenceMetrics(unittest.TestCase):
         metric = metrics.TransientMetric(nFilters=2, nPerLC=3, surveyDuration=ndata/365.25)
         self.assertEqual(metric.run(dataSlice), 1.)
 
+    def testSeasonLengthMetric(self):
+        times = np.arange(0, 3650, 10)
+        data = np.zeros(len(times), dtype=list(zip(['observationStartMJD'], [float])))
+        data['observationStartMJD'] = times
+        metric = metrics.SeasonLengthMetric(reduceFunc=np.median)
+        slicePoint = {'ra': 0}
+        result = metric.run(data, slicePoint)
+        self.assertEqual(result, 350)
+        times = np.arange(0, 3650, 365)
+        data = np.zeros(len(times)*2, dtype=list(zip(['observationStartMJD'], [float])))
+        data['observationStartMJD'][0:len(times)] = times
+        data['observationStartMJD'][len(times):] = times + 10
+        data['observationStartMJD'] = np.sort(data['observationStartMJD'])
+        metric = metrics.SeasonLengthMetric(reduceFunc=np.median)
+        slicePoint = {'ra': 0}
+        result = metric.run(data, slicePoint)
+        self.assertEqual(result, 10)
+        times = np.arange(0, 3650-365, 365)
+        data = np.zeros(len(times)*2, dtype=list(zip(['observationStartMJD'], [float])))
+        data['observationStartMJD'][0:len(times)] = times
+        data['observationStartMJD'][len(times):] = times + 10
+        data['observationStartMJD'] = np.sort(data['observationStartMJD'])
+        metric = metrics.SeasonLengthMetric(reduceFunc=np.size)
+        slicePoint = {'ra': 0}
+        result = metric.run(data, slicePoint)
+        self.assertEqual(result, 9)
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
     pass
