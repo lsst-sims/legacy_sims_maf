@@ -450,16 +450,17 @@ class OpSimFieldStacker(BaseStacker):
             return simData
 
         if self.degrees:
-            # use public method (degrees)
             coord_x, coord_y, coord_z = xyz_from_ra_dec(simData[self.raCol],
                                                         simData[self.decCol])
-            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)),
+                                                   xyz_angular_radius())
 
         else:
-            # use private method (radians)
+            # use _xyz private method (sending radians)
             coord_x, coord_y, coord_z = _xyz_from_ra_dec(simData[self.raCol],
                                                          simData[self.decCol])
-            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)),
+                                                   xyz_angular_radius())
 
         simData['opsimFieldId'] = np.array([ids[0] for ids in field_ids]) + 1
         return simData

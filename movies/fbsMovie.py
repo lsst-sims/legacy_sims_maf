@@ -47,8 +47,6 @@ def getData(opsDb, sqlconstraint):
     simdata = opsDb.fetchMetricData(colnames, sqlconstraint)
     if len(simdata) == 0:
         raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
-    # Hack because observationStartLst in HOURS here. :( 
-    simdata['observationStartLST'] = simdata['observationStartLST']/24.0*360.0
     # Add stacker columns.
     hourangleStacker = stackers.HourAngleStacker()
     simdata = hourangleStacker.run(simdata)
@@ -81,7 +79,7 @@ def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60.,
                              'xlabel': 'Number of visits', 'title': 'Cumulative visits (all bands)',
                              'label': plotlabel, 'metricIsColor': False, 'figsize': figsize})
         for f in (['u', 'g', 'r', 'i', 'z', 'y']):
-            metricList.append(metrics.CountSubsetMetric('filter', subset=f, metricName='Nvisits_'+f))
+            metricList.append(metrics.CountSubsetMetric('filter', subset=f, metricName='Nvisits_' + f))
             plotDictList.append({'colorMin': 0, 'colorMax': colorMax, 'cbarFormat': '%d',
                                  'xlabel': 'Number of Visits', 'title': '%s band' %(f),
                                  'label': plotlabel, 'metricIsColor': False, 'figsize': figsize})
@@ -162,7 +160,8 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
-        opslicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='opsimFieldId', fieldIdColName='opsimFieldId')
+        opslicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='opsimFieldId',
+                                            fieldIdColName='opsimFieldId')
         # Set up metricBundles to combine metrics, plotdicts and slicer.
         bundles = []
         sqlconstraint = ''
