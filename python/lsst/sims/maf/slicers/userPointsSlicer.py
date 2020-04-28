@@ -81,6 +81,13 @@ class UserPointsSlicer(BaseSpatialSlicer):
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
         result = False
+        # check the slicePoints
+        for key in otherSlicer.slicePoints:
+            if key in self.slicePoints.keys():
+                if not np.all(otherSlicer.slicePoints[key] == self.slicePoints[key]):
+                    return False
+                else:
+                    return False
         if isinstance(otherSlicer, UserPointsSlicer):
             if otherSlicer.nslice == self.nslice:
                 if np.all(otherSlicer.slicePoints['ra'] == self.slicePoints['ra']) \
@@ -91,5 +98,6 @@ class UserPointsSlicer(BaseSpatialSlicer):
                                 if otherSlicer.chipsToUse == self.chipsToUse:
                                     if otherSlicer.rotSkyPosColName == self.rotSkyPosColName:
                                         if np.all(otherSlicer.shape == self.shape):
+
                                             result = True
         return result
