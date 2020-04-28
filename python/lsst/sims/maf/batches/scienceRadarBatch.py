@@ -26,7 +26,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     # Hide dependencies
     from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
     from mafContrib import (Plasticc_metric, plasticc_slicer, load_plasticc_lc,
-                            TDEsAsciiMetric, microlensingSlicer, MicrolensingMetric)
+                            TDEsMonteMetric, microlensingSlicer, MicrolensingMetric)
 
     if colmap is None:
         colmap = ColMapDict('fbs')
@@ -197,7 +197,6 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     peakEpoch = 0
     nearPeakT = 10
     postPeakT = 14  # two weeks
-    nPhaseCheck = 1
 
     # condition parameters
     nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
@@ -207,9 +206,9 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     nObsPostPeak = 0
     nFiltersPostPeak = 2
 
-    metric = TDEsAsciiMetric(asciifile=None,
+    metric = TDEsMonteMetric(asciifilelist=None,
                              detectSNR=detectSNR, epochStart=epochStart, peakEpoch=peakEpoch,
-                             nearPeakT=nearPeakT, postPeakT=postPeakT, nPhaseCheck=nPhaseCheck,
+                             nearPeakT=nearPeakT, postPeakT=postPeakT,
                              nObsTotal=nObsTotal, nObsPrePeak=nObsPrePeak,
                              nObsNearPeak=nObsNearPeak, nFiltersNearPeak=nFiltersNearPeak,
                              nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
@@ -220,11 +219,33 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
                              displayDict=displayDict)
     bundleList.append(bundle)
 
-    # Tidal Disruption Events
+    #requirements for TDE_pop_color+u
+    nObsTotal_u = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nObsPrePeak_u = 1 #1 obs pre-peak is probably quite neccesary though
+    nObsNearPeak_u = {'u': 1, 'g': 0, 'r': 1, 'i': 0, 'z': 0, 'y': 0}
+    nFiltersNearPeak_u = 0
+    nObsPostPeak_u = {'u': 1, 'g': 0, 'r': 1, 'i': 0, 'z': 0, 'y': 0}
+    nFiltersPostPeak_u = 0
+
+    eventRate = .3
+    metric = TDEsMonteMetric(asciifilelist=None,
+                             detectSNR=detectSNR, eventRate=eventRate,
+                             epochStart=epochStart, peakEpoch=peakEpoch,
+                             nearPeakT=nearPeakT, postPeakT=postPeakT,
+                             nObsTotal=nObsTotal_u, nObsPrePeak=nObsPrePeak_u,
+                             nObsNearPeak=nObsNearPeak_u, nFiltersNearPeak=nFiltersNearPeak_u,
+                             nObsPostPeak=nObsPostPeak_u, nFiltersPostPeak=nFiltersPostPeak_u,
+                             dataout=False, metricName='TDEsMonteMetric_plus_u')
+
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
+                             plotFuncs=plotFuncs, metadata=extraMetadata,
+                             displayDict=displayDict)
+    bundleList.append(bundle)
+
+    # Microlensing events
     displayDict['subgroup'] = 'Microlensing'
     displayDict['caption'] = 'Fast microlensing events'
 
-    # Microlensing events
     plotDict = {'nside': 128}
     sql = ''
     slicer = microlensingSlicer(min_crossing_time=1, max_crossing_time=10)
