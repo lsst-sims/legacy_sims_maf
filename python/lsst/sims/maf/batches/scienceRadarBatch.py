@@ -25,7 +25,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     # Hide dependencies
     from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
     from mafContrib import (Plasticc_metric, plasticc_slicer, load_plasticc_lc,
-                            TDEsMonteMetric, microlensingSlicer, MicrolensingMetric)
+                            TDEsPopMetric, TDEsPopSlicer, microlensingSlicer, MicrolensingMetric)
 
     if colmap is None:
         colmap = ColMapDict('fbs')
@@ -188,65 +188,19 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     # Tidal Disruption Events
     displayDict['subgroup'] = 'TDE'
-    displayDict['caption'] = 'Fraction of TDE lightcurves that could be identified, outside of DD fields'
-    detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
+    displayDict['caption'] = 'TDE lightcurves that could be identified'
 
-    # light curve parameters
-    epochStart = -22
-    peakEpoch = 0
-    nearPeakT = 10
-    postPeakT = 14  # two weeks
-
-    # condition parameters
-    nObsTotal_color = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
-    nObsPrePeak_color = 1
-    nObsNearPeak_color = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
-    nFiltersNearPeak_color = 3
-    nObsPostPeak_color = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0} 
-    nFiltersPostPeak_color = 2
-
-    metric = TDEsMonteMetric(asciifilelist=None,
-                             mjdCol=colmap['mjd'], m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
-                             detectSNR=detectSNR, epochStart=epochStart, peakEpoch=peakEpoch,
-                             nearPeakT=nearPeakT, postPeakT=postPeakT,
-                             nObsTotal=nObsTotal_color, nObsPrePeak=nObsPrePeak_color,
-                             nObsNearPeak=nObsNearPeak_color, nFiltersNearPeak=nFiltersNearPeak_color,
-                             nObsPostPeak=nObsPostPeak_color, nFiltersPostPeak=nFiltersPostPeak_color)
-    slicer = slicers.HealpixSlicer(nside=16)
-    sql = extraSql + joiner + "note not like '%DD%'"
-    md = extraMetadata
-    if md is None:
-        md = " NonDD"
-    else:
-        md += 'NonDD'
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
-                             plotFuncs=plotFuncs, metadata=md,
+    metric = TDEsPopMetric()
+    slicer = TDEsPopSlicer()
+    sql = ''
+    plotDict = {'reduceFunc': np.sum, 'nside': 128}
+    plotFuncs = [plots.HealpixSkyMap()]
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
+                             plotDict=plotDict, plotFuncs=plotFuncs,
+                             summaryMetrics=[metrics.SumMetric()],
                              displayDict=displayDict)
     bundleList.append(bundle)
 
-    #requirements for TDE_pop_color+u
-    nObsTotal_u = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
-    nObsPrePeak_u = 1 #1 obs pre-peak is probably quite neccesary though
-    nObsNearPeak_u = {'u': 1, 'g': 0, 'r': 1, 'i': 0, 'z': 0, 'y': 0}
-    nFiltersNearPeak_u = 0
-    nObsPostPeak_u = {'u': 1, 'g': 0, 'r': 1, 'i': 0, 'z': 0, 'y': 0}
-    nFiltersPostPeak_u = 0
-
-    eventRate = .3
-    metric = TDEsMonteMetric(asciifilelist=None,
-                             mjdCol=colmap['mjd'], m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
-                             detectSNR=detectSNR, eventRate=eventRate,
-                             epochStart=epochStart, peakEpoch=peakEpoch,
-                             nearPeakT=nearPeakT, postPeakT=postPeakT,
-                             nObsTotal=nObsTotal_u, nObsPrePeak=nObsPrePeak_u,
-                             nObsNearPeak=nObsNearPeak_u, nFiltersNearPeak=nFiltersNearPeak_u,
-                             nObsPostPeak=nObsPostPeak_u, nFiltersPostPeak=nFiltersPostPeak_u,
-                             dataout=False, metricName='TDEsMonteMetric_plus_u')
-
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=standardStats,
-                             plotFuncs=plotFuncs, metadata=extraMetadata,
-                             displayDict=displayDict)
-    bundleList.append(bundle)
 
     # Microlensing events
     displayDict['subgroup'] = 'Microlensing'
@@ -256,7 +210,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     sql = ''
     slicer = microlensingSlicer(min_crossing_time=1, max_crossing_time=10)
     metric = MicrolensingMetric(metricName='Fast Microlensing')
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.MeanMetric()],
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.SumMetric()],
                              plotFuncs=[plots.HealpixSkyMap()], metadata=extraMetadata,
                              displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
@@ -264,7 +218,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     displayDict['caption'] = 'Slow microlensing events'
     slicer = microlensingSlicer(min_crossing_time=100, max_crossing_time=1500)
     metric = MicrolensingMetric(metricName='Slow Microlensing')
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.MeanMetric()],
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.SumMetric()],
                              plotFuncs=[plots.HealpixSkyMap()], metadata=extraMetadata,
                              displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
