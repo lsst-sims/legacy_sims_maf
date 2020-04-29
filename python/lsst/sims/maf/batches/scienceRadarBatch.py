@@ -198,20 +198,21 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     postPeakT = 14  # two weeks
 
     # condition parameters
-    nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
-    nObsPrePeak = 1
-    nObsNearPeak = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
-    nFiltersNearPeak = 3
-    nObsPostPeak = 0
-    nFiltersPostPeak = 2
+    nObsTotal_color = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nObsPrePeak_color = 1
+    nObsNearPeak_color = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+    nFiltersNearPeak_color = 3
+    nObsPostPeak_color = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0} 
+    nFiltersPostPeak_color = 2
 
     metric = TDEsMonteMetric(asciifilelist=None,
+                             mjdCol=colmap['mjd'], m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                              detectSNR=detectSNR, epochStart=epochStart, peakEpoch=peakEpoch,
                              nearPeakT=nearPeakT, postPeakT=postPeakT,
-                             nObsTotal=nObsTotal, nObsPrePeak=nObsPrePeak,
-                             nObsNearPeak=nObsNearPeak, nFiltersNearPeak=nFiltersNearPeak,
-                             nObsPostPeak=nObsPostPeak, nFiltersPostPeak=nFiltersPostPeak)
-    slicer = slicers.HealpixSlicer(nside=32)
+                             nObsTotal=nObsTotal_color, nObsPrePeak=nObsPrePeak_color,
+                             nObsNearPeak=nObsNearPeak_color, nFiltersNearPeak=nFiltersNearPeak_color,
+                             nObsPostPeak=nObsPostPeak_color, nFiltersPostPeak=nFiltersPostPeak_color)
+    slicer = slicers.HealpixSlicer(nside=16)
     sql = extraSql + joiner + "note not like '%DD%'"
     md = extraMetadata
     if md is None:
@@ -233,6 +234,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     eventRate = .3
     metric = TDEsMonteMetric(asciifilelist=None,
+                             mjdCol=colmap['mjd'], m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                              detectSNR=detectSNR, eventRate=eventRate,
                              epochStart=epochStart, peakEpoch=peakEpoch,
                              nearPeakT=nearPeakT, postPeakT=postPeakT,
