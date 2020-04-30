@@ -197,7 +197,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     plotFuncs = [plots.HealpixSkyMap()]
     bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
                              plotDict=plotDict, plotFuncs=plotFuncs,
-                             summaryMetrics=[metrics.SumMetric()],
+                             summaryMetrics=[metrics.MeanMetric(maskVal=0)],
                              displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -210,7 +210,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     sql = ''
     slicer = microlensingSlicer(min_crossing_time=1, max_crossing_time=10)
     metric = MicrolensingMetric(metricName='Fast Microlensing')
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.SumMetric()],
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
+                             summaryMetrics=[metrics.MeanMetric(maskVal=0)],
                              plotFuncs=[plots.HealpixSkyMap()], metadata=extraMetadata,
                              displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
@@ -218,7 +219,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     displayDict['caption'] = 'Slow microlensing events'
     slicer = microlensingSlicer(min_crossing_time=100, max_crossing_time=1500)
     metric = MicrolensingMetric(metricName='Slow Microlensing')
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=[metrics.SumMetric()],
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
+                             summaryMetrics=[metrics.MeanMetric(maskVal=0)],
                              plotFuncs=[plots.HealpixSkyMap()], metadata=extraMetadata,
                              displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
