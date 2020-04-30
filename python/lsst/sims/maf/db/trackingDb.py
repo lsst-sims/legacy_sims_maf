@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import DatabaseError
-from lsst.daf.persistence import DbAuth
 
 Base = declarative_base()
 
@@ -45,35 +44,23 @@ class RunRow(Base):
 
 
 class TrackingDb(object):
-
-    def __init__(self, database=None, driver='sqlite', host=None, port=None,
-                 trackingDbverbose=False):
+    """Sqlite database to track MAF output runs and their locations, for showMaf.py
+    """
+    def __init__(self, database=None, trackingDbverbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
         self.verbose = trackingDbverbose
+        self.driver = 'sqlite'
         # Connect to database
         # for sqlite, connecting to non-existent database creates it automatically
         if database is None:
             # Default is a file in the current directory.
             self.database = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
-            self.driver = 'sqlite'
         else:
             self.database  = database
-            self.driver = driver
-            self.host = host
-            self.port = port
-
-        if self.driver == 'sqlite':
-            dbAddress = url.URL(drivername=self.driver, database=self.database)
-        else:
-            dbAddress = url.URL(self.driver,
-                            username=DbAuth.username(self.host, str(self.port)),
-                            password=DbAuth.password(self.host, str(self.port)),
-                            host=self.host,
-                            port=self.port,
-                            database=self.database)
-
+        # only sqlite
+        dbAddress = url.URL(drivername=self.driver, database=self.database)
         engine = create_engine(dbAddress, echo=self.verbose)
         if self.verbose:
             print('Created or connected to MAF tracking %s database at %s' %(self.driver, self.database))
@@ -83,7 +70,8 @@ class TrackingDb(object):
         try:
             Base.metadata.create_all(engine)
         except DatabaseError:
-            raise DatabaseError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
+            raise DatabaseError("Cannot create a %s database at %s. Check directory exists." %(self.driver,
+                                                                                               self.database))
 
     def close(self):
         self.session.close()
