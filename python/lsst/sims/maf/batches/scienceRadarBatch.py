@@ -237,9 +237,9 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     for f in filterlist:
         displayDict['order'] = filterorders[f]
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
-                                 'of less than 0.1 mag' % f
+                                 'of less than 0.2 mag' % f
         # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
-        metric = metrics.NstarsMetric(crowding_error=0.1, filtername='r',
+        metric = metrics.NstarsMetric(crowding_error=0.2, filtername='r',
                                       seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'])
         plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
         bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
