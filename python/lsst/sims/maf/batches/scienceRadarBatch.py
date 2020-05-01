@@ -233,13 +233,13 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     displayDict['subgroup'] = 'N stars'
     slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
-    sum_stats = [metrics.SumMetric(metricName='Total N Stars')]
+    sum_stats = [metrics.SumMetric(metricName='Total N Stars, crowding')]
     for f in filterlist:
         displayDict['order'] = filterorders[f]
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
                                  'of less than 0.2 mag' % f
         # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
-        metric = metrics.NstarsMetric(crowding_error=0.2, filtername='r',
+        metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f,
                                       seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'])
         plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
         bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
@@ -247,6 +247,25 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
                                  plotFuncs=subsetPlots, plotDict=plotDict,
                                  displayDict=displayDict)
         bundleList.append(bundle)
+
+
+    slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
+    sum_stats = [metrics.SumMetric(metricName='Total N Stars, no crowding')]
+    for f in filterlist:
+        displayDict['order'] = filterorders[f]
+        displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
+                                 'of less than 0.2 mag' % f
+        # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
+        metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f, ignore_crowding=True,
+                                      seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'],
+                                      metricName='Nstars_no_crowding')
+        plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
+        bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
+                                 summaryMetrics=sum_stats,
+                                 plotFuncs=subsetPlots, plotDict=plotDict,
+                                 displayDict=displayDict)
+        bundleList.append(bundle)
+
 
     #########################
     # DDF
