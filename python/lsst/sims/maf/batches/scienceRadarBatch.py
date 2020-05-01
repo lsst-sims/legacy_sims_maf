@@ -4,6 +4,7 @@ from lsst.sims.utils import hpid2RaDec, angularSeparation
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
+import lsst.sims.maf.maps as maps
 import lsst.sims.maf.metricBundles as mb
 from .common import standardSummary, filterList, combineMetadata
 from .colMapDict import ColMapDict
@@ -235,35 +236,38 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
     sum_stats = [metrics.SumMetric(metricName='Total N Stars, crowding')]
     for f in filterlist:
+        stellar_map = maps.StellarDensityMap(filtername=f)
         displayDict['order'] = filterorders[f]
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
                                  'of less than 0.2 mag' % f
         # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
         metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f,
-                                      seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'])
+                                      seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'],
+                                      maps=[])
         plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
         bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
                                  summaryMetrics=sum_stats,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
-                                 displayDict=displayDict)
+                                 displayDict=displayDict, mapsList=[stellar_map])
         bundleList.append(bundle)
 
 
     slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
     sum_stats = [metrics.SumMetric(metricName='Total N Stars, no crowding')]
     for f in filterlist:
+        stellar_map = maps.StellarDensityMap(filtername=f)
         displayDict['order'] = filterorders[f]
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
                                  'of less than 0.2 mag' % f
         # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
         metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f, ignore_crowding=True,
                                       seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'],
-                                      metricName='Nstars_no_crowding')
+                                      metricName='Nstars_no_crowding', maps=[])
         plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
         bundle = mb.MetricBundle(metric, slicer, filtersqls[f], runName=runName,
                                  summaryMetrics=sum_stats,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
-                                 displayDict=displayDict)
+                                 displayDict=displayDict, mapsList=[stellar_map])
         bundleList.append(bundle)
 
 
