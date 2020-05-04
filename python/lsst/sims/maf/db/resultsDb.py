@@ -9,7 +9,6 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.exc import DatabaseError
-from lsst.daf.persistence import DbAuth
 
 import numpy as np
 
@@ -33,7 +32,8 @@ class MetricRow(Base):
     metricMetadata = Column(String)
     metricDataFile = Column(String)
     def __repr__(self):
-        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
+        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', " \
+               "sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
             self.sqlConstraint, self.metricMetadata, self.metricDataFile)
 
@@ -56,7 +56,8 @@ class DisplayRow(Base):
     displayCaption = Column(String)
     metric = relationship("MetricRow", backref=backref('displays', order_by=displayId))
     def __rep__(self):
-        return "<Display(displayGroup='%s', displaySubgroup='%s', displayOrder='%.1f', displayCaption='%s')>" \
+        return "<Display(displayGroup='%s', displaySubgroup='%s', " \
+               "displayOrder='%.1f', displayCaption='%s')>" \
             %(self.displayGroup, self.displaySubgroup, self.displayOrder, self.displayCaption)
 
 class PlotRow(Base):
@@ -97,11 +98,15 @@ class SummaryStatRow(Base):
           %(self.metricId, self.summaryName, self.summaryValue)
 
 class ResultsDb(object):
-    def __init__(self, outDir= None, database=None, driver='sqlite',
-                 host=None, port=None, verbose=False):
+    """The ResultsDb is a sqlite database containing information on the metrics run via MAF,
+    the plots created, the display information (such as captions), and any summary statistics output.
+    """
+    def __init__(self, outDir= None, database=None, verbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
+        # We now require resultsDb to be a sqlite file (for simplicity). Leaving as attribute though.
+        self.driver = 'sqlite'
         # Connect to database
         # for sqlite, connecting to non-existent database creates it automatically
         if database is None:
@@ -116,30 +121,13 @@ class ResultsDb(object):
                     raise OSError(msg, '\n  (If this was the database file (not outDir), '
                                        'remember to use kwarg "database")')
             self.database = os.path.join(outDir, 'resultsDb_sqlite.db')
-            self.driver = 'sqlite'
         else:
-            if driver == 'sqlite':
-                # Using non-default database, but may also specify directory root.
-                if outDir is not None:
-                    database = os.path.join(outDir, database)
-                self.database = database
-                self.driver = driver
-            else:
-                # If not sqlite, then 'outDir' doesn't make much sense.
-                self.database = database
-                self.driver = driver
-                self.host = host
-                self.port = port
+            # Using non-default database, but may also specify directory root.
+            if outDir is not None:
+                database = os.path.join(outDir, database)
+            self.database = database
 
-        if self.driver == 'sqlite':
-            dbAddress = url.URL(self.driver, database=self.database)
-        else:
-            dbAddress = url.URL(self.driver,
-                            username=DbAuth.username(self.host, str(self.port)),
-                            password=DbAuth.password(self.host, str(self.port)),
-                            host=self.host,
-                            port=self.port,
-                            database=self.database)
+        dbAddress = url.URL(self.driver, database=self.database)
 
         engine = create_engine(dbAddress, echo=verbose)
         self.Session = sessionmaker(bind=engine)
@@ -148,7 +136,8 @@ class ResultsDb(object):
         try:
             Base.metadata.create_all(engine)
         except DatabaseError:
-            raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
+            raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver,
+                                                                                            self.database))
         self.slen = 1024
 
     def close(self):
