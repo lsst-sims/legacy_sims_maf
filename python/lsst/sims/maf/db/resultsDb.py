@@ -126,7 +126,7 @@ class ResultsDb(object):
             if outDir is not None:
                 database = os.path.join(outDir, database)
             self.database = database
-        # Self.drive = sqlite.
+
         dbAddress = url.URL(self.driver, database=self.database)
 
         engine = create_engine(dbAddress, echo=verbose)
