@@ -135,7 +135,10 @@ class SNNSNMetric(BaseMetric):
         """
         """
         if slicePoint is not None:
-            self.pixArea = hp.nside2pixarea(slicePoint['nside'], degrees=True)
+            if 'nside' in slicePoint.keys():
+                import healpy as hp
+                self.pixArea = hp.nside2pixarea(
+                    slicePoint['nside'], degrees=True)
 
         # Two things to do: concatenate data (per band, night) and estimate seasons
         dataSlice = self.coadd(pd.DataFrame(dataSlice))
@@ -191,7 +194,8 @@ class SNNSNMetric(BaseMetric):
         for seas in seasons:
             vara_df = self.run_season(
                 dataSlice, [seas], gen_par, dur_z)
-            resdf = pd.concat((resdf, vara_df))
+            if vara_df is not None:
+                resdf = pd.concat((resdf, vara_df))
 
         # final result: median zlim for a faint sn
         # and nsn_med for z<zlim
@@ -426,6 +430,8 @@ class SNNSNMetric(BaseMetric):
             # estimate number of medium supernovae
             zlimsdf['nsn_med'],  zlimsdf['var_nsn_med'] = zlimsdf.apply(lambda x: self.nsn_typedf(
                 x, 0.0, 0.0, effi_seasondf, dur_z), axis=1, result_type='expand').T.values
+        else:
+            return None
 
         if self.verbose:
             print('#### SEASON processed', time.time()-time_ref,
