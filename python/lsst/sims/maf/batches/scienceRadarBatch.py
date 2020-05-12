@@ -26,7 +26,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     # Hide dependencies
     from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
     from mafContrib import (Plasticc_metric, plasticc_slicer, load_plasticc_lc,
-                            TDEsPopMetric, TDEsPopSlicer, microlensingSlicer, MicrolensingMetric)
+                            TdePopMetric, generateTdePopSlicer,
+                            generateMicrolensingSlicer, MicrolensingMetric)
 
     if colmap is None:
         colmap = ColMapDict('fbs')
@@ -191,8 +192,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     displayDict['subgroup'] = 'TDE'
     displayDict['caption'] = 'TDE lightcurves that could be identified'
 
-    metric = TDEsPopMetric()
-    slicer = TDEsPopSlicer()
+    metric = TdePopMetric()
+    slicer = generateTdePopSlicer()
     sql = ''
     plotDict = {'reduceFunc': np.sum, 'nside': 128}
     plotFuncs = [plots.HealpixSkyMap()]
@@ -209,7 +210,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
 
     plotDict = {'nside': 128}
     sql = ''
-    slicer = microlensingSlicer(min_crossing_time=1, max_crossing_time=10)
+    slicer = generateMicrolensingSlicer(min_crossing_time=1, max_crossing_time=10)
     metric = MicrolensingMetric(metricName='Fast Microlensing')
     bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
                              summaryMetrics=[metrics.MeanMetric(maskVal=0)],
@@ -218,7 +219,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     bundleList.append(bundle)
 
     displayDict['caption'] = 'Slow microlensing events'
-    slicer = microlensingSlicer(min_crossing_time=100, max_crossing_time=1500)
+    slicer = generateMicrolensingSlicer(min_crossing_time=100, max_crossing_time=1500)
     metric = MicrolensingMetric(metricName='Slow Microlensing')
     bundle = mb.MetricBundle(metric, slicer, sql, runName=runName,
                              summaryMetrics=[metrics.MeanMetric(maskVal=0)],
@@ -241,7 +242,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
         displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
                                  'of less than 0.2 mag' % f
         # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
-        metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f,
+        metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f, ignore_crowding=False,
                                       seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'],
                                       maps=[])
         plotDict = {'nTicks': 5, 'logScale': True, 'colorMin': 100}
@@ -257,8 +258,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     for f in filterlist:
         stellar_map = maps.StellarDensityMap(filtername=f)
         displayDict['order'] = filterorders[f]
-        displayDict['caption'] = 'Number of stars in %s band with an measurement error due to crowding ' \
-                                 'of less than 0.2 mag' % f
+        displayDict['caption'] = 'Number of stars in %s band with an measurement error ' \
+                                 'of less than 0.2 mag, not considering crowding' % f
         # Configure the NstarsMetric - note 'filtername' refers to the filter in which to evaluate crowding
         metric = metrics.NstarsMetric(crowding_error=0.2, filtername=f, ignore_crowding=True,
                                       seeingCol=colmap['seeingGeom'], m5Col=colmap['fiveSigmaDepth'],
