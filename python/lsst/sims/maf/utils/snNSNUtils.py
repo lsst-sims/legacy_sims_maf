@@ -104,6 +104,41 @@ class LCfast:
 
     def __call__(self, obs, gen_par=None, bands='grizy'):
         """ Simulation of the light curve
+
+        Parameters
+        ----------------
+        obs: array
+         array of observations
+        gen_par: array, opt
+         simulation parameters (default: None)
+        bands: str, opt
+          filters to consider for simulation (default: grizy)
+        Returns
+        ------------
+        astropy table with:
+        columns: band, flux, fluxerr, snr_m5,flux_e,zp,zpsys,time
+        metadata : SNID,RA,Dec,DayMax,X1,Color,z
+        """
+
+        if len(obs) == 0:
+            return None
+
+        tab_tot = pd.DataFrame()
+
+        # multiprocessing here: one process (processBand) per band
+
+        for band in bands:
+            idx = obs[self.filterCol] == band
+            # print('multiproc',band,j,len(obs[idx]))
+            if len(obs[idx]) > 0:
+                res = self.processBand(obs[idx], band, gen_par)
+                tab_tot = tab_tot.append(res, ignore_index=True)
+
+        # return produced LC
+        return tab_tot
+
+   def multi_old(self, obs, gen_par=None, bands='grizy'):
+        """ Simulation of the light curve
         This methid uses multiprocessing (one band per process) to increase speed
         Parameters
         ----------------
@@ -155,7 +190,7 @@ class LCfast:
 
         # return produced LC
         return tab_tot
-
+    
     def processBand(self, sel_obs, band, gen_par, j=-1, output_q=None):
         """ LC simulation of a set of obs corresponding to a band
         The idea is to use python broadcasting so as to estimate
@@ -1093,7 +1128,7 @@ class Load_Reference:
         # gamma_reference
         self.gamma_reference = '{}/gamma.hdf5'.format(templateDir)
 
-        #print('Loading reference files')
+        # print('Loading reference files')
         result_queue = multiprocessing.Queue()
 
         for j in range(len(x1_colors)):
@@ -1314,7 +1349,7 @@ class GetReference:
             gammab = np.reshape(rec[index]['gamma'], (nmag, nexp))
             self.gamma[band] = RegularGridInterpolator(
                 (mag, exp), gammab, method=method, bounds_error=False, fill_value=0.)
-            #print(band, gammab, mag, exp)
+            # print(band, gammab, mag, exp)
 
     def limVals(self, lc, field):
         """ Get unique values of a field in  a table
