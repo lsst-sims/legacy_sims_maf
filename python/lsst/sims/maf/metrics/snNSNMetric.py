@@ -6,6 +6,7 @@ import pandas as pd
 import numpy.lib.recfunctions as rf
 import time
 from scipy.interpolate import interp1d
+import numpy.lib.recfunctions as nlr
 
 
 class SNNSNMetric(BaseMetric):
@@ -131,14 +132,26 @@ class SNNSNMetric(BaseMetric):
         # supernovae parameters
         self.params = ['x0', 'x1', 'daymax', 'color']
 
+        # r = [(-1.0, -1.0)]
+        self.bad = np.rec.fromrecords([(-1.0, -1.0)], names=['nSN', 'zlim'])
+        # self.bad = {'nSN': -1.0, 'zlim': -1.0}
+
     def run(self, dataSlice,  slicePoint=None):
         """
         """
+        print(slicePoint, type(slicePoint))
+        idarray = None
         if slicePoint is not None:
             if 'nside' in slicePoint.keys():
                 import healpy as hp
                 self.pixArea = hp.nside2pixarea(
                     slicePoint['nside'], degrees=True)
+                r = []
+                names = []
+                for kk, vv in slicePoint.items():
+                    r.append(vv)
+                    names.append(kk)
+                idarray = np.rec.fromrecords([r], names=names)
 
         # Two things to do: concatenate data (per band, night) and estimate seasons
         dataSlice = self.coadd(pd.DataFrame(dataSlice))
@@ -164,16 +177,19 @@ class SNNSNMetric(BaseMetric):
             lambda x: self.seasonInfo(x)).reset_index()
 
         # select seasons of at least 30 days
-        idx = season_info['season_length'] >= 30
+        idx = season_info['season_length'] >= 60.
         season_info = season_info[idx]
 
         # check wether requested seasons can be processed
         test_season = season_info[season_info['season'].isin(seasons)]
         # if len(test_season) == 0:
+
         if test_season.empty:
-            return -1., -1.
+            return nlr.merge_arrays([idarray, self.bad], flatten=True)
         else:
             seasons = test_season['season']
+        # print('test_seas', seasons)
+        # print('hh', season_info)
 
         # get season length depending on the redshift
         dur_z = season_info.groupby(['season']).apply(
@@ -188,9 +204,9 @@ class SNNSNMetric(BaseMetric):
             lambda x: self.calcDaymax(x)).reset_index()
 
         if gen_par.empty:
-            return -1, -1
-
+            return nlr.merge_arrays([idarray, self.bad], flatten=True)
         resdf = pd.DataFrame()
+
         for seas in seasons:
             vara_df = self.run_season(
                 dataSlice, [seas], gen_par, dur_z)
@@ -200,13 +216,34 @@ class SNNSNMetric(BaseMetric):
         # final result: median zlim for a faint sn
         # and nsn_med for z<zlim
 
+        if resdf.empty:
+            return nlr.merge_arrays([idarray, self.bad], flatten=True)
+
         idx = np.abs(resdf['x1']+2.0) < 1.e-5
 
         resdf = resdf.round({'zlim': 3, 'nsn_med': 3})
         zlim = resdf[idx]['zlim'].median()
         nSN = resdf[idx]['nsn_med'].sum()
 
-        return nSN, zlim
+        resd = np.rec.fromrecords([(nSN, zlim)], names=['nSN', 'zlim'])
+
+        res = nlr.merge_arrays([idarray, resd], flatten=True)
+
+        return res
+
+    """
+    def reducenSN(self, metricVal):
+
+        # At each slicepoint, return the sum nSN value.
+
+        return np.sum(metricVal['nSN'])
+
+    def reducezlim(self, metricVal):
+
+        # At each slicepoint, return the median zlim
+
+        return np.median(metricVal['zlim'])
+    """
 
     def coadd(self, data):
         """
@@ -224,7 +261,8 @@ class SNNSNMetric(BaseMetric):
 
         keygroup = [self.filterCol, self.nightCol]
 
-        data.sort_values(by=keygroup, ascending=[True, True], inplace=True)
+        data.sort_values(by=keygroup, ascending=[
+                         True, True], inplace=True)
 
         coadd_df = data.groupby(keygroup).agg({self.nexpCol: ['sum'],
                                                self.vistimeCol: ['sum'],
@@ -398,6 +436,7 @@ class SNNSNMetric(BaseMetric):
         # simulate supernovae and lc
         if self.verbose:
             print("SN generation")
+            print(season, obs)
         sn = self.genSN(obs.to_records(
             index=False), gen_p.to_records(index=False))
 
@@ -408,14 +447,6 @@ class SNNSNMetric(BaseMetric):
         effi_seasondf = self.effidf(sn)
 
         # zlims can only be estimated if efficiencies are ok
-        idx = effi_seasondf['z'] <= 0.2
-        x1ref = -2.0
-        colorref = 0.2
-        idx &= np.abs(effi_seasondf['x1']-x1ref) < 1.e-5
-        idx &= np.abs(effi_seasondf['color']-colorref) < 1.e-5
-        sel = effi_seasondf[idx]
-
-        # zlims can only be estimated if efficiencies are high enough
         idx = effi_seasondf['z'] <= 0.2
         x1ref = -2.0
         colorref = 0.2
@@ -770,6 +801,7 @@ class SNNSNMetric(BaseMetric):
         idx = duration_z['season'] == season
         seas_duration_z = duration_z[idx]
 
+        # print('hhh1', seas_duration_z)
         durinterp_z = interp1d(
             seas_duration_z['z'], seas_duration_z['season_length'], bounds_error=False, fill_value=0.)
 
@@ -789,7 +821,7 @@ class SNNSNMetric(BaseMetric):
         if nsn_cum[-1] >= 1.e-5:
             nsn_cum_norm = nsn_cum/nsn_cum[-1]  # normalize
             zlim = interp1d(nsn_cum_norm, zplot)
-            zlimit = zlim(0.95).item()
+            zlimit = zlim(0.9).item()
             # status = self.status['ok']
 
             if self.ploteffi:
@@ -856,6 +888,7 @@ class SNNSNMetric(BaseMetric):
         idx = duration_z['season'] == season
         seas_duration_z = duration_z[idx]
 
+        # print('hhh2', seas_duration_z)
         durinterp_z = interp1d(
             seas_duration_z['z'], seas_duration_z['season_length'], bounds_error=False, fill_value=0.)
 
@@ -899,7 +932,7 @@ class SNNSNMetric(BaseMetric):
         """
 
         if zlim < 1.e-3:
-            return -1.0, -1.0
+            return (-1.0, -1.0)
 
         dz = 0.001
         zplot = list(np.arange(self.zmin, self.zmax, dz))
