@@ -139,7 +139,7 @@ class SNNSNMetric(BaseMetric):
     def run(self, dataSlice,  slicePoint=None):
         """
         """
-        print(slicePoint, type(slicePoint))
+        #print(slicePoint, type(slicePoint))
         idarray = None
         if slicePoint is not None:
             if 'nside' in slicePoint.keys():
@@ -821,7 +821,7 @@ class SNNSNMetric(BaseMetric):
         if nsn_cum[-1] >= 1.e-5:
             nsn_cum_norm = nsn_cum/nsn_cum[-1]  # normalize
             zlim = interp1d(nsn_cum_norm, zplot)
-            zlimit = zlim(0.9).item()
+            zlimit = zlim(0.95).item()
             # status = self.status['ok']
 
             if self.ploteffi:

@@ -137,7 +137,7 @@ class LCfast:
         # return produced LC
         return tab_tot
 
-   def multi_old(self, obs, gen_par=None, bands='grizy'):
+    def multi_old(self, obs, gen_par=None, bands='grizy'):
         """ Simulation of the light curve
         This methid uses multiprocessing (one band per process) to increase speed
         Parameters
