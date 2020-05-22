@@ -139,7 +139,7 @@ class SNNSNMetric(BaseMetric):
     def run(self, dataSlice,  slicePoint=None):
         """
         """
-        #print(slicePoint, type(slicePoint))
+        print(slicePoint, type(slicePoint))
         idarray = None
         if slicePoint is not None:
             if 'nside' in slicePoint.keys():
@@ -215,20 +215,33 @@ class SNNSNMetric(BaseMetric):
 
         # final result: median zlim for a faint sn
         # and nsn_med for z<zlim
+        
+        print('result here',resdf)
 
         if resdf.empty:
             return nlr.merge_arrays([idarray, self.bad], flatten=True)
 
-        idx = np.abs(resdf['x1']+2.0) < 1.e-5
 
         resdf = resdf.round({'zlim': 3, 'nsn_med': 3})
-        zlim = resdf[idx]['zlim'].median()
-        nSN = resdf[idx]['nsn_med'].sum()
+        x1_ref = -2.0
+        color_ref = 0.2
 
-        resd = np.rec.fromrecords([(nSN, zlim)], names=['nSN', 'zlim'])
+        idx = np.abs(resdf['x1']-x1_ref) < 1.e-5
+        idx &= np.abs(resdf['color']-color_ref) < 1.e-5
+        idx &= resdf['zlim']>0
 
-        res = nlr.merge_arrays([idarray, resd], flatten=True)
+        if not resdf[idx].empty:
+            zlim = resdf[idx]['zlim'].median()
+            nSN = resdf[idx]['nsn_med'].sum()
 
+            resd = np.rec.fromrecords([(nSN, zlim)], names=['nSN', 'zlim'])
+            
+            res = nlr.merge_arrays([idarray, resd], flatten=True)
+
+        else:
+
+            res = nlr.merge_arrays([idarray, self.bad], flatten=True)
+            
         return res
 
     """
