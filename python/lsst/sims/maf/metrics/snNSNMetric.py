@@ -67,8 +67,8 @@ class SNNSNMetric(BaseMetric):
                  nightCol='night', obsidCol='observationId', nexpCol='numExposures',
                  vistimeCol='visitTime', season=[-1], zmin=0.0, zmax=1.2,
                  pixArea=9.6, verbose=False, ploteffi=False,
-                 n_bef=5, n_aft=10, snr_min=5., n_phase_min=1,
-                 n_phase_max=1, templateDir='reference_files', **kwargs):
+                 n_bef=4, n_aft=10, snr_min=5., n_phase_min=0,
+                 n_phase_max=0, templateDir='reference_files', zlim_coeff=-1., **kwargs):
 
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -82,6 +82,7 @@ class SNNSNMetric(BaseMetric):
         self.nexpCol = nexpCol
         self.vistimeCol = vistimeCol
         self.pixArea = pixArea
+        self.zlim_coeff = zlim_coeff
 
         cols = [self.nightCol, self.m5Col, self.filterCol, self.mjdCol, self.obsidCol,
                 self.nexpCol, self.vistimeCol, self.exptimeCol, self.seasonCol]
@@ -90,7 +91,6 @@ class SNNSNMetric(BaseMetric):
             col=cols, metricDtype='object', metricName=metricName, **kwargs)
 
         self.season = season
-
         # LC selection parameters
         self.n_bef = n_bef  # nb points before peak
         self.n_aft = n_aft  # nb points after peak
@@ -126,8 +126,8 @@ class SNNSNMetric(BaseMetric):
             min_rf_phase=self.min_rf_phase_qual, max_rf_phase=self.max_rf_phase_qual)
 
         # verbose mode - useful for debug and code performance estimation
-        self.verbose = verbose
-        self.ploteffi = ploteffi
+        self.verbose = False
+        self.ploteffi = False
 
         # supernovae parameters
         self.params = ['x0', 'x1', 'daymax', 'color']
@@ -138,8 +138,14 @@ class SNNSNMetric(BaseMetric):
 
     def run(self, dataSlice,  slicePoint=None):
         """
+        run method of the metric
+
+        Parameters
+        ---------------
+        dataSlice: array
+          data to process
+
         """
-        print(slicePoint, type(slicePoint))
         idarray = None
         if slicePoint is not None:
             if 'nside' in slicePoint.keys():
@@ -154,10 +160,18 @@ class SNNSNMetric(BaseMetric):
                 idarray = np.rec.fromrecords([r], names=names)
 
         # Two things to do: concatenate data (per band, night) and estimate seasons
+        dataSlice = rf.drop_fields(dataSlice, ['season'])
+
         dataSlice = self.coadd(pd.DataFrame(dataSlice))
 
         dataSlice = self.getseason(dataSlice)
 
+        """
+        print('after season', dataSlice, len(dataSlice))
+        for seas in np.unique(dataSlice['season']):
+            iu = dataSlice['season'] == seas
+            print(seas, len(dataSlice[iu]))
+        """
         # get the seasons
         seasons = self.season
 
@@ -176,6 +190,7 @@ class SNNSNMetric(BaseMetric):
         season_info = dfa.groupby(['season']).apply(
             lambda x: self.seasonInfo(x)).reset_index()
 
+        #print('season info', season_info)
         # select seasons of at least 30 days
         idx = season_info['season_length'] >= 60.
         season_info = season_info[idx]
@@ -210,17 +225,17 @@ class SNNSNMetric(BaseMetric):
         for seas in seasons:
             vara_df = self.run_season(
                 dataSlice, [seas], gen_par, dur_z)
+            #print('res', seas, vara_df)
             if vara_df is not None:
                 resdf = pd.concat((resdf, vara_df))
 
         # final result: median zlim for a faint sn
         # and nsn_med for z<zlim
-        
-        print('result here',resdf)
+
+        #print('result here', resdf)
 
         if resdf.empty:
             return nlr.merge_arrays([idarray, self.bad], flatten=True)
-
 
         resdf = resdf.round({'zlim': 3, 'nsn_med': 3})
         x1_ref = -2.0
@@ -228,23 +243,22 @@ class SNNSNMetric(BaseMetric):
 
         idx = np.abs(resdf['x1']-x1_ref) < 1.e-5
         idx &= np.abs(resdf['color']-color_ref) < 1.e-5
-        idx &= resdf['zlim']>0
+        idx &= resdf['zlim'] > 0
 
         if not resdf[idx].empty:
             zlim = resdf[idx]['zlim'].median()
             nSN = resdf[idx]['nsn_med'].sum()
 
             resd = np.rec.fromrecords([(nSN, zlim)], names=['nSN', 'zlim'])
-            
+
             res = nlr.merge_arrays([idarray, resd], flatten=True)
 
         else:
 
             res = nlr.merge_arrays([idarray, self.bad], flatten=True)
-            
+
         return res
 
-    """
     def reducenSN(self, metricVal):
 
         # At each slicepoint, return the sum nSN value.
@@ -256,7 +270,6 @@ class SNNSNMetric(BaseMetric):
         # At each slicepoint, return the median zlim
 
         return np.median(metricVal['zlim'])
-    """
 
     def coadd(self, data):
         """
@@ -446,6 +459,15 @@ class SNNSNMetric(BaseMetric):
         obs = pd.DataFrame(np.copy(dataSlice))
         obs = obs[obs['season'].isin(season)]
 
+        obs = obs.sort_values(by=['night'])
+        #print('data here', obs.columns)
+        #print(obs[['night', 'filter', 'observationStartMJD', 'fieldRA', 'fieldDec']])
+        """
+        import matplotlib.pyplot as plt
+        plt.plot(dataSlice['fieldRA'], dataSlice['fieldDec'], 'ko')
+        print('data', len(dataSlice))
+        plt.show()
+        """
         # simulate supernovae and lc
         if self.verbose:
             print("SN generation")
@@ -454,7 +476,13 @@ class SNNSNMetric(BaseMetric):
             index=False), gen_p.to_records(index=False))
 
         if self.verbose:
-            print('sn and lc', len(sn), sn[['z', 'Cov_colorcolor']])
+            idx = np.abs(sn['x1']+2) < 1.e-5
+            idx &= np.abs(sn['z']-0.2) < 1.e-5
+            sel = sn[idx]
+            sel = sel.sort_values(by=['z', 'daymax'])
+
+            print('sn and lc', len(sn), sel.columns,
+                  sel[['x1', 'color', 'z', 'daymax', 'Cov_colorcolor', 'n_bef', 'n_aft']])
 
         # from these supernovae: estimate observation efficiency vs z
         effi_seasondf = self.effidf(sn)
@@ -586,6 +614,9 @@ class SNNSNMetric(BaseMetric):
         idx &= sums['n_phmin'] >= self.n_phase_min
         idx &= sums['n_phmax'] >= self.n_phase_max
 
+        if self.verbose:
+            print('selection parameters', self.n_bef,
+                  self.n_aft, self.n_phase_min, self.n_phase_max)
         finalsn = pd.DataFrame()
         goodsn = pd.DataFrame(sums.loc[idx])
 
@@ -767,6 +798,195 @@ class SNNSNMetric(BaseMetric):
         return res
 
     def zlimdf(self, grp, duration_z):
+        """
+        Method to estimate redshift limits
+        Parameters
+        --------------
+        grp: pandas df group
+          efficiencies to estimate redshift limits;
+          columns:
+           season: season
+           pixRA: RA of the pixel
+           pixDec: Dec of the pixel
+           healpixID: pixel ID
+           x1: SN stretch
+           color: SN color
+           z: redshift
+           effi: efficiency
+           effi_err: efficiency error (binomial)
+        duration_z: pandas df with the following cols:
+           season: season
+           z: redshift
+           T0_min: min daymax
+           T0_max: max daymax
+            season_length: season length
+        Returns
+        ----------
+        pandas df with the following cols:
+         zlimit: redshift limit
+        """
+
+        zlimit = 0.0
+
+        # z range for the study
+        zplot = np.arange(self.zmin, self.zmax, 0.01)
+
+        # print(grp['z'], grp['effi'])
+
+        if len(grp['z']) <= 3:
+            return pd.DataFrame({'zlim': [zlimit]})
+            # 'status': [int(status)]})
+        # interpolate efficiencies vs z
+        effiInterp = interp1d(
+            grp['z'], grp['effi'], kind='linear', bounds_error=False, fill_value=0.)
+
+        if self.zlim_coeff < 0.:
+            # in that case zlim is estimated from efficiencies
+            # first step: identify redshift domain with efficiency decrease
+            zlimit = self.zlim_from_effi(effiInterp, zplot)
+            #status = self.status['ok']
+
+        else:
+            zlimit = self.zlim_from_cumul(
+                grp, duration_z, effiInterp, zplot)
+
+        return pd.DataFrame({'zlim': [zlimit]})
+        # 'status': [int(status)]})
+
+    def zlim_from_cumul(self, grp, duration_z, effiInterp, zplot, rate='cte'):
+        """
+        Method to estimate the redshift limit from the cumulative
+        The redshift limit is estimated to be the z value corresponding to:
+        frac(NSN(z<zlimit))=zlimi_coeff
+
+        Parameters
+        ---------------
+        grp: pandas group
+          data to process
+        duration_z: array
+           duration as a function of the redshift
+        effiInterp: interp1d
+          interpolator for efficiencies
+        zplot: interp1d
+          interpolator for redshift values
+        rate: str, opt
+          rate to estimate the number of SN to estimate zlimit
+          rate = cte: rate independent of z
+          rate = SN_rate: rate from SN_Rate class
+
+        Returns
+        ----------
+        zlimit: float
+          the redshift limit
+        """
+
+        if rate == 'SN_rate':
+            # get rate
+            season = np.median(grp['season'])
+            idx = duration_z['season'] == season
+            seas_duration_z = duration_z[idx]
+
+            durinterp_z = interp1d(
+                seas_duration_z['z'], seas_duration_z['season_length'], bounds_error=False, fill_value=0.)
+
+            # estimate the rates and nsn vs z
+            zz, rate, err_rate, nsn, err_nsn = self.rateSN(zmin=self.zmin,
+                                                           zmax=self.zmax,
+                                                           duration_z=durinterp_z,
+                                                           survey_area=self.pixArea)
+
+            # rate interpolation
+            rateInterp = interp1d(zz, nsn, kind='linear',
+                                  bounds_error=False, fill_value=0)
+        else:
+            # this is for a rate z-independent
+            nsn = np.ones(len(zplot))
+            rateInterp = interp1d(zplot, nsn, kind='linear',
+                                  bounds_error=False, fill_value=0)
+
+        nsn_cum = np.cumsum(effiInterp(zplot)*rateInterp(zplot))
+
+        if nsn_cum[-1] >= 1.e-5:
+            nsn_cum_norm = nsn_cum/nsn_cum[-1]  # normalize
+            zlim = interp1d(nsn_cum_norm, zplot)
+            zlimit = zlim(self.zlim_coeff).item()
+
+            if self.ploteffi:
+                self.plot_NSN_cumul(grp, nsn_cum_norm, zplot)
+        else:
+            zlimit = 0.
+
+        return zlimit
+
+    def plot_NSN_cumul(self, grp, nsn_cum_norm, zplot):
+        """
+        Method to plot the NSN cumulative vs redshift
+        Parameters
+        --------------
+        grp: pandas group
+         data to process
+        """
+
+        import matplotlib.pylab as plt
+        fig, ax = plt.subplots()
+        x1 = grp['x1'].unique()[0]
+        color = grp['color'].unique()[0]
+
+        ax.plot(zplot, nsn_cum_norm,
+                label='(x1,color)=({},{})'.format(x1, color))
+
+        ftsize = 15
+        ax.set_ylabel('NSN ($z<$)', fontsize=ftsize)
+        ax.set_xlabel('z', fontsize=ftsize)
+        ax.xaxis.set_tick_params(labelsize=ftsize)
+        ax.yaxis.set_tick_params(labelsize=ftsize)
+        ax.set_xlim((0.0, 0.8))
+        ax.set_ylim((0.0, 1.05))
+        ax.plot([0., 1.2], [0.95, 0.95], ls='--', color='k')
+        plt.legend(fontsize=ftsize)
+        plt.show()
+
+    def zlim_from_effi(self, effiInterp, zplot):
+        """
+        Method to estimate the redshift limit from efficiency curves
+        The redshift limit is defined here as the redshift value beyond
+        which efficiency decreases up to zero.
+        Parameters
+        ---------------
+        effiInterp: interpolator
+         use to get efficiencies
+        zplot: numpy array
+          redshift values
+        Returns
+        -----------
+        zlimit: float
+          the redshift limit
+        """
+
+        # get efficiencies
+        effis = effiInterp(zplot)
+        # select data with efficiency decrease
+        idx = np.where(np.diff(effis) < -0.005)
+        z_effi = np.array(zplot[idx], dtype={
+            'names': ['z'], 'formats': [np.float]})
+        # from this make some "z-periods" to avoid accidental zdecrease at low z
+        z_gap = 0.05
+        seasoncalc = np.ones(z_effi.size, dtype=int)
+        diffz = np.diff(z_effi['z'])
+        flag = np.where(diffz > z_gap)[0]
+
+        if len(flag) > 0:
+            for i, indx in enumerate(flag):
+                seasoncalc[indx+1:] = i+2
+        z_effi = rf.append_fields(z_effi, 'season', seasoncalc)
+
+        # now take the highest season (end of the efficiency curve)
+        idd = z_effi['season'] == np.max(z_effi['season'])
+        zlimit = np.min(z_effi[idd]['z'])
+
+        return zlimit
+
+    def zlimdf_deprecated(self, grp, duration_z):
         """
         Method to estimate redshift limits
         Parameters
