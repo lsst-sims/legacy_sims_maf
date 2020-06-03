@@ -147,6 +147,8 @@ class SNNSNMetric(BaseMetric):
 
         """
         idarray = None
+        healpixID_ref = 1
+        healpixID = -1
         if slicePoint is not None:
             if 'nside' in slicePoint.keys():
                 import healpy as hp
@@ -154,6 +156,12 @@ class SNNSNMetric(BaseMetric):
                     slicePoint['nside'], degrees=True)
                 r = []
                 names = []
+
+                healpixID = hp.ang2pix(
+                    slicePoint['nside'], np.rad2deg(slicePoint['ra']), np.rad2deg(slicePoint['dec']), nest=True, lonlat=True)
+                print('healpixID', healpixID)
+                if healpixID == healpixID_ref:
+                    print('point', slicePoint, healpixID)
                 for kk, vv in slicePoint.items():
                     r.append(vv)
                     names.append(kk)
@@ -165,6 +173,8 @@ class SNNSNMetric(BaseMetric):
         dataSlice = self.coadd(pd.DataFrame(dataSlice))
 
         dataSlice = self.getseason(dataSlice)
+        if healpixID == healpixID_ref:
+            print('dataSlice here', dataSlice, dataSlice.dtype)
 
         """
         print('after season', dataSlice, len(dataSlice))
@@ -232,7 +242,8 @@ class SNNSNMetric(BaseMetric):
         # final result: median zlim for a faint sn
         # and nsn_med for z<zlim
 
-        #print('result here', resdf)
+        if healpixID == healpixID_ref:
+            print('result here', resdf)
 
         if resdf.empty:
             return nlr.merge_arrays([idarray, self.bad], flatten=True)
@@ -249,8 +260,10 @@ class SNNSNMetric(BaseMetric):
             zlim = resdf[idx]['zlim'].median()
             nSN = resdf[idx]['nsn_med'].sum()
 
-            resd = np.rec.fromrecords([(nSN, zlim)], names=['nSN', 'zlim'])
-
+            resd = np.rec.fromrecords([(nSN, zlim, healpixID)], names=[
+                                      'nSN', 'zlim', 'healpixID'])
+            if healpixID == healpixID_ref:
+                print('final result', resd)
             res = nlr.merge_arrays([idarray, resd], flatten=True)
 
         else:
@@ -259,6 +272,7 @@ class SNNSNMetric(BaseMetric):
 
         return res
 
+    """
     def reducenSN(self, metricVal):
 
         # At each slicepoint, return the sum nSN value.
@@ -270,6 +284,7 @@ class SNNSNMetric(BaseMetric):
         # At each slicepoint, return the median zlim
 
         return np.median(metricVal['zlim'])
+    """
 
     def coadd(self, data):
         """
