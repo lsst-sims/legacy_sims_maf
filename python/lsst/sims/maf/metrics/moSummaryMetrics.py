@@ -118,15 +118,12 @@ class MoCompletenessMetric(BaseMoMetric):
             if 'metricName' not in kwargs:
                 self.cumulative = True
                 metricName = 'CumulativeCompleteness'
-                units = '<= H'
             else:  #  'metricName' in kwargs:
                 metricName = kwargs.pop('metricName')
                 if metricName.lower().startswith('differential'):
                     self.cumulative=False
-                    units = '@ H'
                 else:
                     self.cumulative=True
-                    units = '<= H'
         else: # cumulative was set
             self.cumulative = cumulative
             if 'metricName' in kwargs:
@@ -136,10 +133,12 @@ class MoCompletenessMetric(BaseMoMetric):
             else:
                 if self.cumulative:
                     metricName = 'CumulativeCompleteness'
-                    units = '<= H'
                 else:
                     metricName = 'DifferentialCompleteness'
-                    units = '@ H'
+        if self.cumulative:
+            units = "<=H"
+        else:
+            units = "@H"
         super().__init__(metricName=metricName, units=units, **kwargs)
         self.threshold = threshold
         # If H is not a cloned distribution, then we need to specify how to bin these values.

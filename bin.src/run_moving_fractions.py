@@ -46,7 +46,7 @@ if __name__ == '__main__':
     metricfiles = glob.glob(matchstring)
     metricNames = []
     for m in metricfiles:
-        mname = os.path.split(m)[-1].rstrip('_MOOB.npz')
+        mname = os.path.split(m)[-1].replace('_MOOB.npz', '')
         metricNames.append(mname)
 
     bdict = {}
