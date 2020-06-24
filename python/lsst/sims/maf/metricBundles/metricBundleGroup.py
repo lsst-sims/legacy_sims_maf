@@ -239,7 +239,6 @@ class MetricBundleGroup(object):
         for constraint in self.constraints:
             # Set the 'currentBundleDict' which is a dictionary of the metricBundles which match this
             #  constraint.
-            self.setCurrent(constraint)
             self.runCurrent(constraint, clearMemory=clearMemory,
                             plotNow=plotNow, plotKwargs=plotKwargs)
 
@@ -281,6 +280,8 @@ class MetricBundleGroup(object):
         plotKwargs : kwargs, opt
            Plotting kwargs to pass to plotCurrent.
         """
+        self.setCurrent(constraint)
+
         # Build list of all the columns needed from the database.
         self.dbCols = []
         for b in self.currentBundleDict.values():
