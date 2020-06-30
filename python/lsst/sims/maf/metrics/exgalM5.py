@@ -66,12 +66,13 @@ class ExgalM5_cut(BaseMetric):
 
     A copy of ExgalM5 for use of FoMEmulator as a Summary Metric on this.
     """
-    def __init__(self, m5Col='fiveSigmaDepth', units='mag',
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', units='mag',
                  lsstFilter='i', wavelen_min=None, wavelen_max=None, 
-                 wavelen_step=1., extinction_cut=0.2, depth_cut=26, **kwargs):
+                 wavelen_step=1., extinction_cut=0.2, depth_cut=25.9, **kwargs):
         """
         Args: 
             m5Col (str): Column name that ('fiveSigmaDepth')
+            filterCol (str): Filter column name, default is 'filter'
             units (str): units of the metric ('mag')
             lsstFilter (str): Which LSST filter to calculate m5 for
             wavelen_min (float): Minimum wavength of your filter (None)
@@ -88,7 +89,8 @@ class ExgalM5_cut(BaseMetric):
             wavelen_max = waveMaxes[lsstFilter]
 
         self.m5Col = m5Col
-        super(ExgalM5_cut, self).__init__(col=[self.m5Col],
+        self.filterCol = filterCol
+        super(ExgalM5_cut, self).__init__(col=[self.m5Col, self.filterCol],
                                           maps=maps, 
                                           units=units, 
                                           **kwargs
@@ -120,13 +122,23 @@ class ExgalM5_cut(BaseMetric):
         Returns:
              float: the dust atennuated co-added m5-depth.
         """
+        # check to make sure there is at least some coverage in all bands
+        if set(dataSlice[self.filterCol]) != set(('u','g','r','i','z','y')):
+            return self.badval
         
+        # if coverage criteria is valid, move forward with only i-band visits
+        dataSlice = dataSlice[dataSlice[self.filterCol] == 'i']
+        
+        # exclude areas with bad extinction
         if slicePoint['ebv'] > self.extinction_cut:
             return self.badval
-
+        
+        # calculate the i-band coadded depth
         m5 = self.Coaddm5Metric.run(dataSlice)
         A_x = (self.a[0] + self.b[0]/self.R_v) * (self.R_v*slicePoint['ebv'])
         result = m5-A_x
+        
+        # exclude areas that are shallower than the depth cut
         if result < self.depth_cut:
             return self.badval
         else:
