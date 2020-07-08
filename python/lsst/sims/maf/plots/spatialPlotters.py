@@ -692,6 +692,10 @@ def draw_grat(ax):
         x, y = project_lambert(temp_ra, dec)
         ax.plot(x, y, 'k--', alpha=0.5)
 
+    for dec in decs:
+        x, y = project_lambert(np.radians(45.), dec)
+        ax.text(x, y, '%i' % np.round(np.degrees(dec)))
+
     return ax
 
 class LambertSkyMap(BasePlotter):
