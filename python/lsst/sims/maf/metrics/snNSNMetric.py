@@ -107,7 +107,7 @@ class SNNSNMetric(BaseMetric):
             self.lcFast[key] = LCfast(vals, key[0], key[1], telescope,
                                       self.mjdCol, self.RACol, self.DecCol,
                                       self.filterCol, self.exptimeCol,
-                                      self.m5Col, self.seasonCol,
+                                      self.m5Col, self.seasonCol, self.nexpCol,
                                       self.snr_min)
 
         # loading parameters
@@ -162,6 +162,8 @@ class SNNSNMetric(BaseMetric):
                     r.append(vv)
                     names.append(kk)
                 idarray = np.rec.fromrecords([r], names=names)
+        else:
+            idarray = np.rec.fromrecords([0., 0.], names=['RA', 'Dec'])
 
         # Two things to do: concatenate data (per band, night) and estimate seasons
         dataSlice = rf.drop_fields(dataSlice, ['season'])
@@ -247,6 +249,7 @@ class SNNSNMetric(BaseMetric):
 
             resd = np.rec.fromrecords([(nSN, zlim, healpixID)], names=[
                                       'nSN', 'zlim', 'healpixID'])
+
             res = nlr.merge_arrays([idarray, resd], flatten=True)
 
         else:
@@ -255,7 +258,6 @@ class SNNSNMetric(BaseMetric):
 
         return res
 
-    """
     def reducenSN(self, metricVal):
 
         # At each slicepoint, return the sum nSN value.
@@ -267,7 +269,6 @@ class SNNSNMetric(BaseMetric):
         # At each slicepoint, return the median zlim
 
         return np.median(metricVal['zlim'])
-    """
 
     def coadd(self, data):
         """

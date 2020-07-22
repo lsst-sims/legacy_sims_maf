@@ -279,7 +279,6 @@ class TestSNmetrics(unittest.TestCase):
         day0 = 59000
         data = None
 
-        #print('generating data')
         diff_season = 280.
         nseasons = 1
         for val in np.arange(59000, 59000+nseasons*diff_season, diff_season):
@@ -301,11 +300,14 @@ class TestSNmetrics(unittest.TestCase):
 
         time_ref = time.time()
 
-        nSN, zlim = metric.run(data)
+        res = metric.run(data)
+
+        nSN = res['nSN'].item()
+        zlim = res['zlim'].item()
 
         #print(time.time()-time_ref, nSN, zlim)
-        nSN_ref = 2.674
-        zlim_ref = 0.664
+        nSN_ref = 2.523
+        zlim_ref = 0.65
 
         assert(np.isclose(nSN, nSN_ref))
         assert(np.isclose(zlim, zlim_ref))

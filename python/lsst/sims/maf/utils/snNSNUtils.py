@@ -58,6 +58,7 @@ class LCfast:
                  RACol='fieldRA', DecCol='fieldDec',
                  filterCol='filter', exptimeCol='visitExposureTime',
                  m5Col='fiveSigmaDepth', seasonCol='season',
+                 nexpCol='numExposures',
                  snr_min=5.):
 
         # grab all vals
@@ -68,6 +69,7 @@ class LCfast:
         self.m5Col = m5Col
         self.exptimeCol = exptimeCol
         self.seasonCol = seasonCol
+        self.nexpCol = nexpCol
         self.x1 = x1
         self.color = color
 
@@ -190,7 +192,7 @@ class LCfast:
 
         # return produced LC
         return tab_tot
-    
+
     def processBand(self, sel_obs, band, gen_par, j=-1, output_q=None):
         """ LC simulation of a set of obs corresponding to a band
         The idea is to use python broadcasting so as to estimate
@@ -292,7 +294,7 @@ class LCfast:
         #    sel_obs[self.m5Col], [band]*len(sel_obs), sel_obs[self.exptimeCol])
 
         gamma_obs = self.reference_lc.gamma[band](
-            (sel_obs[self.m5Col], sel_obs[self.exptimeCol]))
+            (sel_obs[self.m5Col], sel_obs[self.exptimeCol]/sel_obs[self.nexpCol], sel_obs[self.nexpCol]))
 
         mag_obs = -2.5*np.log10(fluxes_obs/3631.)
 
@@ -1088,13 +1090,13 @@ class Load_Reference:
     Parameters
     ---------------
     server: str, opt
-      where to get the files (default: https://me.lsst.eu/gris/Reference_Files)
+      where to get the files (default: https://me.lsst.eu/gris/DESC_SN_pipeline/Reference_Files)
     templateDir: str, opt
       where to put the files (default: reference_files)
 
     """
 
-    def __init__(self, server='https://me.lsst.eu/gris/Reference_Files',
+    def __init__(self, server='https://me.lsst.eu/gris/DESC_SN_pipeline',
                  templateDir='reference_files'):
 
         self.server = server
@@ -1120,7 +1122,8 @@ class Load_Reference:
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
-            fname = 'LC_{}_{}_vstack.hdf5'.format(x1, color)
+            fname = 'LC_{}_{}_380.0_800.0_ebvofMW_0.0_vstack.hdf5'.format(
+                x1, color)
             list_files += [fname]
 
         self.check_grab(templateDir, list_files)
@@ -1134,7 +1137,7 @@ class Load_Reference:
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
-            fname = '{}/LC_{}_{}_vstack.hdf5'.format(
+            fname = '{}/LC_{}_{}_380.0_800.0_ebvofMW_0.0_vstack.hdf5'.format(
                 templateDir, x1, color)
             p = multiprocessing.Process(
                 name='Subprocess_main-'+str(j), target=self.load, args=(fname, j, result_queue))
@@ -1198,7 +1201,7 @@ class Load_Reference:
                 if 'gamma' in fname:
                     fullname = '{}/reference_files/{}'.format(self.server, fi)
                 else:
-                    fullname = '{}/Templates/{}'.format(self.server, fi)
+                    fullname = '{}/Template_LC/{}'.format(self.server, fi)
                 print('wget path:', fullname)
                 cmd = 'wget --no-clobber --no-verbose {} --directory-prefix {}'.format(
                     fullname, templateDir)
@@ -1338,6 +1341,30 @@ class GetReference:
             rec = Table.read(gammaName, path='gamma_{}'.format(band))
 
             rec['mag'] = rec['mag'].data.round(decimals=4)
+            rec['single_exptime'] = rec['single_exptime'].data.round(
+                decimals=4)
+
+            magmin, magmax, magstep, nmag = self.limVals(rec, 'mag')
+            expmin, expmax, expstep, nexpo = self.limVals(
+                rec, 'single_exptime')
+            nexpmin, nexpmax, nexpstep, nnexp = self.limVals(rec, 'nexp')
+            mag = np.linspace(magmin, magmax, nmag)
+            exp = np.linspace(expmin, expmax, nexpo)
+            nexp = np.linspace(nexpmin, nexpmax, nnexp)
+
+            index = np.lexsort(
+                (rec['nexp'], np.round(rec['single_exptime'], 4), rec['mag']))
+            gammab = np.reshape(rec[index]['gamma'], (nmag, nexpo, nnexp))
+            fluxb = np.reshape(rec[index]['flux_e_sec'], (nmag, nexpo, nnexp))
+            self.gamma[band] = RegularGridInterpolator(
+                (mag, exp, nexp), gammab, method='linear', bounds_error=False, fill_value=0.)
+            """
+            self.mag_to_flux[band] = RegularGridInterpolator(
+                (mag, exp, nexp), fluxb, method='linear', bounds_error=False, fill_value=0.)
+
+            
+            print('hello', rec.columns)
+            rec['mag'] = rec['mag'].data.round(decimals=4)
             rec['exptime'] = rec['exptime'].data.round(decimals=4)
 
             magmin, magmax, magstep, nmag = self.limVals(rec, 'mag')
@@ -1349,6 +1376,7 @@ class GetReference:
             gammab = np.reshape(rec[index]['gamma'], (nmag, nexp))
             self.gamma[band] = RegularGridInterpolator(
                 (mag, exp), gammab, method=method, bounds_error=False, fill_value=0.)
+            """
             # print(band, gammab, mag, exp)
 
     def limVals(self, lc, field):
