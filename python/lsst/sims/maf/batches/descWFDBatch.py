@@ -1,6 +1,5 @@
 import numpy as np
 import healpy as hp
-from lsst.sims.utils import hpid2RaDec, angularSeparation
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
@@ -12,7 +11,9 @@ from .colMapDict import ColMapDict
 __all__ = ['descWFDBatch']
 
 
-def descWFDBatch(colmap=None, runName='opsim', nside=64):
+def descWFDBatch(colmap=None, runName='opsim', nside=64,
+                 bandpass='i', nfilters_needed=6, lim_ebv=0.2,
+                 mag_cuts = {1: 24.75 - 0.1, 3: 25.35 - 0.1, 6: 25.72 - 0.1, 10: 26.0 - 0.1}):
 
     # Hide some dependencies .. we should probably bring these into MAF
     from mafContrib.lssmetrics.depthLimitedNumGalMetric import DepthLimitedNumGalMetric
@@ -24,30 +25,35 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64):
 
     # Calculate a subset of DESC WFD-related metrics.
     displayDict = {'group': 'Cosmology'}
+    subgroupCount = 1
+
+    standardStats = standardSummary(withCount=False)
+    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+
+    if not isinstance(mag_cuts, dict):
+        if isinstance(mag_cuts, float) or isinstance(mag_cuts, int):
+            mag_cuts = {10: mag_cuts}
+        else:
+            raise TypeError()
+    yrs = list(mag_cuts.keys())
+    maxYr = max(yrs)
 
     # Load up the plastic light curves
     models = ['SNIa-normal']
     plasticc_models_dict = {}
     for model in models:
-        plasticc_models_dict[model] = list(load_plasticc_lc(model=model).values())
-
-    standardStats = standardSummary(withCount=False)
-    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+        plasticc_models_dict[model] = 'sn' # list(load_plasticc_lc(model=model).values())
 
     # One of the primary concerns for DESC WFD metrics is to add dust extinction and coadded depth limits
     # as well as to get some coverage in all 6 bandpasses.
     # These cuts figure into many of the general metrics.
 
-    displayDict['subgroup'] = 'A: Static Science'
+    displayDict['subgroup'] = f'{subgroupCount}: Static Science'
     ## Static Science
     # Calculate the static science metrics - effective survey area, mean/median coadded depth, stdev of
     # coadded depth and the 3x2ptFoM emulator.
-    nfilters_needed = 6
-    lim_ebv = 0.2
+
     dustmap = maps.DustMap(nside=nside, interp=False)
-    yrs = [1, 3, 6, 10]
-    mag_cuts = {1: 24.75 - 0.1, 3: 25.35 - 0.1, 6: 25.72 - 0.1, 10: 26.0 - 0.1}
-    bandpass = 'i'
     pix_area = hp.nside2pixarea(nside, degrees=True)
     summaryMetrics = [metrics.MeanMetric(), metrics.MedianMetric(), metrics.RmsMetric(),
                       metrics.CountRatioMetric(normVal=1/pix_area, metricName='Effective Area (deg)')]
@@ -83,7 +89,8 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64):
     ## LSS Science
     # The only metric we have from LSS is the NGals metric - which is similar to the GalaxyCountsExtended
     # metric, but evaluated only on the depth/dust cuts footprint.
-    displayDict['subgroup'] = 'B: LSS'
+    subgroupCount += 1
+    displayDict['subgroup'] = f'{subgroupCount}: LSS'
     displayDict['order'] = 0
     plotDict = {'percentileClip': 95., 'nTicks': 5}
     sqlconstraint = f'note not like "DD%" and filter = "{bandpass}"'
@@ -91,7 +98,7 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64):
     metric = DepthLimitedNumGalMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                       nside=nside, filterBand=bandpass, redshiftBin='all',
                                       nfilters_needed=nfilters_needed,
-                                      lim_mag_i_ptsrc=mag_cuts[10], lim_ebv=lim_ebv)
+                                      lim_mag_i_ptsrc=mag_cuts[maxYr], lim_ebv=lim_ebv)
     summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.sum, decreasing=True,
                                          metricName='N Galaxies (18k)')]
     summary.append(metrics.SumMetric(metricName='N Galaxies (all)'))
@@ -105,13 +112,14 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64):
 
     ## WL metrics
     # Calculates the number of visits per pointing, after removing parts of the footprint due to dust/depth
-    displayDict['subgroup'] = 'C: WL'
+    subgroupCount += 1
+    displayDict['subgroup'] = f'{subgroupCount}: WL'
     displayDict['order'] = 0
     sqlconstraint = f'note not like "DD%" and filter = "{bandpass}"'
     metadata = f'{bandpass} band non-DD'
     minExpTime = 15
     m = metrics.WeakLensingNvisits(m5Col=colmap['fiveSigmaDepth'], expTimeCol=colmap['exptime'],
-                                   lsstFilter=bandpass, depthlim=mag_cuts[10],
+                                   lsstFilter=bandpass, depthlim=mag_cuts[maxYr],
                                    ebvlim=lim_ebv, min_expTime=minExpTime)
     s = slicers.HealpixSlicer(nside=nside, useCache=False)
     displayDict['caption'] = f'The number of visits per pointing, over the same reduced footprint as '
@@ -122,7 +130,8 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64):
     bundleList.append(bundle)
 
     # This probably will get replaced by @pgris's SN metrics?
-    displayDict['subgroup'] = 'SNe Ia'
+    subgroupCount += 1
+    displayDict['subgroup'] = f'{subgroupCount}: SNe Ia'
     displayDict['order'] = 0
     # XXX-- use the light curves from PLASTICC here
     displayDict['caption'] = 'Fraction of normal SNe Ia (using PLaSTICCs)'
@@ -138,7 +147,8 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64):
                              plotFuncs=plotFuncs,  displayDict=displayDict)
     bundleList.append(bundle)
 
-    displayDict['subgroup'] = 'Camera Rotator'
+    subgroupCount += 1
+    displayDict['subgroup'] = f'{subgroupCount}: Camera Rotator'
     displayDict['caption'] = 'Kuiper statistic (0 is uniform, 1 is delta function) of the '
     slicer = slicers.HealpixSlicer(nside=nside)
     metric1 = metrics.KuiperMetric('rotSkyPos')
