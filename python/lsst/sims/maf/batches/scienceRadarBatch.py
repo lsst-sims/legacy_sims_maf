@@ -52,7 +52,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Load up the plastic light curves - SNIa-normal are loaded in descWFDBatch
-    models = ['KN']
+    models = ['SNIa-normal', 'KN']
     plasticc_models_dict = {}
     for model in models:
         plasticc_models_dict[model] = list(load_plasticc_lc(model=model).values())
