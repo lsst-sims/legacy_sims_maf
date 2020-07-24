@@ -1,3 +1,4 @@
+import numpy as np
 from .baseMetric import BaseMetric
 from .exgalM5 import ExgalM5
 
