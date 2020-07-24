@@ -9,6 +9,7 @@ import lsst.sims.maf.metricBundles as mb
 from .common import standardSummary, filterList, combineMetadata
 from .colMapDict import ColMapDict
 from .srdBatch import fOBatch, astrometryBatch, rapidRevisitBatch
+from .descWFDBatch import descWFDBatch
 
 
 __all__ = ['scienceRadarBatch']
@@ -50,8 +51,8 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     healslicer = slicers.HealpixSlicer(nside=nside)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
-    # Load up the plastic light curves
-    models = ['SNIa-normal', 'KN']
+    # Load up the plastic light curves - SNIa-normal are loaded in descWFDBatch
+    models = ['KN']
     plasticc_models_dict = {}
     for model in models:
         plasticc_models_dict[model] = list(load_plasticc_lc(model=model).values())
@@ -94,11 +95,12 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     #########################
     # Generally, we need to run Solar System metrics separately; they're a multi-step process.
 
+
     #########################
-    # Cosmology
+    # Galaxies
     #########################
 
-    displayDict = {'group': 'Cosmology', 'subgroup': 'Galaxy Counts', 'order': 0, 'caption': None}
+    displayDict = {'group': 'Galaxies', 'subgroup': 'Galaxy Counts', 'order': 0, 'caption': None}
     plotDict = {'percentileClip': 95., 'nTicks': 5}
     sql = extraSql + joiner + 'filter="i"'
     metadata = combineMetadata(extraMetadata, 'i band')
@@ -108,6 +110,7 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     summary.append(metrics.SumMetric(metricName='N Galaxies (all)'))
     # make sure slicer has cache off
     slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
+    displayDict['caption'] = 'Number of galaxies across the sky, in i band. Generally, full survey footprint.'
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                              metadata=metadata,
                              displayDict=displayDict, summaryMetrics=summary,
@@ -115,36 +118,15 @@ def scienceRadarBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata
     bundleList.append(bundle)
     displayDict['order'] += 1
 
-    # let's put Type Ia SN in here
-    displayDict['subgroup'] = 'SNe Ia'
-    # XXX-- use the light curves from PLASTICC here
-    displayDict['caption'] = 'Fraction of normal SNe Ia'
-    sql = extraSql
-    slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42, badval=0)
-    metric = Plasticc_metric(metricName='SNIa')
-    # Set the maskval so that we count missing objects as zero.
-    summary_stats = [metrics.MeanMetric(maskVal=0)]
-    plotFuncs = [plots.HealpixSkyMap()]
-    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
-                             plotFuncs=plotFuncs, metadata=extraMetadata, displayDict=displayDict)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
 
-    displayDict['subgroup'] = 'Camera Rotator'
-    displayDict['caption'] = 'Kuiper statistic (0 is uniform, 1 is delta function) of the '
-    slicer = slicers.HealpixSlicer(nside=nside)
-    metric1 = metrics.KuiperMetric('rotSkyPos')
-    metric2 = metrics.KuiperMetric('rotTelPos')
-    for f in filterlist:
-        for m in [metric1, metric2]:
-            plotDict = {'color': colors[f]}
-            displayDict['order'] = filterorders[f]
-            displayDict['caption'] += f"{m.colname} for visits in {f} band."
-            bundleList.append(mb.MetricBundle(m, slicer, filtersqls[f], plotDict=plotDict,
-                                              displayDict=displayDict, summaryMetrics=standardStats,
-                                              plotFuncs=subsetPlots))
+    #########################
+    # Cosmology
+    #########################
 
-    # XXX--need some sort of metric for weak lensing
+    # note the desc batch does not currently take the extraSql or extraMetadata arguments.
+    descBundleDict = descWFDBatch(colmap=colmap, runName=runName, nside=nside)
+    for d in descBundleDict:
+        bundleList.append(descBundleDict[d])
 
     #########################
     # Variables and Transients
