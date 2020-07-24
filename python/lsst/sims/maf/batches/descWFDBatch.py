@@ -42,7 +42,7 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64,
     models = ['SNIa-normal']
     plasticc_models_dict = {}
     for model in models:
-        plasticc_models_dict[model] = 'sn' # list(load_plasticc_lc(model=model).values())
+        plasticc_models_dict[model] = list(load_plasticc_lc(model=model).values())
 
     # One of the primary concerns for DESC WFD metrics is to add dust extinction and coadded depth limits
     # as well as to get some coverage in all 6 bandpasses.
