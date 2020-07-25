@@ -25,5 +25,5 @@ if __name__ == '__main__':
     if args.plotOnly:
         replot(bdict, opsdb, colmap, args)
     else:
-        run(bdict, opsdb, colmap, args)
+        run(bdict, opsdb, colmap, args, save=False)
     opsdb.close()
