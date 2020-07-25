@@ -42,7 +42,7 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64,
     models = ['SNIa-normal']
     plasticc_models_dict = {}
     for model in models:
-        plasticc_models_dict[model] = list(load_plasticc_lc(model=model).values())
+        plasticc_models_dict[model] = 'SN' #list(load_plasticc_lc(model=model).values())
 
     # One of the primary concerns for DESC WFD metrics is to add dust extinction and coadded depth limits
     # as well as to get some coverage in all 6 bandpasses.
@@ -93,8 +93,10 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64,
     displayDict['subgroup'] = f'{subgroupCount}: LSS'
     displayDict['order'] = 0
     plotDict = {'percentileClip': 95., 'nTicks': 5}
-    sqlconstraint = f'note not like "DD%" and filter = "{bandpass}"'
-    metadata = f'{bandpass} band non-DD'
+    # Have to include all filters in query, so that we check for all-band coverage.
+    # Galaxy numbers calculated using 'bandpass' images only though.
+    sqlconstraint = f'note not like "DD%"'
+    metadata = f'{bandpass} band galaxies non-DD'
     metric = DepthLimitedNumGalMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                       nside=nside, filterBand=bandpass, redshiftBin='all',
                                       nfilters_needed=nfilters_needed,
