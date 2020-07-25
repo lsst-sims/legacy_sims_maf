@@ -18,7 +18,8 @@ class ExgalM5_with_cuts(BaseMetric):
     Note: this metric calculates the depth after dust extinction in band 'lsstFilter', but because
     it looks for coverage in all bands, there should generally be no filter-constraint on the sql query.
     """
-    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', units='mag',
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter',
+                 metricName='ExgalM5_with_cuts', units='mag',
                  lsstFilter='i', wavelen_min=None, wavelen_max=None,
                  extinction_cut=0.2, depth_cut=25.9, nFilters=6, **kwargs):
         self.m5Col = m5Col
@@ -30,8 +31,8 @@ class ExgalM5_with_cuts(BaseMetric):
         # I thought about inheriting from ExGalM5 instead, but the columns specification is more complicated
         self.exgalM5 = ExgalM5(m5Col=m5Col, units=units, lsstFilter=self.lsstFilter,
                                wavelen_min=wavelen_min, wavelen_max=wavelen_max)
-        super().__init__(col=[self.m5Col, self.filterCol], units=units, maps=self.exgalM5.maps,
-                         **kwargs)
+        super().__init__(col=[self.m5Col, self.filterCol], metricName=metricName, units=units,
+                         maps=self.exgalM5.maps, **kwargs)
 
     def run(self, dataSlice, slicePoint):
         # check to make sure there is at least some coverage in the required number of bands

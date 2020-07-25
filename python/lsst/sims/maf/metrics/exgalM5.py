@@ -27,7 +27,7 @@ class ExgalM5(BaseMetric):
     wavelen_max : float, opt
         If lsstFilter is not specified, this can be used to set the maximum wavelength for dust extinction.
     """
-    def __init__(self, m5Col='fiveSigmaDepth', units='mag',
+    def __init__(self, m5Col='fiveSigmaDepth', metricName='ExgalM5', units='mag',
                  lsstFilter='r', wavelen_min=None , wavelen_max=None , **kwargs):
         # Set the name for the dust map to use. This is gathered into the MetricBundle.
         maps = ['DustMap']
@@ -39,7 +39,7 @@ class ExgalM5(BaseMetric):
             wavelen_max = waveMaxes[lsstFilter]
 
         self.m5Col = m5Col
-        super().__init__(col=[self.m5Col], maps=maps, units=units, **kwargs)
+        super().__init__(col=[self.m5Col], maps=maps, metricName=metricName, units=units, **kwargs)
 
         # Set up internal values for the dust extinction.
         testsed = Sed()
