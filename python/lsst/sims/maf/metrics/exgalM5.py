@@ -54,8 +54,8 @@ class ExgalM5(BaseMetric):
         # Add dust
         self.a, self.b = testsed.setupCCM_ab()
         testsed.addDust(self.a, self.b, ebv=self.ref_ebv, R_v=self.R_v)
-        # Calculate difference due to dust when EBV=1.0
-        self.Ax1 = flatmag - testsed.calcMag(testbandpass)
+        # Calculate difference due to dust when EBV=1.0 (m_dust = m_nodust - Ax, Ax > 0)
+        self.Ax1 = testsed.calcMag(testbandpass) - flatmag
         # We will call Coaddm5Metric to calculate the coadded depth. Set it up here.
         self.Coaddm5Metric = Coaddm5Metric(m5Col=m5Col)
 

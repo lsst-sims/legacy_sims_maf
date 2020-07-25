@@ -92,7 +92,7 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64,
     subgroupCount += 1
     displayDict['subgroup'] = f'{subgroupCount}: LSS'
     displayDict['order'] = 0
-    plotDict = {'percentileClip': 95., 'nTicks': 5}
+    plotDict = {'nTicks': 5}
     # Have to include all filters in query, so that we check for all-band coverage.
     # Galaxy numbers calculated using 'bandpass' images only though.
     sqlconstraint = f'note not like "DD%"'
