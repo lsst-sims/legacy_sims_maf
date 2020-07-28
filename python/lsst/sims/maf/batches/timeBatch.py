@@ -315,7 +315,7 @@ def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata
 
     # Median inter-night gap (each and all filters)
     metric = metrics.SeasonLengthMetric(metricName='Median Season Length', mjdCol=colmap['mjd'],
-                                        seasonCol='season', reduceFunc=np.median)
+                                        reduceFunc=np.median)
     for f in filterlist:
         displayDict['caption'] = 'Median season length, %s.' % metadata[f]
         displayDict['order'] = orders[f]

@@ -239,6 +239,9 @@ class StaticProbesFoMEmulatorMetricSimple(BaseMetric):
     A newer version is being created. This version has been renamed 
     Simple in anticipation of the newer, more sophisticated metric
     replacing it.
+
+    Note that this is truly a summary metric and should be run on the output of
+    Exgalm5_with_cuts.
     """
     def __init__(self, nside=128, year=10, col=None, **kwargs):
         
@@ -250,7 +253,7 @@ class StaticProbesFoMEmulatorMetricSimple(BaseMetric):
             col (str): column name of metric data.
         """
         self.nside = nside
-        super().__init__(metricName='StaticProbesFoMEmulatorMetric', col=col, **kwargs)
+        super().__init__(col=col, **kwargs)
         if col is None:
             self.col = 'metricdata'
         self.year = year
