@@ -1,6 +1,12 @@
 import numpy as np
 import healpy as hp
 from scipy import interpolate
+import george
+from george import kernels
+from scipy.optimize import minimize
+from george.metrics import Metric
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
