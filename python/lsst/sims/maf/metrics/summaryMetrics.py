@@ -343,25 +343,23 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
         # Standardizing data
         df_unscaled = pd.DataFrame(parameters)
         X_params = ['area', 'depth', 'shear_m', 'sigma_z', 'sig_delta_z', 'sig_sigma_z']
-        scaler = StandardScaler()
         scalerX = StandardScaler()
         scalerY = StandardScaler()
-        df = pd.DataFrame(scaler.fit_transform(df_unscaled), columns=parameters.keys())
         X = df_unscaled.drop('FOM', axis=1)
         X = pd.DataFrame(scalerX.fit_transform(df_unscaled.drop('FOM', axis=1)), columns=X_params)
         Y = pd.DataFrame(scalerY.fit_transform(np.array(df_unscaled['FOM']).reshape(-1, 1)), columns=['FOM'])
 
         # Building Gaussian Process based emulator
         kernel = kernels.ExpSquaredKernel(metric=[1,1,1,1,1,1], ndim=6)
-        gp = george.GP(kernel, mean=df['FOM'].mean())
+        gp = george.GP(kernel, mean=Y['FOM'].mean())
         gp.compute(X) #I have taken the last raw put to use it as test point 
 
         def neg_ln_lik(p):
                     gp.set_parameter_vector(p)
-                    return -gp.log_likelihood(df['FOM']) 
+                    return -gp.log_likelihood(Y['FOM']) 
         def grad_neg_ln_like(p):
                     gp.set_parameter_vector(p)
-                    return -gp.grad_log_likelihood(df['FOM']) 
+                    return -gp.grad_log_likelihood(Y['FOM']) 
         result = minimize(neg_ln_lik, gp.get_parameter_vector(), jac=grad_neg_ln_like)
 
         gp.set_parameter_vector(result.x)
@@ -370,7 +368,7 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
         to_pred = np.array([[area, median_depth, self.shear_m, self.sigma_z, self.sig_delta_z, self.sig_sigma_z]])
         to_pred = scalerX.transform(to_pred)
         
-        predSFOM = gp.predict(df['FOM'], to_pred, return_cov=False)
+        predSFOM = gp.predict(Y['FOM'], to_pred, return_cov=False)
         
         predFOM = scalerY.inverse_transform(list(predSFOM))
         
