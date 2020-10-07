@@ -46,7 +46,7 @@ class AreaSummaryMetric(BaseMetric):
         n_pix_needed = int(np.ceil(self.area/pix_area))
 
         # Only use the finite data
-        data = dataSlice[self.col][np.isfinite(dataSlice[self.col])]
+        data = dataSlice[self.col][np.isfinite(dataSlice[self.col].astype(float))]
         order = np.argsort(data)
         if self.decreasing:
             order = order[::-1]
