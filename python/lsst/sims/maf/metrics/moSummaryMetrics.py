@@ -52,10 +52,10 @@ class ValueAtHMetric(BaseMoMetric):
         # Check if desired H value is within range of H values.
         if (self.Hmark < Hvals.min()) or (self.Hmark > Hvals.max()):
             warnings.warn('Desired H value of metric outside range of provided H values.')
-            return None
+            return self.badval
         if metricVals.shape[0] != 1:
             warnings.warn('This is not an appropriate summary statistic for this data - need 1d values.')
-            return None
+            return self.badval
         value = np.interp(self.Hmark, Hvals, metricVals[0])
         return value
 
@@ -81,7 +81,7 @@ class MeanValueAtHMetric(BaseMoMetric):
         # Check if desired H value is within range of H values.
         if (self.Hmark < Hvals.min()) or (self.Hmark > Hvals.max()):
             warnings.warn('Desired H value of metric outside range of provided H values.')
-            return None
+            return self.badval
         value = np.interp(self.Hmark, Hvals, self.reduceFunc(metricVals.swapaxes(0, 1), axis=1))
         return value
 
