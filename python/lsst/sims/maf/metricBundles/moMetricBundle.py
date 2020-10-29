@@ -71,9 +71,8 @@ def makeCompletenessBundle(bundle, completenessMetric, Hmark=None, resultsDb=Non
         metric = ValueAtHMetric(Hmark=Hmark)
         mb.setSummaryMetrics(metric)
         mb.computeSummaryStats(resultsDb)
+        # if Hmark is outside Hrange, then 'val' will be ValueAtHMetric.badval (-999)
         val = mb.summaryValues['Value At H=%.1f' % Hmark]
-        if val is None:
-            val = 0
         if summaryName.startswith('Cumulative'):
             plotDict['label'] += ': @ H(<=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
         else:
