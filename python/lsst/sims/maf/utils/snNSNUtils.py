@@ -1292,8 +1292,15 @@ class GetReference:
             idx = lc_ref_tot['band'] == band
             lc_sel = Table(lc_ref_tot[idx])
 
-            lc_sel['z'] = lc_sel['z'].data.round(decimals=4)
-            lc_sel['phase'] = lc_sel['phase'].data.round(decimals=4)
+            lc_sel['z'] = lc_sel['z'].data.round(decimals=2)
+            lc_sel['phase'] = lc_sel['phase'].data.round(decimals=1)
+
+            """
+               select phases between -20 and 50 only
+               """
+            idx = lc_sel['phase'] < 50.
+            idx &= lc_sel['phase'] > -20.
+            lc_sel = lc_sel[idx]
 
             fluxes_e_sec = telescope.mag_to_flux_e_sec(
                 mag_range, [band]*len(mag_range), [30]*len(mag_range))
@@ -1311,14 +1318,15 @@ class GetReference:
             zmin, zmax, zstep, nz = self.limVals(lc_sel, 'z')
             phamin, phamax, phastep, npha = self.limVals(lc_sel, 'phase')
 
-            zstep = np.round(zstep, 3)
-            phastep = np.round(phastep, 3)
+            zstep = np.round(zstep, 1)
+            phastep = np.round(phastep, 1)
 
             zv = np.linspace(zmin, zmax, nz)
             # zv = np.round(zv,2)
             # print(band,zv)
             phav = np.linspace(phamin, phamax, npha)
 
+            print('Loading ', lcName, band, len(lc_sel), npha, nz)
             index = np.lexsort((lc_sel['z'], lc_sel['phase']))
             flux = np.reshape(lc_sel[index]['flux'], (npha, nz))
             fluxerr = np.reshape(lc_sel[index]['fluxerr'], (npha, nz))
