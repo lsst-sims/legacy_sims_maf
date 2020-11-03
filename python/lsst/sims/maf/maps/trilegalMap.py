@@ -18,14 +18,20 @@ class TrilegalDensityMap(BaseMap):
         Filter to use. Options of u,g,r,i,z,y
     nside : int (64)
         The HEALpix nside (can be 64 or 128)
+    ext : bool (False)
+        Use the full sky maps
     """
-    def __init__(self, filtername='r', nside=64):
+    def __init__(self, filtername='r', nside=64, ext=False):
         self.mapDir = os.path.join(getPackageDir('sims_maps'), 'TriMaps')
         self.filtername = filtername
         self.nside = nside
+        self.ext = ext
 
     def _readMap(self):
-        filename = 'TRIstarDensity_%s_nside_%i.npz' % (self.filtername, self.nside)
+        if self.ext:
+            filename = 'TRIstarDensity_%s_nside_%i_ext.npz' % (self.filtername, self.nside)
+        else:
+            filename = 'TRIstarDensity_%s_nside_%i.npz' % (self.filtername, self.nside)
         starMap = np.load(os.path.join(self.mapDir, filename))
         self.starMap = starMap['starDensity'].copy()
         self.starMapBins = starMap['bins'].copy()

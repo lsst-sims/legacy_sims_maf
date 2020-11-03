@@ -74,11 +74,14 @@ def setSQL(opsdb, sqlConstraint=None, extraMeta=None):
     return (propids, proptags, sqltags, metadata)
 
 
-def run(bdict, opsdb, colmap, args):
+def run(bdict, opsdb, colmap, args, save=True):
     resultsDb = db.ResultsDb(outDir=args.outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
-    group.runAll()
-    group.plotAll()
+    group = mb.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb, saveEarly=False)
+    if save:
+        group.runAll()
+        group.plotAll()
+    else:
+        group.runAll(clearMemory=True, plotNow=True)
     resultsDb.close()
     mafUtils.writeConfigs(opsdb, args.outDir)
 

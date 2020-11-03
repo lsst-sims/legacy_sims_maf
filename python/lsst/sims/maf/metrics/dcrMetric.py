@@ -48,16 +48,22 @@ class DcrPrecisionMetric(BaseMetric):
         position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol], snr)**2 +
                                   self.atm_err**2)
 
-        x_coord = np.tan(dataSlice['zenithDistance'])*np.sin(dataSlice[self.PACol])
+        x_coord = np.tan(np.radians(dataSlice['zenithDistance']))*np.sin(np.radians(dataSlice[self.PACol]))
+        x_coord2 = np.tan(np.radians(dataSlice['zenithDistance']))*np.cos(np.radians(dataSlice[self.PACol]))
         # Things should be the same for RA and dec.
         # Now I want to compute the error if I interpolate/extrapolate to +/-1.
 
         # function is of form, y=ax. a=y/x. da = dy/x.
         # Only strictly true if we know the unshifted position. But this should be a reasonable approx.
         slope_uncerts = position_errors/x_coord
-        total_slope_uncert = 1./np.sqrt(np.sum(1./slope_uncerts**2))
+        slope_uncerts2 = position_errors/x_coord2
 
-        # So, this will be the uncertainty in the RA or Dec offset at x= +/- 1.
+        total_slope_uncert = 1./np.sqrt(np.sum(1./slope_uncerts**2)+np.sum(1./slope_uncerts2**2))
+
+        # So, this will be the uncertainty in the RA or Dec offset at x= +/- 1. A.K.A., the uncertainty in the slope
+        # of the line made by tan(zd)*sin(PA) vs RA offset
+        # or the line tan(zd)*cos(PA) vs Dec offset
+        # Assuming we know the unshfted position of the object (or there's little covariance if we are fitting for both)
         result = total_slope_uncert
 
         return result

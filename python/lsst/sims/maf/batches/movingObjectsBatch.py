@@ -942,7 +942,6 @@ def plotFractions(bdictFractions, figroot=None, resultsDb=None,
     # Set colors for the fractions.
     for b in bdictFractions.values():
         k = b.metric.name
-        print(k)
         if '6' in k:
             b.plotDict['color'] = 'b'
         if '5' in k:
@@ -991,13 +990,10 @@ def plotSingle(bundle, resultsDb=None, outDir='.', figformat='pdf'):
     ph = plots.PlotHandler(figformat=figformat, resultsDb=resultsDb, outDir=outDir)
     plotBundles = []
     plotDicts = []
-    for r in pDict:
+    for percentile in pDict:
         plotBundles.append(bundle)
-        plotDicts.append(pDict[r])
+        plotDicts.append(pDict[percentile])
     plotDicts[0].update({'figsize': (8, 6), 'legendloc': 'upper right', 'yMin': 0})
-    # Remove the Hmark line because these plots get complicated.
-    for r in plotDicts:
-        del plotDicts[r]['Hmark']
     ph.setMetricBundles(plotBundles)
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
 
