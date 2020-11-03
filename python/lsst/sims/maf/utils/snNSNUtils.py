@@ -139,59 +139,6 @@ class LCfast:
         # return produced LC
         return tab_tot
 
-    def multi_old(self, obs, gen_par=None, bands='grizy'):
-        """ Simulation of the light curve
-        This methid uses multiprocessing (one band per process) to increase speed
-        Parameters
-        ----------------
-        obs: array
-         array of observations
-        gen_par: array, opt
-         simulation parameters (default: None)
-        bands: str, opt
-          filters to consider for simulation (default: grizy)
-        Returns
-        ------------
-        astropy table with:
-        columns: band, flux, fluxerr, snr_m5,flux_e,zp,zpsys,time
-        metadata : SNID,RA,Dec,DayMax,X1,Color,z
-        """
-
-        ra = np.mean(obs[self.RACol])
-        dec = np.mean(obs[self.DecCol])
-
-        if len(obs) == 0:
-            return None
-
-        result_queue = multiprocessing.Queue()
-
-        tab_tot = pd.DataFrame()
-
-        # multiprocessing here: one process (processBand) per band
-        jproc = -1
-
-        for j, band in enumerate(bands):
-            idx = obs[self.filterCol] == band
-            # print('multiproc',band,j,len(obs[idx]))
-            if len(obs[idx]) > 0:
-                jproc += 1
-                p = multiprocessing.Process(name='Subprocess-'+str(
-                    j), target=self.processBand, args=(obs[idx], band, gen_par, jproc, result_queue))
-                p.start()
-
-        resultdict = {}
-        for j in range(jproc+1):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
-
-        for j in range(jproc+1):
-            if not resultdict[j].empty:
-                tab_tot = tab_tot.append(resultdict[j], ignore_index=True)
-
-        # return produced LC
-        return tab_tot
 
     def processBand(self, sel_obs, band, gen_par, j=-1, output_q=None):
         """ LC simulation of a set of obs corresponding to a band
@@ -1136,23 +1083,15 @@ class Load_Reference:
         self.gamma_reference = '{}/gamma.hdf5'.format(templateDir)
 
         # print('Loading reference files')
-        result_queue = multiprocessing.Queue()
+
+        resultdict = {}
 
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
             fname = '{}/LC_{}_{}_380.0_800.0_ebvofMW_0.0_vstack.hdf5'.format(
                 templateDir, x1, color)
-            p = multiprocessing.Process(
-                name='Subprocess_main-'+str(j), target=self.load, args=(fname, j, result_queue))
-            p.start()
-
-        resultdict = {}
-        for j in range(len(x1_colors)):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
+            resultdict[j] = self.load(fname)
 
         for j in range(len(x1_colors)):
             if resultdict[j] is not None:
@@ -1160,18 +1099,14 @@ class Load_Reference:
 
         self.ref = lc_reference
 
-    def load(self, fname, j=-1, output_q=None):
+    def load(self, fname):
         """
-        Method to load reference files 
+        Method to load reference files
 
         Parameters
         ---------------
         fname: str
            file name
-        j: int, opt
-           int for multiprocessing (default: -1)
-        output_q: multiprocessing.queue
-          queue for multiprocessing (default: None)
 
         Returns
         -----------
@@ -1180,10 +1115,7 @@ class Load_Reference:
         lc_ref = GetReference(
             fname, self.gamma_reference, self.Instrument)
 
-        if output_q is not None:
-            output_q.put({j: lc_ref})
-        else:
-            return tab_tot
+        return lc_ref
 
     def check_grab(self, templateDir, listfiles):
         """
