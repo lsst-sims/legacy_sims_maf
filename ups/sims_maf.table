@@ -1,14 +1,8 @@
 setupRequired(base)
-setupRequired(numpy)
-setupRequired(matplotlib)
-setupRequired(scipy)
-setupRequired(sqlalchemy)
 # For the sunrise/sunset -- this should be replaced by palpy
 setupRequired(ephem)
 # For palpy coordinate transforms
 setupRequired(palpy)
-# For the healpy slicer and grid
-setupRequired(healpy)
 # For basic sims utilities
 setupRequired(sims_utils)
 # For opsim database for unit test

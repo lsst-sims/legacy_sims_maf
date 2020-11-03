@@ -275,47 +275,47 @@ class TestSNmetrics(unittest.TestCase):
 
     def testNSNMetric(self):
         """ Test the SN NSN metric """
+        sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
+        if sims_maf_contrib_dir is not None:
 
-        day0 = 59000
-        data = None
+            day0 = 59000
+            data = None
 
-        diff_season = 280.
-        nseasons = 1
-        for val in np.arange(59000, 59000+nseasons*diff_season, diff_season):
-            dat = Observations_season(day0, val)
-            if data is None:
-                data = dat
-            else:
-                data = np.concatenate((data, dat))
+            diff_season = 280.
+            nseasons = 1
+            for val in np.arange(59000, 59000+nseasons*diff_season, diff_season):
+                dat = Observations_season(day0, val)
+                if data is None:
+                    data = dat
+                else:
+                    data = np.concatenate((data, dat))
 
-        #print('data generated', len(data))
+            #print('data generated', len(data))
 
-        # this is to mimic healpixilization
-        nside = 128
-        area = hp.nside2pixarea(nside, degrees=True)
-        # metric instance
-        templateDir = 'reference_files_NSN_metric'
-        metric = SNNSNMetric(
-            pixArea=area, season=[-1], verbose=False, templateDir=templateDir)
+            # this is to mimic healpixilization
+            nside = 128
+            area = hp.nside2pixarea(nside, degrees=True)
+            # metric instance
+            templateDir = None
+            metric = SNNSNMetric(
+                pixArea=area, season=[-1], verbose=False, templateDir=templateDir)
 
-        time_ref = time.time()
+            time_ref = time.time()
 
-        res = metric.run(data)
+            res = metric.run(data)
 
-        nSN = res['nSN'].item()
-        zlim = res['zlim'].item()
+            nSN = res['nSN'].item()
+            zlim = res['zlim'].item()
 
-        #print(time.time()-time_ref, nSN, zlim)
-        nSN_ref = 2.523
-        zlim_ref = 0.65
+            #print(time.time()-time_ref, nSN, zlim)
+            nSN_ref = 2.523
+            zlim_ref = 0.65
 
-        assert(np.isclose(nSN, nSN_ref))
-        assert(np.isclose(zlim, zlim_ref))
-
-        # now cleaning the dir ie remove reference files
-        if os.path.isdir(templateDir):
-            os.system('rm -rf {}'.format(templateDir))
-
+            assert(np.isclose(nSN, nSN_ref))
+            assert(np.isclose(zlim, zlim_ref))
+        else:
+            warnings.warn(
+                "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
 def setup_module(module):
     lsst.utils.tests.init()

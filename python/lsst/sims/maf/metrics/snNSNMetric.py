@@ -68,7 +68,7 @@ class SNNSNMetric(BaseMetric):
                  vistimeCol='visitTime', season=[-1], zmin=0.0, zmax=1.2,
                  pixArea=9.6, verbose=False, ploteffi=False,
                  n_bef=4, n_aft=10, snr_min=5., n_phase_min=1,
-                 n_phase_max=1, templateDir='reference_files', zlim_coeff=-1., **kwargs):
+                 n_phase_max=1, templateDir=None, zlim_coeff=-1., **kwargs):
 
         self.mjdCol = mjdCol
         self.m5Col = m5Col

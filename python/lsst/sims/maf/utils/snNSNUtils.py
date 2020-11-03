@@ -1097,7 +1097,11 @@ class Load_Reference:
     """
 
     def __init__(self, server='https://me.lsst.eu/gris/DESC_SN_pipeline',
-                 templateDir='reference_files'):
+                 templateDir=None):
+
+        if templateDir is None:
+            sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
+            templateDir = os.path.join(sims_maf_contrib_dir, 'data/SNe_data')
 
         self.server = server
         # define instrument
