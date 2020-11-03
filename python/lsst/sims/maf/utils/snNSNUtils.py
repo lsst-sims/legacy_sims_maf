@@ -1297,7 +1297,7 @@ class GetReference:
 
             """
                select phases between -20 and 50 only
-               """
+            """
             idx = lc_sel['phase'] < 50.
             idx &= lc_sel['phase'] > -20.
             lc_sel = lc_sel[idx]
