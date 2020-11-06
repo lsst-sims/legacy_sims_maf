@@ -3,7 +3,6 @@ setupRequired(base)
 setupRequired(ephem)
 # For palpy coordinate transforms
 setupRequired(palpy)
-# For the healpy slicer and grid
 # For basic sims utilities
 setupRequired(sims_utils)
 # For opsim database for unit test

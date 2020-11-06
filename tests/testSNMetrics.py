@@ -1,6 +1,6 @@
 from builtins import zip
 import matplotlib
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 import numpy as np
 import unittest
 #import lsst.sims.maf.metrics as metrics
@@ -9,11 +9,79 @@ from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
 from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
 from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
 from lsst.sims.maf.metrics.snSLMetric import SNSLMetric
+from lsst.sims.maf.metrics.snNSNMetric import SNNSNMetric
+
 import os
 import warnings
+import healpy as hp
+import time
 
 m5_ref = dict(
     zip('ugrizy', [23.60, 24.83, 24.38, 23.92, 23.35, 22.44]))
+
+
+def Observations_band(day0=59000, daymin=59000, cadence=3., season_length=140., band='r'):
+    # Define fake data
+    names = ['observationStartMJD', 'fieldRA', 'fieldDec',
+             'fiveSigmaDepth', 'visitExposureTime', 'numExposures',
+             'visitTime', 'season', 'seeingFwhmEff', 'seeingFwhmGeom',
+             'pixRA', 'pixDec']
+    types = ['f8']*len(names)
+    names += ['night', 'healpixID']
+    types += ['i2', 'i2']
+    names += ['filter']
+    types += ['O']
+
+    daylast = daymin+season_length
+    cadence = cadence
+    dayobs = np.arange(daymin, daylast, cadence)
+    npts = len(dayobs)
+    data = np.zeros(npts, dtype=list(zip(names, types)))
+    data['observationStartMJD'] = dayobs
+    data['night'] = np.floor(data['observationStartMJD']-day0+1)
+    #data['night'] = 10
+    data['fiveSigmaDepth'] = m5_ref[band]
+    data['visitExposureTime'] = 30.
+    data['numExposures'] = 1
+    data['visitTime'] = 34
+    data['filter'] = band
+    #data['season'] = 1.
+    data['seeingFwhmEff'] = 0.8
+    data['seeingFwhmGeom'] = 0.8
+    data['healpixID'] = 10
+    data['pixRA'] = 0.0
+    data['pixDec'] = 0.0
+    return data
+
+
+def Observations_season(day0=59000, mjdmin=59000, cadence=3.):
+    bands = 'grizy'
+    Nvisits = dict(zip(bands, [10, 20, 20, 26, 20]))
+    rat = 34./3600./24.
+    shift_visits = {}
+    shift_visits['g'] = 0
+    shift_visits['r'] = rat*Nvisits['g']
+    shift_visits['i'] = rat*Nvisits['r']
+    shift_visits['z'] = rat*Nvisits['i']
+    shift_visits['y'] = rat*Nvisits['z']
+
+    # get data
+    data = None
+    season_length = 180
+    shift = 30./(3600.*24)
+    for band in bands:
+
+        mjd = mjdmin+shift_visits[band]
+        for i in range(Nvisits[band]):
+            mjd += shift
+            dat = Observations_band(
+                daymin=mjd, season_length=season_length, cadence=cadence, band=band)
+            if data is None:
+                data = dat
+            else:
+                data = np.concatenate((data, dat))
+
+    return data
 
 
 def fakeData(band, season=1):
@@ -177,7 +245,7 @@ class TestSNmetrics(unittest.TestCase):
                 "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
     def testSNSLMetric(self):
-        """Test the SN SNR metric """
+        """Test the SN SL metric """
 
         # load some fake data
         data = None
@@ -205,6 +273,49 @@ class TestSNmetrics(unittest.TestCase):
 
         assert(np.abs(nSL-nSL_ref) < 1.e-8)
 
+    def testNSNMetric(self):
+        """ Test the SN NSN metric """
+        sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
+        if sims_maf_contrib_dir is not None:
+
+            day0 = 59000
+            data = None
+
+            diff_season = 280.
+            nseasons = 1
+            for val in np.arange(59000, 59000+nseasons*diff_season, diff_season):
+                dat = Observations_season(day0, val)
+                if data is None:
+                    data = dat
+                else:
+                    data = np.concatenate((data, dat))
+
+            #print('data generated', len(data))
+
+            # this is to mimic healpixilization
+            nside = 128
+            area = hp.nside2pixarea(nside, degrees=True)
+            # metric instance
+            templateDir = None
+            metric = SNNSNMetric(
+                pixArea=area, season=[-1], verbose=False, templateDir=templateDir)
+
+            time_ref = time.time()
+
+            res = metric.run(data)
+
+            nSN = res['nSN'].item()
+            zlim = res['zlim'].item()
+
+            #print(time.time()-time_ref, nSN, zlim)
+            nSN_ref = 2.523
+            zlim_ref = 0.65
+
+            assert(np.isclose(nSN, nSN_ref))
+            assert(np.isclose(zlim, zlim_ref))
+        else:
+            warnings.warn(
+                "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
 def setup_module(module):
     lsst.utils.tests.init()
