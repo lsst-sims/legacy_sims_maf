@@ -59,11 +59,13 @@ class BaseSpatialSlicer(BaseSlicer):
     chipNames : array-like, optional
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
+    scienceChips : bool (True)
+        Do not include wavefront sensors when checking if a point landed on a chip.
     """
     def __init__(self, lonCol='fieldRA', latCol='fieldDec', latLonDeg=True,
                  verbose=True, badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
-                 chipNames='all'):
+                 chipNames='all', scienceChips=True):
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
         self.latCol = latCol
@@ -82,6 +84,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.leafsize = leafsize
         self.useCamera = useCamera
         self.chipsToUse = chipNames
+        self.scienceChips = scienceChips
         # RA and Dec are required slicePoint info for any spatial slicer. Slicepoint RA/Dec are in radians.
         self.slicePoints['sid'] = None
         self.slicePoints['ra'] = None
@@ -187,6 +190,11 @@ class BaseSpatialSlicer(BaseSlicer):
                                                self.slicePoints['dec'][hpIndices],
                                                epoch=self.epoch,
                                                camera=self.camera, obs_metadata=obs_metadata)
+                if self.scienceChips:
+                    # I think it's W for wavefront sensor
+                    good = np.flatnonzero(np.core.defchararray.find(chipNames.astype(str), 'W') == -1)
+                    chipNames = chipNames[good]
+                    hpIndices = hpIndices[good]
                 # If we are using only a subset of chips
                 if self.chipsToUse != 'all':
                     checkedChipNames = [chipName in self.chipsToUse for chipName in chipNames]
