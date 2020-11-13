@@ -12,7 +12,7 @@ from functools import wraps
 from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
-from lsst.obs.lsstSim import LsstSimMapper
+from lsst.obs.lsst import LsstCamMapper
 from lsst.sims.coordUtils import _chipNameFromRaDec
 import lsst.sims.utils as simsUtils
 
@@ -152,7 +152,7 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def _setupLSSTCamera(self):
         """If we want to include the camera chip gaps, etc"""
-        mapper = LsstSimMapper()
+        mapper = LsstCamMapper()
         self.camera = mapper.camera
         self.epoch = 2000.0
 
