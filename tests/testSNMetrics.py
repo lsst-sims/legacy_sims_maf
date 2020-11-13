@@ -6,10 +6,10 @@ import unittest
 #import lsst.sims.maf.metrics as metrics
 import lsst.utils.tests
 from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
-from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
-from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
-from lsst.sims.maf.metrics.snSLMetric import SNSLMetric
-from lsst.sims.maf.metrics.snNSNMetric import SNNSNMetric
+from lsst.sims.maf.metrics import SNCadenceMetric
+from lsst.sims.maf.metrics import SNSNRMetric
+from lsst.sims.maf.metrics import SNSLMetric
+from lsst.sims.maf.metrics import SNNSNMetric
 
 import os
 import warnings
