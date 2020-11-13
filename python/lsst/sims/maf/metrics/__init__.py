@@ -29,3 +29,7 @@ from .periodicDetectMetric import *
 from .coverageMetric import *
 from .dcrMetric import *
 from .kuiperMetrics import *
+from .snNSNMetric import *
+from .snSLMetric import *
+from .snSNRMetric import *
+from .snCadenceMetric import *
