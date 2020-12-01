@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['TemplateExistsMetric', 'UniformityMetric',
            'RapidRevisitUniformityMetric', 'RapidRevisitMetric','NRevisitsMetric', 'IntraNightGapsMetric',
-           'InterNightGapsMetric', 'VisitGapMetric', 'SeasonLengthMetric']
+           'InterNightGapsMetric', 'VisitGapMetric']
 
 
 class fSMetric(BaseMetric):
@@ -386,66 +386,4 @@ class VisitGapMetric(BaseMetric):
         dataSlice.sort(order=self.mjdCol)
         diff = np.diff(dataSlice[self.mjdCol])
         result = self.reduceFunc(diff) * 24.
-        return result
-
-class SeasonLengthMetric(BaseMetric):
-    """
-    Calculate the length of LSST seasons, in days.
-
-    Parameters
-    ----------
-    reduceFunc : function, optional
-       Function that can operate on array-like structures. Typically numpy function.
-       This reduces the season length in each season from 10 separate values to a single value.
-       Default np.median.
-    """
-    def __init__(self, mjdCol='observationStartMJD', reduceFunc=np.median,
-                 metricName='SeasonLength', **kwargs):
-        units = 'days'
-        self.mjdCol = mjdCol
-        self.reduceFunc = reduceFunc
-        super().__init__(col=[self.mjdCol],
-                         units=units, metricName=metricName, **kwargs)
-        # objRA=0 on autumnal equinox.
-        # autumnal equinox 2014 happened on Sept 23 --> Equinox MJD
-        self.Equinox = 2456923.5 - 2400000.5
-
-    def run(self, dataSlice, slicePoint):
-        """Calculate the (reduceFunc) of the length of each season.
-        Uses the slicePoint RA/Dec to calculate the position in question, then uses the times of the visits
-        to assign them into seasons (based on where the sun is relative to the slicePoint Ra/Dec).
-
-        Parameters
-        ----------
-        dataSlice : numpy.array
-            Numpy structured array containing the data related to the visits provided by the slicer.
-        slicePoint : dict
-            Dictionary containing information about the slicepoint currently active in the slicer.
-
-        Returns
-        -------
-        float
-           The (reduceFunc) of the length of each season, in days.
-        """
-        dataSlice.sort(order=self.mjdCol)
-        # SlicePoints ra/dec are always in radians - convert to HOURS for this (b/c time)
-        objRA = np.degrees(slicePoint['ra']) / 15.0
-        # objRA=0 on autumnal equinox.
-        # autumnal equinox 2014 happened on Sept 23 --> Equinox MJD
-        # Use 365.25 for the length of a year here, because we're dealing with real seasons.
-        daysSinceEquinox = 0.5*objRA*(365.25/12.0)  # 0.5 to go from RA to month; 365.25/12.0 months to days
-        firstSeasonBegan = self.Equinox + daysSinceEquinox - 0.5*365.25   # in MJD
-        # Now we can compute the number of years since the first season
-        # began, and so assign a global integer season number:
-        globalSeason = np.floor((dataSlice[self.mjdCol] - firstSeasonBegan)/365.25)
-        # Subtract off season number of first observation:
-        seasons = globalSeason - np.min(globalSeason)
-        # Get the unique seasons, so that we can separate each one
-        season_list = np.unique(seasons)
-        # Find the first and last observation of each season.
-        firstOfSeason= np.searchsorted(seasons, season_list)
-        lastOfSeason = np.searchsorted(seasons, season_list, side='right') - 1
-
-        seasonlength = dataSlice[self.mjdCol][lastOfSeason] - dataSlice[self.mjdCol][firstOfSeason]
-        result = self.reduceFunc(seasonlength)
         return result
