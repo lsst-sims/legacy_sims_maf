@@ -8,7 +8,7 @@ import lsst.sims.maf.metricBundles as mb
 from .common import standardSummary, filterList, combineMetadata
 from .colMapDict import ColMapDict
 
-__all__ = ['descWFDBatch']
+__all__ = ['descWFDBatch', 'tdcBatch']
 
 
 def descWFDBatch(colmap=None, runName='opsim', nside=64,
@@ -166,6 +166,36 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64,
             bundleList.append(mb.MetricBundle(m, slicer, filtersqls[f], plotDict=plotDict,
                                               displayDict=displayDict, summaryMetrics=standardStats,
                                               plotFuncs=subsetPlots))
+
+    # Set the runName for all bundles and return the bundleDict.
+    for b in bundleList:
+        b.setRunName(runName)
+    return mb.makeBundlesDictFromList(bundleList)
+
+
+def tdcBatch(colmap=None, runName='opsim', nside=64, accuracyThreshold=0.04,
+             extraSql=None, extraMetadata=None):
+    # The options to add additional sql constraints are removed for now.
+    if colmap is None:
+        colmap = ColMapDict('fbs')
+
+    # Calculate a subset of DESC WFD-related metrics.
+    displayDict = {'group': 'Strong Lensing'}
+    displayDict['subgroup'] = 'Lens Time Delay'
+
+    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+
+    summaryMetrics = [metrics.MeanMetric(), metrics.MedianMetric(), metrics.RmsMetric()]
+    # Ideally need a way to do better on calculating the summary metrics for the high accuracy area.
+
+    slicer = slicers.HealpixSlicer(nside=nside)
+    tdcMetric = metrics.TdcMetric(metricName='TDC', nightCol=colmap['night'], mjdCol=colmap['mjd'])
+
+    bundle = mb.MetricBundle(tdcMetric, slicer, constraint=extraSql, metadata=extraMetadata,
+                             displayDict=displayDict, plotFuncs=subsetPlots,
+                             summaryMetrics=summaryMetrics)
+
+    bundleList = [bundle]
 
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
