@@ -7,18 +7,22 @@ __all__ = ['PhaseGapMetric', 'PeriodicQualityMetric']
 class PhaseGapMetric(BaseMetric):
     """
     Measure the maximum gap in phase coverage for observations of periodic variables.
+
+    Parameters
+    ----------
+    col: str, opt
+        Name of the column to use for the observation times (MJD)
+    nPeriods: int, opt
+        Number of periods to test
+    periodMin: float, opt
+        Minimum period to test, in days.
+    periodMax: float, opt
+        Maximum period to test, in days
+    nVisitsMin: int, opt
+        Minimum number of visits necessary before looking for the phase gap.
     """
     def __init__(self, col='observationStartMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3,
                  metricName='Phase Gap', **kwargs):
-        """
-        Construct an instance of a PhaseGapMetric class
-
-        :param col: Name of the column to use for the observation times, commonly 'observationStartMJD'
-        :param nPeriods: Number of periods to test
-        :param periodMin: Minimum period to test (days)
-        :param periodMax: Maximimum period to test (days)
-        :param nVistisMin: minimum number of visits necessary before looking for the phase gap
-        """
         self.periodMin = periodMin
         self.periodMax = periodMax
         self.nPeriods = nPeriods
@@ -26,12 +30,6 @@ class PhaseGapMetric(BaseMetric):
         super(PhaseGapMetric, self).__init__(col, metricName=metricName, units='Fraction, 0-1', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        """
-        Run the PhaseGapMetric.
-        :param dataSlice: Data for this slice.
-        :param slicePoint: Metadata for the slice (Optional as not used here).
-        :return: a dictionary of the periods used here and the corresponding largest gaps.
-        """
         if len(dataSlice) < self.nVisitsMin:
             return self.badval
         # Create 'nPeriods' evenly spaced periods within range of min to max.
