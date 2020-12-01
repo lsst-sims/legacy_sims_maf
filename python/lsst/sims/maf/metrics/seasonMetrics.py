@@ -144,9 +144,9 @@ class MeanCampaignFrequencyMetric(BaseMetric):
         for i, (first, last) in enumerate(zip(firstOfSeason, lastOfSeason)):
             if first < last:
                 n = dataSlice[self.nightCol][first:last+1]
-                deltaNights = np.diff(n)
-                deltaNights = deltaNights[np.where(deltaNights > 0)]
-                seasonMeans[i] = np.mean(deltaNights)
+                deltaNights = np.diff(np.unique(n))
+                if len(deltaNights) > 0:
+                    seasonMeans[i] = np.mean(deltaNights)
         return np.mean(seasonMeans)
 
 
@@ -190,15 +190,13 @@ class TdcMetric(BaseMetric):
         seasonMeans = np.zeros(len(firstOfSeason), float)
         for i, (first, last) in enumerate(zip(firstOfSeason, lastOfSeason)):
             n = dataSlice[self.nightCol][first:last+1]
-            deltaNights = np.diff(n)
-            deltaNights = deltaNights[np.where(deltaNights>0)]
-            seasonMeans[i] = np.mean(deltaNights)
+            deltaNights = np.diff(np.unique(n))
+            if len(deltaNights) > 0:
+                seasonMeans[i] = np.mean(deltaNights)
         cad = np.mean(seasonMeans)
         # Evaluate precision and accuracy for TDC
         if sea == 0 or cad == 0 or camp == 0:
-            accuracy = self.badval
-            precision = self.badval
-            rate = self.badval
+            return self.badval
         else:
             accuracy = 0.06 * (self.seaNorm / sea) * \
                        (self.campNorm / camp)**(1.1)
