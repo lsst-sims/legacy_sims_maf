@@ -44,14 +44,14 @@ def findSeasonEdges(seasons):
     Parameters
     ----------
     seasons: np.ndarray
-        Seasons, such as calculated by calcSeason
+        Seasons, such as calculated by calcSeason.
+        Note that seasons should be sorted!!
 
     Returns
     -------
     np.ndarray, np.ndarray
         The indexes of the first and last date in the season.
     """
-    seasons.sort()
     intSeasons = np.floor(seasons)
     # Get the unique seasons, so that we can separate each one
     season_list = np.unique(intSeasons)
@@ -67,17 +67,21 @@ class SeasonLengthMetric(BaseMetric):
 
     Parameters
     ----------
+    minExpTime: float, opt
+        Minimum visit exposure time to count for a 'visit', in seconds. Default 20.
     reduceFunc : function, optional
        Function that can operate on array-like structures. Typically numpy function.
        This reduces the season length in each season from 10 separate values to a single value.
        Default np.median.
     """
-    def __init__(self, mjdCol='observationStartMJD', reduceFunc=np.median,
-                 metricName='SeasonLength', **kwargs):
+    def __init__(self, mjdCol='observationStartMJD', expTimeCol='visitExposureTime', minExpTime=20,
+                 reduceFunc=np.median, metricName='SeasonLength', **kwargs):
         units = 'days'
         self.mjdCol = mjdCol
+        self.expTimeCol = expTimeCol
+        self.minExpTime = minExpTime
         self.reduceFunc = reduceFunc
-        super().__init__(col=[self.mjdCol],
+        super().__init__(col=[self.mjdCol, self.expTimeCol],
                          units=units, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint):
@@ -97,12 +101,13 @@ class SeasonLengthMetric(BaseMetric):
         float
            The (reduceFunc) of the length of each season, in days.
         """
-        # Order data Slice/times
-        dataSlice.sort(order=self.mjdCol)
+        # Order data Slice/times and exclude visits which are too short.
+        long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        data = np.sort(dataSlice[long], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
-        seasons = calcSeason(np.degrees(slicePoint['ra']), dataSlice[self.mjdCol])
+        seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
         firstOfSeason, lastOfSeason = findSeasonEdges(seasons)
-        seasonlengths = dataSlice[self.mjdCol][lastOfSeason] - dataSlice[self.mjdCol][firstOfSeason]
+        seasonlengths = data[self.mjdCol][lastOfSeason] - data[self.mjdCol][firstOfSeason]
         result = self.reduceFunc(seasonlengths)
         return result
 
@@ -111,14 +116,18 @@ class CampaignLengthMetric(BaseMetric):
     """Calculate the number of seasons (roughly, years) a pointing is observed for.
     This corresponds to the 'campaign length' for lensed quasar time delays.
     """
-    def __init__(self, mjdCol='observationStartMJD',  **kwargs):
+    def __init__(self, mjdCol='observationStartMJD', expTimeCol='visitExposureTime', minExpTime=20, **kwargs):
         units = ''
+        self.expTimeCol = expTimeCol
+        self.minExpTime = minExpTime
         self.mjdCol = mjdCol
-        super().__init__(col=[self.mjdCol], units=units, **kwargs)
+        super().__init__(col=[self.mjdCol, self.expTimeCol], units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint):
-        dataSlice.sort(order=self.mjdCol)
-        seasons = calcSeason(np.degrees(slicePoint['ra'], dataSlice[self.mjdCol]))
+        # Order data Slice/times and exclude visits which are too short.
+        long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        data = np.sort(dataSlice[long], order=self.mjdCol)
+        seasons = calcSeason(np.degrees(slicePoint['ra'], data[self.mjdCol]))
         intSeasons = np.floor(seasons)
         count = len(np.unique(intSeasons))
         return count
@@ -128,22 +137,26 @@ class MeanCampaignFrequencyMetric(BaseMetric):
     """Calculate the mean separation between nights, within a season - then the mean over the campaign.
     Calculate per season, to avoid any influence from season gaps.
     """
-    def __init__(self, mjdCol='observationStartMJD', nightCol='night', **kwargs):
+    def __init__(self, mjdCol='observationStartMJD', expTimeCol='visitExposureTime', minExpTime=20,
+                 nightCol='night', **kwargs):
         self.mjdCol = mjdCol
+        self.expTimeCol = expTimeCol
+        self.minExpTime = minExpTime
         self.nightCol = nightCol
         units = 'nights'
-        super().__init__(col=[self.mjdCol, self.nightCol], units=units, **kwargs)
+        super().__init__(col=[self.mjdCol, self.expTimeCol, self.nightCol], units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint):
-        # Order data Slice/times
-        dataSlice.sort(order=self.mjdCol)
+        # Order data Slice/times and exclude visits which are too short.
+        long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        data = np.sort(dataSlice[long], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
-        seasons = calcSeason(np.degrees(slicePoint['ra']), dataSlice[self.mjdCol])
+        seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
         firstOfSeason, lastOfSeason = findSeasonEdges(seasons)
         seasonMeans = np.zeros(len(firstOfSeason), float)
         for i, (first, last) in enumerate(zip(firstOfSeason, lastOfSeason)):
             if first < last:
-                n = dataSlice[self.nightCol][first:last+1]
+                n = data[self.nightCol][first:last+1]
                 deltaNights = np.diff(np.unique(n))
                 if len(deltaNights) > 0:
                     seasonMeans[i] = np.mean(deltaNights)
@@ -162,34 +175,38 @@ class TdcMetric(BaseMetric):
     campNorm = in units of years
     """
     def __init__(self, mjdCol='observationStartMJD', nightCol='night',
+                 expTimeCol='visitExposureTime', minExpTime=20,
                  metricName = 'TDC', cadNorm=3., seaNorm=4., campNorm=5., badval=-999, **kwargs):
         # Save the normalization values.
         self.cadNorm = cadNorm
         self.seaNorm = seaNorm
         self.campNorm = campNorm
         self.mjdCol = mjdCol
+        self.expTimeCol = expTimeCol
+        self.minExpTime = minExpTime
         self.nightCol = nightCol
-        super().__init__(col=[self.mjdCol, self.nightCol], badval=badval,
+        super().__init__(col=[self.mjdCol, self.expTimeCol, self.nightCol], badval=badval,
                          metricName = metricName, units = '%s' %('%'), **kwargs)
 
     def run(self, dataSlice, slicePoint):
-        # Order data Slice/times
-        dataSlice.sort(order=self.mjdCol)
+        # Order data Slice/times and exclude visits which are too short.
+        long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        data = np.sort(dataSlice[long], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
-        seasons = calcSeason(np.degrees(slicePoint['ra']), dataSlice[self.mjdCol])
+        seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
         intSeasons = np.floor(seasons)
         firstOfSeason, lastOfSeason = findSeasonEdges(seasons)
         # Campaign length
         camp = len(np.unique(intSeasons))
         # Season length
-        seasonlengths = dataSlice[self.mjdCol][lastOfSeason] - dataSlice[self.mjdCol][firstOfSeason]
+        seasonlengths = data[self.mjdCol][lastOfSeason] - data[self.mjdCol][firstOfSeason]
         sea = np.median(seasonlengths)
         # Convert to months
         sea = sea / 30.0
         # Campaign frequency / mean night separation
         seasonMeans = np.zeros(len(firstOfSeason), float)
         for i, (first, last) in enumerate(zip(firstOfSeason, lastOfSeason)):
-            n = dataSlice[self.nightCol][first:last+1]
+            n = data[self.nightCol][first:last+1]
             deltaNights = np.diff(np.unique(n))
             if len(deltaNights) > 0:
                 seasonMeans[i] = np.mean(deltaNights)
