@@ -189,7 +189,8 @@ def tdcBatch(colmap=None, runName='opsim', nside=64, accuracyThreshold=0.04,
     # Ideally need a way to do better on calculating the summary metrics for the high accuracy area.
 
     slicer = slicers.HealpixSlicer(nside=nside)
-    tdcMetric = metrics.TdcMetric(metricName='TDC', nightCol=colmap['night'], mjdCol=colmap['mjd'])
+    tdcMetric = metrics.TdcMetric(metricName='TDC', nightCol=colmap['night'],
+                                  expTimeCol=colmap['exptime'], mjdCol=colmap['mjd'])
 
     bundle = mb.MetricBundle(tdcMetric, slicer, constraint=extraSql, metadata=extraMetadata,
                              displayDict=displayDict, plotFuncs=subsetPlots,
