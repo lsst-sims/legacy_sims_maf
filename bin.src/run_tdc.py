@@ -115,7 +115,7 @@ if __name__ == '__main__':
     results['distance_precision'] = distance_precision
     # Write these summary values to the resultsDb
     metricId = resultsDb.updateMetric(bundle.metric.name, bundle.slicer.slicerName,
-                                      name, bundle.constraint, bundle.metadata, None)
+                                      args.runName, bundle.constraint, bundle.metadata, None)
     for k in results:
         resultsDb.updateSummaryStat(metricId, summaryName=k, summaryValue=results[k])
         
