@@ -155,6 +155,9 @@ class SummaryHistogram(BasePlotter):
             width = np.diff(bins)
             leftedge = bins[:-1] - width/2.0
             rightedge = bins[:-1] + width/2.0
+            # Correct for uneven/big bin widths
+            t = np.where(leftedge[1:] < rightedge[:-1], rightedge[:-1], leftedge[1:])
+            leftedge[1:] = t
             #x = np.ravel(list(zip(bins[:-1], bins[1:])))
             x = np.ravel(list(zip(leftedge, rightedge)))
             y = np.ravel(list(zip(finalHist, finalHist)))
