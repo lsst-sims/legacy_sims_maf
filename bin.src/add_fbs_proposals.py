@@ -82,7 +82,7 @@ def update_database(opsimdb, visits, propTags, propId):
         print('Already had filter index')
     # Add new table to track proposal information.
     sql = 'CREATE TABLE IF NOT EXISTS "Proposal" ("proposalId" INT PRIMARY KEY, ' \
-            '"proposalName" VARCHAR(10), "proposalType" VARCHAR(5))'
+            '"proposalName" VARCHAR(20), "proposalType" VARCHAR(5))'
     cursor.execute(sql)
     # Add proposal information to Proposal table.
     for pName, pId in propTags.items():
@@ -109,8 +109,9 @@ if __name__ == '__main__':
                         help='Type of wfd footprint [standard, extended, dust]')
     args = parser.parse_args()
 
-    # There are some standard WFD footprints: the standard version, the extendded version (with gal-lat cut),
+    # There are some standard WFD footprints: the standard version, the extended version (with gal-lat cut),
     # and an extended version with dust extinction cuts.
+    # Some of the actual simulations use variations on the declination limits; these aren't account for.
     # If you're using something else (non-standard), this script will have to be modified.
     # Note these "footprints" are standard (full) length healpix arrays for nside, but with values of 0/1
     wfd_defaults = ['standard', 'extended', 'dust', 'extended with dust']
