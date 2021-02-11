@@ -965,7 +965,12 @@ class SNNSNMetric(BaseMetric):
         # get efficiencies
         effis = effiInterp(zplot)
         # select data with efficiency decrease
-        idx = np.where(np.diff(effis) < -0.005)
+        idx = np.where(np.diff(effis) < -0.005)[0]
+
+        # Bail out if there is no data
+        if np.size(idx) == 0:
+            return 0
+
         z_effi = np.array(zplot[idx], dtype={
             'names': ['z'], 'formats': [np.float]})
         # from this make some "z-periods" to avoid accidental zdecrease at low z
