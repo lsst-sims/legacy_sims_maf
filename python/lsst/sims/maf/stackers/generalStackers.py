@@ -54,6 +54,7 @@ class SaturationStacker(BaseStacker):
             # Note these zeropoints are calculating the number of *electrons* per second (thus gain=1)
             # https://github.com/lsst-pst/syseng_throughputs/blob/master/notebooks/Syseng%20Throughputs%20Repo%20Demo.ipynb
             self.zeropoints = np.array([27.03, 28.38, 28.15, 27.86, 27.46, 26.68]).view(list(zip(names, types)))
+            self.saturation_adu = saturation_e 
         else:
             self.zeropoints = zeropoints
 
