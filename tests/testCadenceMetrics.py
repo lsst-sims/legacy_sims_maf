@@ -274,26 +274,29 @@ class TestCadenceMetrics(unittest.TestCase):
 
     def testSeasonLengthMetric(self):
         times = np.arange(0, 3650, 10)
-        data = np.zeros(len(times), dtype=list(zip(['observationStartMJD'], [float])))
+        data = np.zeros(len(times), dtype=list(zip(['observationStartMJD', 'visitExposureTime'], [float, float])))
         data['observationStartMJD'] = times
+        data['visitExposureTime'] = 30.0
         metric = metrics.SeasonLengthMetric(reduceFunc=np.median)
         slicePoint = {'ra': 0}
         result = metric.run(data, slicePoint)
         self.assertEqual(result, 350)
         times = np.arange(0, 3650, 365)
-        data = np.zeros(len(times)*2, dtype=list(zip(['observationStartMJD'], [float])))
+        data = np.zeros(len(times)*2, dtype=list(zip(['observationStartMJD', 'visitExposureTime'], [float, float])))
         data['observationStartMJD'][0:len(times)] = times
         data['observationStartMJD'][len(times):] = times + 10
         data['observationStartMJD'] = np.sort(data['observationStartMJD'])
+        data['visitExposureTime'] = 30.0
         metric = metrics.SeasonLengthMetric(reduceFunc=np.median)
         slicePoint = {'ra': 0}
         result = metric.run(data, slicePoint)
         self.assertEqual(result, 10)
         times = np.arange(0, 3650-365, 365)
-        data = np.zeros(len(times)*2, dtype=list(zip(['observationStartMJD'], [float])))
+        data = np.zeros(len(times)*2, dtype=list(zip(['observationStartMJD', 'visitExposureTime'], [float, float])))
         data['observationStartMJD'][0:len(times)] = times
         data['observationStartMJD'][len(times):] = times + 10
         data['observationStartMJD'] = np.sort(data['observationStartMJD'])
+        data['visitExposureTime'] = 30.0
         metric = metrics.SeasonLengthMetric(reduceFunc=np.size)
         slicePoint = {'ra': 0}
         result = metric.run(data, slicePoint)
