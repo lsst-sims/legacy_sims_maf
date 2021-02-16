@@ -8,13 +8,11 @@ from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
-           'SeasonStacker', 'DcrStacker', 'FiveSigmaStacker', 'OpSimFieldStacker',
+           'DcrStacker', 'FiveSigmaStacker', 'OpSimFieldStacker',
            'SaturationStacker']
 
 # Original stackers by Peter Yoachim (yoachim@uw.edu)
 # Filter color stacker by Lynne Jones (lynnej@uw.edu)
-# Season stacker by Phil Marshall (dr.phil.marshall@gmail.com),
-# modified by Humna Awan (humna.awan@rutgers.edu)
 
     
 class SaturationStacker(BaseStacker):
@@ -411,6 +409,8 @@ class ParallacticAngleStacker(BaseStacker):
 
 class FilterColorStacker(BaseStacker):
     """Translate filters ('u', 'g', 'r' ..) into RGB tuples.
+
+    This is useful for making movies if you want to make the pointing have a related color-tuple for a plot.
     """
     colsAdded = ['rRGB', 'gRGB', 'bRGB']
 
@@ -440,54 +440,6 @@ class FilterColorStacker(BaseStacker):
             simData['rRGB'][match] = self.filter_rgb_map[f][0]
             simData['gRGB'][match] = self.filter_rgb_map[f][1]
             simData['bRGB'][match] = self.filter_rgb_map[f][2]
-        return simData
-
-
-class SeasonStacker(BaseStacker):
-    """Add an integer label to show which season a given visit is in.
-
-    The season only depends on the RA of the object: we compute the MJD
-    when each object is on the meridian at midnight, and subtract 6
-    months to get the start date of each season.
-    The season index range is 0-10.
-    Must wrap 0th and 10th to get a total of 10 seasons.
-    """
-    colsAdded = ['year', 'season']
-
-    def __init__(self, mjdCol='observationStartMJD', RACol='fieldRA', degrees=True):
-        # Names of columns we need from database.
-        self.colsReq = [mjdCol, RACol]
-        # List of units for our new columns.
-        self.units = ['yr', '']
-        # And save the column names.
-        self.mjdCol = mjdCol
-        self.RACol = RACol
-        self.degrees = degrees
-
-    def _run(self, simData, cols_present=False):
-        if cols_present:
-            # Column already present in data; assume it is correct and does not need recalculating.
-            return simData
-        # Define year number: (note that opsim defines "years" in flat 365 days).
-        year = np.floor((simData[self.mjdCol] - simData[self.mjdCol][0]) / 365)
-        # Convert RA to Hours
-        if self.degrees:
-            objRA = simData[self.RACol]/15.0
-        else:
-            objRA = np.degrees(simData[self.RACol])/15.0
-        # objRA=0 on autumnal equinox.
-        # autumnal equinox 2014 happened on Sept 23 --> Equinox MJD
-        Equinox = 2456923.5 - 2400000.5
-        # Use 365.25 for the length of a year here, because we're dealing with real seasons.
-        daysSinceEquinox = 0.5*objRA*(365.25/12.0)  # 0.5 to go from RA to month; 365.25/12.0 months to days
-        firstSeasonBegan = Equinox + daysSinceEquinox - 0.5*365.25   # in MJD
-        # Now we can compute the number of years since the first season
-        # began, and so assign a global integer season number:
-        globalSeason = np.floor((simData[self.mjdCol] - firstSeasonBegan)/365.25)
-        # Subtract off season number of first observation:
-        season = globalSeason - np.min(globalSeason)
-        simData['year'] = year
-        simData['season'] = season
         return simData
 
 
