@@ -24,6 +24,7 @@ class TrilegalDensityMap(BaseMap):
     def __init__(self, filtername='r', nside=64, ext=False):
         self.mapDir = os.path.join(getPackageDir('sims_maps'), 'TriMaps')
         self.filtername = filtername
+        self.keynames = [f'starLumFunc_{self.filtername}', f'starMapBins_{self.filtername}']
         self.nside = nside
         self.ext = ext
 

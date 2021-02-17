@@ -24,7 +24,7 @@ class StellarDensityMap(BaseMap):
     def __init__(self, startype='allstars', filtername='r'):
         self.mapDir = os.path.join(getPackageDir('sims_maps'), 'StarMaps')
         self.filtername = filtername
-        self.keynames = [f'starLumFunc_{self.filtername}']
+        self.keynames = [f'starLumFunc_{self.filtername}', f'starMapBins_{self.filtername}']
         if startype == 'allstars':
             self.startype = ''
         else:
