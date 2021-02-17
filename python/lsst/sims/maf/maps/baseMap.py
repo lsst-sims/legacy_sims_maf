@@ -40,26 +40,32 @@ class MapsRegistry(type):
                 maps = cls.registry[mapsname]()
                 print(' added to SlicePoint: ', ','.join(maps.keynames))
 
+
 class BaseMap(with_metaclass(MapsRegistry, object)):
     """ """
 
-    def __init__(self,**kwargs):
-        self.keyname = 'newkey'
+    def __init__(self, **kwargs):
+        self.keynames = ['newkey']
 
     def __eq__(self, othermap):
         return self.keynames == othermap.keynames
+
     def __ne__(self, othermap):
         return self.keynames != othermap.keynames
+
     def __lt__(self, othermap):
         return (self.keynames < othermap.keynames)
+
     def __gt__(self, othermap):
         return (self.keynames > othermap.keynames)
+
     def __le__(self, othermap):
         return (self.keynames <= othermap.keynames)
+
     def __ge__(self, othermap):
         return (self.keynames >= othermap.keynames)
 
-    def run(self,slicePoints):
+    def run(self, slicePoints):
         """
         Given slicePoints (dict containing metadata about each slicePoint, including ra/dec),
          adds additional metadata at each slicepoint and returns updated dict.
