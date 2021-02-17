@@ -152,15 +152,12 @@ class SummaryHistogram(BasePlotter):
             finalHist[i] = metric.run(mV[:, i])
         bins = plotDict['bins']
         if plotDict['histStyle']:
-            width = np.diff(bins)
-            leftedge = bins[:-1] - width/2.0
-            rightedge = bins[:-1] + width/2.0
-            # Correct for uneven/big bin widths
-            t = np.where(leftedge[1:] < rightedge[:-1], rightedge[:-1], leftedge[1:])
-            leftedge[1:] = t
-            #x = np.ravel(list(zip(bins[:-1], bins[1:])))
-            x = np.ravel(list(zip(leftedge, rightedge)))
-            y = np.ravel(list(zip(finalHist, finalHist)))
+            leftedge = bins[:-1]
+            rightedge = bins[1:]
+
+            x = np.vstack([leftedge, rightedge]).T.flatten()
+            y = np.vstack([finalHist, finalHist]).T.flatten()
+
         else:
             # Could use this to plot things like FFT
             x = bins[:-1]
