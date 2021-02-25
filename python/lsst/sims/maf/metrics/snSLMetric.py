@@ -1,8 +1,6 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
 import healpy as hp
-from lsst.sims.maf.stackers import snStacker
-import numpy.lib.recfunctions as rf
 from .seasonMetrics import calcSeason
 
 __all__ = ['SNSLMetric']
@@ -14,7 +12,9 @@ class SNSLMetric(metrics.BaseMetric):
                  filterCol='filter', exptimeCol='visitExposureTime',
                  nightCol='night', obsidCol='observationId', nexpCol='numExposures',
                  vistimeCol='visitTime', m5Col='fiveSigmaDepth', season=[-1], night_collapse=False,
-                 uniqueBlocks=False, season_gap=80., **kwargs):
+                 nfilters_min=4, min_season_obs=5,
+                 # XXX--I just made up some reasonable sounding numbers
+                 m5mins={'u': 22.6, 'g': 23.5, 'r': 23.2, 'i': 22.5, 'z': 22.0, 'y': 21.2}, **kwargs):
         """
         Strongly Lensed SN metric
 
@@ -63,6 +63,8 @@ class SNSLMetric(metrics.BaseMetric):
          Default : visitTime
         season: int (list) or -1, opt
          season to process (default: -1: all seasons)
+        nfilters_min : int (5)
+            The number of filters to demand in a season
 
 
         """
@@ -77,10 +79,9 @@ class SNSLMetric(metrics.BaseMetric):
         self.vistimeCol = vistimeCol
         self.seasonCol = 'season'
         self.m5Col = m5Col
-        self.season_gap = season_gap
 
         cols = [self.nightCol, self.filterCol, self.mjdCol, self.obsidCol,
-                self.nexpCol, self.vistimeCol, self.exptimeCol]
+                self.nexpCol, self.vistimeCol, self.exptimeCol, self.m5Col]
 
         super(SNSLMetric, self).__init__(
             col=cols, metricName=metricName, units='N SL', **kwargs)
@@ -89,6 +90,9 @@ class SNSLMetric(metrics.BaseMetric):
         self.bands = 'ugrizy'
 
         self.night_collapse = night_collapse
+        self.m5mins = m5mins
+        self.min_season_obs = min_season_obs
+        self.nfilters_min = nfilters_min
 
     def run(self, dataSlice, slicePoint=None):
         """
@@ -111,16 +115,6 @@ class SNSLMetric(metrics.BaseMetric):
         if len(dataSlice) == 0:
             return self.badVal
 
-        # Collapse down by night if requested
-        if self.night_collapse:
-            # Or maybe this should be specific per filter?
-            key = np.char.array(dataSlice[self.nightCol].astype(str)) + np.char.array(dataSlice[self.filterCol].astype(str))
-            u_key, indx = np.unique(key, return_index=True)
-            # Normally we would want to co-add depths, increase the number of exposures, average mjdCol. But none of that gets used later.
-            dataSlice = dataSlice[indx]
-            # Need to resort I think
-            dataSlice.sort(order=self.mjdCol)
-
         season_id = np.floor(calcSeason(np.degrees(slicePoint['ra']), dataSlice[self.mjdCol]))
 
         seasons = self.season
@@ -132,9 +126,19 @@ class SNSLMetric(metrics.BaseMetric):
         median_gaps = []
         for season in seasons:
             idx = np.where(season_id == season)[0]
-            slice_sel = dataSlice[idx]
-            if len(slice_sel) < 5:
+            bright_enough = np.zeros(idx.size, dtype=bool)
+            for key in self.m5mins:
+                in_filt = np.where(dataSlice[idx][self.filterCol] == key)[0]
+                bright_enough[in_filt[np.where(dataSlice[idx][in_filt][self.m5Col] > self.m5mins[key])[0]]] = True
+            idx = idx[bright_enough]
+            u_filters = np.unique(dataSlice[idx][self.filterCol])
+            if (len(idx) < self.min_season_obs) | (np.size(u_filters) < self.nfilters_min):
                 continue
+            if self.night_collapse:
+                u_nights, unight_indx = np.unique(dataSlice[idx][self.nightCol], return_index=True)
+                idx = idx[unight_indx]
+                order = np.argsort(dataSlice[self.mjdCol][idx])
+                idx = idx[order]
             mjds_season = dataSlice[self.mjdCol][idx]
             cadence = mjds_season[1:]-mjds_season[:-1]
             season_lengths.append(mjds_season[-1]-mjds_season[0])
