@@ -14,7 +14,7 @@ class SNSLMetric(metrics.BaseMetric):
                  vistimeCol='visitTime', m5Col='fiveSigmaDepth', season=[-1], night_collapse=False,
                  nfilters_min=4, min_season_obs=5,
                  # XXX--I just made up some reasonable sounding numbers
-                 m5mins={'u': 22.6, 'g': 23.5, 'r': 23.2, 'i': 22.5, 'z': 22.0, 'y': 21.2}, **kwargs):
+                 m5mins={'u': 22.7, 'g': 24.1, 'r': 23.7, 'i': 23.1, 'z': 22.2, 'y': 21.4}, **kwargs):
         """
         Strongly Lensed SN metric
 
