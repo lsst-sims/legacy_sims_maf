@@ -265,11 +265,11 @@ class TestSNmetrics(unittest.TestCase):
         metric = SNSLMetric(night_collapse=night_collapse)
 
         # run the metric
-        nSL = metric.run(data, slicePoint={'nside': 64})
+        nSL = metric.run(data, slicePoint={'nside': 64, 'ra': 0., 'ebv': 0.})
 
         # and the result should be
-
-        nSL_ref = 0.00012650940
+        # Changing the refernce value because we have new coadd and mag limits
+        nSL_ref = 1.42168e-6  # 0.00012650940
 
         assert(np.abs(nSL-nSL_ref) < 1.e-8)
 
