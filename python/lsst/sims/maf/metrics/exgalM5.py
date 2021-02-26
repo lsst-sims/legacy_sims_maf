@@ -21,14 +21,9 @@ class ExgalM5(BaseMetric):
     lsstFilter : str, opt
         Filter name for which to calculate m5 depth. Default 'r'.
         This is used to set the wavelength range over which to calculate dust extinction.
-        Overrides wavelen_min/wavelen_max/wavelen_step if specified.
-    wavelen_min : float, opt
-        If lsstFilter is not specified, this can be used to set the minimum wavelength for dust extinction.
-    wavelen_max : float, opt
-        If lsstFilter is not specified, this can be used to set the maximum wavelength for dust extinction.
     """
     def __init__(self, m5Col='fiveSigmaDepth', metricName='ExgalM5', units='mag',
-                 lsstFilter='r', wavelen_min=None, wavelen_max=None, **kwargs):
+                 lsstFilter='r', **kwargs):
         # Set the name for the dust map to use. This is gathered into the MetricBundle.
         maps = ['DustMap']
         self.m5Col = m5Col
