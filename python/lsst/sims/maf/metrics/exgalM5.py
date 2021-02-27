@@ -18,16 +18,14 @@ class ExgalM5(BaseMetric):
         Column name for five sigma depth. Default 'fiveSigmaDepth'.
     unit : str, opt
         Label for units. Default 'mag'.
-    lsstFilter : str, opt
-        Filter name for which to calculate m5 depth. Default 'r'.
-        This is used to set the wavelength range over which to calculate dust extinction.
     """
     def __init__(self, m5Col='fiveSigmaDepth', metricName='ExgalM5', units='mag',
-                 lsstFilter='r', **kwargs):
+                 filterCol='filter', **kwargs):
         # Set the name for the dust map to use. This is gathered into the MetricBundle.
         maps = ['DustMap']
         self.m5Col = m5Col
-        super().__init__(col=[self.m5Col], maps=maps, metricName=metricName, units=units, **kwargs)
+        self.filterCol = filterCol
+        super().__init__(col=[self.m5Col, self.filterCol], maps=maps, metricName=metricName, units=units, **kwargs)
         # Set the default wavelength limits for the lsst filters. These are approximately correct.
         dust_properties = Dust_values()
         self.Ax1 = dust_properties.Ax1
@@ -40,5 +38,5 @@ class ExgalM5(BaseMetric):
         """
         m5 = self.Coaddm5Metric.run(dataSlice)
         # Total dust extinction along this line of sight. Correct default A to this EBV value.
-        A_x = self.Ax1 * slicePoint['ebv']
+        A_x = self.Ax1[dataSlice[self.filterCol][0]] * slicePoint['ebv']
         return m5 - A_x

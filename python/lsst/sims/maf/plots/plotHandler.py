@@ -566,10 +566,10 @@ class PlotHandler(object):
         fig = plt.figure(fignum)
         plotFile = outfileRoot + '_' + plotType + '.' + self.figformat
         if self.trimWhitespace:
-            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi,
+            fig.savefig(os.path.join(self.outDir, plotFile), dpi=self.dpi,
                         bbox_inches='tight')
         else:
-            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
+            fig.savefig(os.path.join(self.outDir, plotFile), dpi=self.dpi)
         # Generate a png thumbnail.
         if self.thumbnail:
             thumbFile = 'thumb.' + outfileRoot + '_' + plotType + '.png'
