@@ -2,17 +2,10 @@ import numpy as np
 import lsst.sims.maf.metrics as metrics
 import healpy as hp
 from .seasonMetrics import calcSeason
-from scipy.stats import binned_statistic
-from lsst.sims.utils import int_binned_stat
 from lsst.sims.photUtils import Dust_values
+from lsst.sims.maf.utils import collapse_night
 
 __all__ = ['SNSLMetric']
-
-
-def coaddM5(mags):
-    """Coadded depth, assuming Gaussian noise
-    """
-    return 1.25 * np.log10(np.sum(10.**(0.8*np.array(mags))))
 
 
 class SNSLMetric(metrics.BaseMetric):
@@ -122,7 +115,8 @@ class SNSLMetric(metrics.BaseMetric):
         dataSlice.sort(order=self.mjdCol)
 
         # Crop it down so things are coadded per night at the median MJD time
-        dataSlice = self.coadd(dataSlice)
+        dataSlice = collapse_night(dataSlice, nightCol=self.nightCol, filterCol=self.filterCol,
+                                   m5Col=self.m5Col, mjdCol=self.mjdCol)
 
         # get the pixel area
         area = hp.nside2pixarea(slicePoint['nside'], degrees=True)
@@ -177,47 +171,3 @@ class SNSLMetric(metrics.BaseMetric):
 
         return N_lensed_SNe_Ia
 
-    def coadd(self, dataSlice):
-        """
-        Method to coadd data per band and per night
-
-        Parameters
-        ---------------
-        dataSlice : np.array
-
-        Returns
-        -----------
-        dataSlice, with m5Col replaced with m5 coadded in the night
-
-        """
-
-        dataSlice.sort(order=[self.nightCol, self.filterCol])
-
-        filters = np.unique(dataSlice[self.filterCol])
-
-        for filtername in filters:
-            infilt = np.where(dataSlice[self.filterCol] == filtername)[0]
-            unight, indices = np.unique(dataSlice[self.nightCol][infilt], return_inverse=True)
-            right = unight+0.5
-            bins = [unight[0]-0.5] + right.tolist()
-            coadds, be, bn = binned_statistic(dataSlice[self.nightCol][infilt],
-                                              dataSlice[self.m5Col][infilt], bins=bins,
-                                              statistic=coaddM5)
-            # now we just clobber the m5Col with the coadd for the night
-            dataSlice[self.m5Col][infilt] = coadds[indices]
-
-            unights, median_mjd_per_night = int_binned_stat(dataSlice[self.nightCol][infilt],
-                                                            dataSlice[self.mjdCol][infilt],
-                                                            statistic=np.median)
-            dataSlice[self.mjdCol][infilt] = median_mjd_per_night[indices]
-
-            # Note, we could also clobber exposure MJD, exposure time, etc. But I don't think they
-            # get used later, so maybe OK.
-
-        # Make a string that is the combination of night and filter
-        night_filt = np.char.add(dataSlice[self.nightCol].astype(str), dataSlice[self.filterCol].astype(str))
-        u_nf, indx = np.unique(night_filt, return_index=True)
-        dataSlice = dataSlice[indx]
-        dataSlice.sort(order=[self.mjdCol])
-
-        return dataSlice
