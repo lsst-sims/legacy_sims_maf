@@ -1,8 +1,9 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
 import healpy as hp
-from lsst.sims.maf.stackers import snStacker
-import numpy.lib.recfunctions as rf
+from .seasonMetrics import calcSeason
+from lsst.sims.photUtils import Dust_values
+from lsst.sims.maf.utils import collapse_night
 
 __all__ = ['SNSLMetric']
 
@@ -13,7 +14,9 @@ class SNSLMetric(metrics.BaseMetric):
                  filterCol='filter', exptimeCol='visitExposureTime',
                  nightCol='night', obsidCol='observationId', nexpCol='numExposures',
                  vistimeCol='visitTime', m5Col='fiveSigmaDepth', season=[-1], night_collapse=False,
-                 uniqueBlocks=False, season_gap=80., **kwargs):
+                 nfilters_min=4, min_season_obs=5,
+                 m5mins={'u': 22.7, 'g': 24.1, 'r': 23.7, 'i': 23.1, 'z': 22.2, 'y': 21.4},
+                 maps=['DustMap'], **kwargs):
         """
         Strongly Lensed SN metric
 
@@ -62,6 +65,8 @@ class SNSLMetric(metrics.BaseMetric):
          Default : visitTime
         season: int (list) or -1, opt
          season to process (default: -1: all seasons)
+        nfilters_min : int (5)
+            The number of filters to demand in a season
 
 
         """
@@ -76,18 +81,22 @@ class SNSLMetric(metrics.BaseMetric):
         self.vistimeCol = vistimeCol
         self.seasonCol = 'season'
         self.m5Col = m5Col
-        self.season_gap = season_gap
+        self.maps= maps
 
         cols = [self.nightCol, self.filterCol, self.mjdCol, self.obsidCol,
-                self.nexpCol, self.vistimeCol, self.exptimeCol]
+                self.nexpCol, self.vistimeCol, self.exptimeCol, self.m5Col]
 
         super(SNSLMetric, self).__init__(
-            col=cols, metricName=metricName, units='N SL', **kwargs)
+            col=cols, metricName=metricName, maps=self.maps, units='N SL', **kwargs)
         self.badVal = 0
         self.season = season
         self.bands = 'ugrizy'
 
         self.night_collapse = night_collapse
+        self.m5mins = m5mins
+        self.min_season_obs = min_season_obs
+        self.nfilters_min = nfilters_min
+        self.phot_properties = Dust_values()
 
     def run(self, dataSlice, slicePoint=None):
         """
@@ -104,23 +113,18 @@ class SNSLMetric(metrics.BaseMetric):
 
         """
         dataSlice.sort(order=self.mjdCol)
+
+        # Crop it down so things are coadded per night at the median MJD time
+        dataSlice = collapse_night(dataSlice, nightCol=self.nightCol, filterCol=self.filterCol,
+                                   m5Col=self.m5Col, mjdCol=self.mjdCol)
+
         # get the pixel area
         area = hp.nside2pixarea(slicePoint['nside'], degrees=True)
 
         if len(dataSlice) == 0:
             return self.badVal
 
-        # Collapse down by night if requested
-        if self.night_collapse:
-            # Or maybe this should be specific per filter?
-            key = np.char.array(dataSlice[self.nightCol].astype(str)) + np.char.array(dataSlice[self.filterCol].astype(str))
-            u_key, indx = np.unique(key, return_index=True)
-            # Normally we would want to co-add depths, increase the number of exposures, average mjdCol. But none of that gets used later.
-            dataSlice = dataSlice[indx]
-            # Need to resort I think
-            dataSlice.sort(order=self.mjdCol)
-
-        dataSlice, season_id = self.seasonCalc(dataSlice)
+        season_id = np.floor(calcSeason(np.degrees(slicePoint['ra']), dataSlice[self.mjdCol]))
 
         seasons = self.season
 
@@ -131,9 +135,20 @@ class SNSLMetric(metrics.BaseMetric):
         median_gaps = []
         for season in seasons:
             idx = np.where(season_id == season)[0]
-            slice_sel = dataSlice[idx]
-            if len(slice_sel) < 5:
+            bright_enough = np.zeros(idx.size, dtype=bool)
+            for key in self.m5mins:
+                in_filt = np.where(dataSlice[idx][self.filterCol] == key)[0]
+                A_x = self.phot_properties.Ax1[key] * slicePoint['ebv']
+                bright_enough[in_filt[np.where((dataSlice[idx[in_filt]][self.m5Col] - A_x) > self.m5mins[key])[0]]] = True
+            idx = idx[bright_enough]
+            u_filters = np.unique(dataSlice[idx][self.filterCol])
+            if (len(idx) < self.min_season_obs) | (np.size(u_filters) < self.nfilters_min):
                 continue
+            if self.night_collapse:
+                u_nights, unight_indx = np.unique(dataSlice[idx][self.nightCol], return_index=True)
+                idx = idx[unight_indx]
+                order = np.argsort(dataSlice[self.mjdCol][idx])
+                idx = idx[order]
             mjds_season = dataSlice[self.mjdCol][idx]
             cadence = mjds_season[1:]-mjds_season[:-1]
             season_lengths.append(mjds_season[-1]-mjds_season[0])
@@ -156,38 +171,3 @@ class SNSLMetric(metrics.BaseMetric):
 
         return N_lensed_SNe_Ia
 
-    def seasonCalc(self, obs):
-        """
-        Method to estimate seasons
-
-        Parameters
-        --------------
-       obs: numpy array
-          array of observations
-        season_gap: float, opt
-          minimal gap required to define a season (default: 80 days)
-        mjdCol: str, opt
-          col name for MJD infos (default: observationStartMJD)
-
-        Returns
-        ----------
-        original numpy array sorted and season 
-
-        """
-
-        # check wether season has already been estimated
-        if 'season' in obs.dtype.names:
-            return obs, obs['season']
-
-        obs.sort(order=self.mjdCol)
-        season = np.zeros(obs.size, dtype=int)
-
-        if len(obs) == 1:
-            return obs, season
-
-        diff = obs[self.mjdCol][1:]-obs[self.mjdCol][:-1]
-        flag = np.where(diff > self.season_gap)[0]
-        for i, indx in enumerate(flag):
-            season[indx+1:] = i+1
-
-        return obs, season
