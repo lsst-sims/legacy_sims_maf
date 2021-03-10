@@ -4,6 +4,7 @@ In addition, these supports the time delay metric calculation for strong lensing
 
 import numpy as np
 from .baseMetric import BaseMetric
+from lsst.sims.photUtils import Dust_values
 
 __all__ = ['calcSeason', 'findSeasonEdges',
            'SeasonLengthMetric', 'CampaignLengthMetric',
@@ -173,25 +174,78 @@ class TdcMetric(BaseMetric):
     cadNorm = in units of days
     seaNorm = in units of months
     campNorm = in units of years
+
+    This metric also adds a requirement to achieve limiting magnitudes after galactic dust extinction,
+    in various bandpasses, in order to exclude visits which are not useful for detecting quasars
+    (due to being short or having high sky brightness, etc.) and to reject regions with
+    high galactic dust extinction.
+
+    Parameters
+    ----------
+    mjdCol: str, opt
+        Column name for mjd. Default observationStartMJD.
+    nightCol: str, opt
+        Column name for night. Default night.
+    filterCol: str, opt
+        Column name for filter. Default filter.
+    m5Col: str, opt
+        Column name for five-sigma depth. Default fiveSigmaDepth.
+    magCuts: dict, opt
+        Dictionary with filtername:mag limit (after dust extinction). Default None in kwarg.
+        Defaults set within metric: {'u': 22.7, 'g': 24.1, 'r': 23.7, 'i': 23.1, 'z': 22.2, 'y': 21.4}
+    metricName: str, opt
+        Metric Name. Default TDC.
+    cadNorm: float, opt
+        Cadence normalization constant, in units of days. Default 3.
+    seaNorm: float, opt
+        Season normalization constant, in units of months. Default 4.
+    campNorm: float, opt
+        Campaign length normalization constant, in units of years. Default 5.
+    badval: float, opt
+        Return this value instead of the dictionary for bad points.
+
+    Returns
+    -------
+    dictionary
+        Dictionary of values for {'rate', 'precision', 'accuracy'} at this point in the sky.
     """
-    def __init__(self, mjdCol='observationStartMJD', nightCol='night',
-                 expTimeCol='visitExposureTime', minExpTime=20,
+    def __init__(self, mjdCol='observationStartMJD', nightCol='night', filterCol='filter',
+                 m5Col='fiveSigmaDepth', magCuts=None,
                  metricName = 'TDC', cadNorm=3., seaNorm=4., campNorm=5., badval=-999, **kwargs):
         # Save the normalization values.
         self.cadNorm = cadNorm
         self.seaNorm = seaNorm
         self.campNorm = campNorm
         self.mjdCol = mjdCol
-        self.expTimeCol = expTimeCol
-        self.minExpTime = minExpTime
+        self.m5Col = m5Col
         self.nightCol = nightCol
-        super().__init__(col=[self.mjdCol, self.expTimeCol, self.nightCol], badval=badval,
+        self.filterCol = filterCol
+        if magCuts is None:
+            self.magCuts = {'u': 22.7, 'g': 24.1, 'r': 23.7, 'i': 23.1, 'z': 22.2, 'y': 21.4}
+        else:
+            self.magCuts = magCuts
+            if not isinstance(self.magCuts, dict):
+                raise Exception('magCuts should be a dictionary')
+        # Set up dust map requirement
+        maps = ['DustMap']
+        # Set the default wavelength limits for the lsst filters. These are approximately correct.
+        dust_properties = Dust_values()
+        self.Ax1 = dust_properties.Ax1
+        super().__init__(col=[self.mjdCol, self.m5Col, self.nightCol], badval=badval, maps=maps,
                          metricName = metricName, units = '%s' %('%'), **kwargs)
 
     def run(self, dataSlice, slicePoint):
-        # Order data Slice/times and exclude visits which are too short.
-        long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
-        data = np.sort(dataSlice[long], order=self.mjdCol)
+        # Calculate dust-extinction limiting magnitudes for each visit.
+        filterlist = np.unique(dataSlice[self.filterCol])
+        m5Dust = np.zeros(len(dataSlice), float)
+        for f in filterlist:
+            match = np.where(dataSlice[self.filterCol]) == f
+            A_x = self.Ax1[f] * slicePoint['ebv']
+            m5Dust[match] = dataSlice[self.m5Col][match] - A_x
+            good = np.where(m5Dust[match] > self.magCuts[f])
+            m5Dust[~good] = -999
+        idxs = np.where(m5Dust > -998)
+        data = np.sort(dataSlice[idxs], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
         seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
         intSeasons = np.floor(seasons)
