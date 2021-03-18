@@ -63,18 +63,18 @@ class WeakLensingNvisits(BaseMetric):
     Intended to be used with a single filter.
     """
     def __init__(self, m5Col='fiveSigmaDepth', expTimeCol='visitExposureTime',
-                 lsstFilter='i',
+                 lsstFilter='i', filterCol='filter',
                  depthlim=24.5,
                  ebvlim=0.2, min_expTime=15,
                  **kwargs):
         # First set up the ExgalM5 metric (this will also add the dustmap as a map attribute)
-        self.ExgalM5 = ExgalM5(m5Col=m5Col)
+        self.ExgalM5 = ExgalM5(m5Col=m5Col, filterCol=filterCol)
         self.m5Col = m5Col
         self.expTimeCol = expTimeCol
         self.depthlim = depthlim
         self.ebvlim = ebvlim
         self.min_expTime = min_expTime
-        super().__init__(col=[self.m5Col, self.expTimeCol], maps=self.ExgalM5.maps, **kwargs)
+        super().__init__(col=[self.m5Col, self.expTimeCol, filterCol], maps=self.ExgalM5.maps, **kwargs)
 
     def run(self, dataSlice, slicePoint):
         if slicePoint['ebv'] > self.ebvlim:
