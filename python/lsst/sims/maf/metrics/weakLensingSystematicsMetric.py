@@ -29,8 +29,7 @@ class ExgalM5_with_cuts(BaseMetric):
         self.nFilters = nFilters
         self.lsstFilter = lsstFilter
         # I thought about inheriting from ExGalM5 instead, but the columns specification is more complicated
-        self.exgalM5 = ExgalM5(m5Col=m5Col, units=units, lsstFilter=self.lsstFilter,
-                               wavelen_min=wavelen_min, wavelen_max=wavelen_max)
+        self.exgalM5 = ExgalM5(m5Col=m5Col, units=units)
         super().__init__(col=[self.m5Col, self.filterCol], metricName=metricName, units=units,
                          maps=self.exgalM5.maps, **kwargs)
 
@@ -69,7 +68,7 @@ class WeakLensingNvisits(BaseMetric):
                  ebvlim=0.2, min_expTime=15,
                  **kwargs):
         # First set up the ExgalM5 metric (this will also add the dustmap as a map attribute)
-        self.ExgalM5 = ExgalM5(m5Col=m5Col, lsstFilter=lsstFilter)
+        self.ExgalM5 = ExgalM5(m5Col=m5Col)
         self.m5Col = m5Col
         self.expTimeCol = expTimeCol
         self.depthlim = depthlim
