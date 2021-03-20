@@ -92,9 +92,9 @@ class BaseOpsimDatabase(Database):
         """
         if tableName is None:
             tableName = self.defaultTable
-        if groupBy is 'default' and tableName==self.defaultTable:
+        if groupBy == 'default' and tableName==self.defaultTable:
             groupBy = self.mjdCol
-        if groupBy is 'default' and tableName!=self.defaultTable:
+        if groupBy == 'default' and tableName!=self.defaultTable:
             groupBy = None
         metricdata = super(BaseOpsimDatabase, self).fetchMetricData(colnames=colnames,
                                                                 sqlconstraint=sqlconstraint,
