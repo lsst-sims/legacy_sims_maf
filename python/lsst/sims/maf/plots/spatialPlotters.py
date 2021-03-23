@@ -1,5 +1,6 @@
 from builtins import zip
 import numbers
+import copy
 import numpy as np
 import warnings
 import healpy as hp
@@ -64,6 +65,7 @@ def setColorMap(plotDict):
     if type(cmap) == str:
         cmap = getattr(cm, cmap)
     # Set background and masked pixel colors default healpy white and gray.
+    cmap = copy.copy(cmap)
     cmap.set_over(cmap(1.0))
     cmap.set_under('w')
     cmap.set_bad('gray')
