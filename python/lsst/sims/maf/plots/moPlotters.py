@@ -101,7 +101,8 @@ class MetricVsH(BasePlotter):
         plt.title(plotDict['title'], y=y)
         plt.xlabel(plotDict['xlabel'])
         plt.ylabel(plotDict['ylabel'])
-        plt.tight_layout()
+        # matplotlib has started failing on this, comment out for now
+        # plt.tight_layout()
         return fig.number
 
 
