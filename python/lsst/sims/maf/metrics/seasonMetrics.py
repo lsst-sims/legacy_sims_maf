@@ -104,6 +104,8 @@ class SeasonLengthMetric(BaseMetric):
         """
         # Order data Slice/times and exclude visits which are too short.
         long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        if len(long[0]) == 0:
+            return self.badval
         data = np.sort(dataSlice[long], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
         seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
@@ -127,6 +129,8 @@ class CampaignLengthMetric(BaseMetric):
     def run(self, dataSlice, slicePoint):
         # Order data Slice/times and exclude visits which are too short.
         long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        if len(long[0]) == 0:
+            return self.badval
         data = np.sort(dataSlice[long], order=self.mjdCol)
         seasons = calcSeason(np.degrees(slicePoint['ra'], data[self.mjdCol]))
         intSeasons = np.floor(seasons)
@@ -150,6 +154,8 @@ class MeanCampaignFrequencyMetric(BaseMetric):
     def run(self, dataSlice, slicePoint):
         # Order data Slice/times and exclude visits which are too short.
         long = np.where(dataSlice[self.expTimeCol] > self.minExpTime)
+        if len(long[0]) == 0:
+            return self.badval
         data = np.sort(dataSlice[long], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
         seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
@@ -245,6 +251,8 @@ class TdcMetric(BaseMetric):
             good = np.where(m5Dust[match] > self.magCuts[f])
             m5Dust[~good] = -999
         idxs = np.where(m5Dust > -998)
+        if len(idxs) == 0:
+            return self.badval
         data = np.sort(dataSlice[idxs], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
         seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
