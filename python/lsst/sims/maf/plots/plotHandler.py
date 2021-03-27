@@ -555,26 +555,26 @@ class PlotHandler(object):
             plt.suptitle(self.plotDicts[0]['suptitle'])
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
-            if displayDict is None:
-                displayDict = self._buildDisplayDict()
-            self.saveFig(fignum, outfile, plotType, self.jointMetricNames, self.slicer.slicerName,
-                         self.jointRunNames, self.constraints, self.jointMetadata, displayDict)
+            if fignum is not None:
+                if displayDict is None:
+                    displayDict = self._buildDisplayDict()
+                self.saveFig(fignum, outfile, plotType, self.jointMetricNames, self.slicer.slicerName,
+                             self.jointRunNames, self.constraints, self.jointMetadata, displayDict)
         return fignum
 
     def saveFig(self, fignum, outfileRoot, plotType, metricName, slicerName,
-                runName, constraint, metadata, displayDict=None):
+                runName, constraint, metadata, displayDict=None, thumb_dpi=72):
         fig = plt.figure(fignum)
         plotFile = outfileRoot + '_' + plotType + '.' + self.figformat
-        # removing dpi for now because there are NoneTypes getting through.
         if self.trimWhitespace:
-            fig.savefig(os.path.join(self.outDir, plotFile),
+            fig.savefig(os.path.join(self.outDir, plotFile), dpi=self.dpi,
                         bbox_inches='tight', format=self.figformat)
         else:
-            fig.savefig(os.path.join(self.outDir, plotFile), format=self.figformat)
+            fig.savefig(os.path.join(self.outDir, plotFile), format=self.figformat, dpi=self.dpi)
         # Generate a png thumbnail.
         if self.thumbnail:
             thumbFile = 'thumb.' + outfileRoot + '_' + plotType + '.png'
-            plt.savefig(os.path.join(self.outDir, thumbFile), bbox_inches='tight')
+            plt.savefig(os.path.join(self.outDir, thumbFile), bbox_inches='tight', dpi=thumb_dpi)
         # Save information about the file to resultsDb.
         if self.resultsDb:
             if displayDict is None:
