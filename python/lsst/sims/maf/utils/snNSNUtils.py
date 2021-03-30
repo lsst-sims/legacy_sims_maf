@@ -3,8 +3,6 @@ from lsst.sims.photUtils import PhotometricParameters
 from lsst.sims.photUtils import Bandpass, Sed
 
 import numpy as np
-import matplotlib.pyplot as plt
-import math
 from scipy.constants import *
 from functools import wraps
 import os
@@ -12,14 +10,16 @@ import h5py
 import multiprocessing
 from astropy.table import Table
 import pandas as pd
-from scipy import interpolate, integrate
+from scipy import interpolate
 from scipy.interpolate import RegularGridInterpolator
-from astropy import (units as u, constants as const)
 from astropy.cosmology import FlatLambdaCDM
 
 STERADIAN2SQDEG = 180.**2 / np.pi**2
 # Mpc^3 -> Mpc^3/sr
 norm = 1. / (4. * np.pi)
+
+__all__ = ['LCfast', 'Throughputs', 'Telescope',
+           'Load_Reference', 'GetReference', 'SN_Rate', 'CovColor']
 
 
 class LCfast:
@@ -96,13 +96,6 @@ class LCfast:
         for b in 'ugrizy':
             self.zp[b] = telescope.zp(b)
 
-        """
-        test = np.array(['u','g','g'])
-        index = np.argwhere(zp['band'] == test[:,None])
-        print(index)
-        print(zp['zp'][index][:,1])
-        print(toto)
-        """
 
     def __call__(self, obs, gen_par=None, bands='grizy'):
         """ Simulation of the light curve
@@ -390,6 +383,8 @@ class Throughputs(object):
     lsst_system: system throughput (lens+mirrors+filters)
     lsst_atmos: lsst_system+atmosphere
     lsst_atmos_aerosol: lsst_system+atmosphere+aerosol
+
+    Note: I would like to see this replaced by a class in sims_photUtils instead. This does not belong in MAF.
     """
 
     def __init__(self, **kwargs):
@@ -409,7 +404,6 @@ class Throughputs(object):
                     'telescope_files', 'filterlist', 'wave_min', 'wave_max']:
             if par in kwargs.keys():
                 params[par] = kwargs[par]
-                # params[par]=str(kwargs[par])
 
         self.atmos = params['atmos']
         self.throughputsDir = os.getenv(params['through_dir'])
@@ -448,11 +442,6 @@ class Throughputs(object):
             for f in self.filterlist:
                 self.lsst_atmos[f] = self.lsst_system[f]
                 self.lsst_atmos_aerosol[f] = self.lsst_system[f]
-
-        # self.lsst_telescope={}
-
-        # self.Load_Telescope()
-
         self.Mean_Wave()
 
     @property
@@ -479,7 +468,6 @@ class Throughputs(object):
             self.lsst_std[f] = Bandpass()
             self.lsst_system[f] = Bandpass()
 
-            telfiles = ''
             if len(self.telescope_files) > 0:
                 index = [i for i, x in enumerate(
                     self.filter_files) if f+'.dat' in x]
@@ -490,15 +478,6 @@ class Throughputs(object):
                                                    rootDir=self.throughputsDir,
                                                    wavelen_min=self.wave_min,
                                                    wavelen_max=self.wave_max)
-    """
-    def Load_Telescope(self):
-        for system in self.telescope_files+self.filter_files:
-            self.lsst_telescope[system] = Bandpass()
-            self.lsst_telescope[system].readThroughputList([system],
-                                                        rootDir=self.throughputsDir,
-                                                        wavelen_min=self.wave_min,
-                                                        wavelen_max=self.wave_max)
-     """
 
     def Load_DarkSky(self):
         """ Load DarkSky
@@ -550,66 +529,6 @@ class Throughputs(object):
             for f in self.filterlist:
                 self.lsst_atmos[f] = self.lsst_system[f]
                 self.lsst_atmos_aerosol[f] = self.lsst_system[f]
-
-    def Plot_Throughputs(self):
-        """ Plot the throughputs
-        """
-        # colors=['b','g','r','m','c',[0.8,0,0]]
-        style = [',', ',', ',', ',']
-        for i, band in enumerate(self.filterlist):
-
-            plt.plot(self.lsst_system[band].wavelen,
-                     self.lsst_system[band].sb,
-                     linestyle='--', color=self.filtercolors[band],
-                     label='%s - syst' % (band))
-            plt.plot(self.lsst_atmos[band].wavelen,
-                     self.lsst_atmos[band].sb,
-                     linestyle='-.', color=self.filtercolors[band],
-                     label='%s - syst+atm' % (band))
-            if len(self.lsst_atmos_aerosol) > 0:
-                plt.plot(self.lsst_atmos_aerosol[band].wavelen,
-                         self.lsst_atmos_aerosol[band].sb,
-                         linestyle='-', color=self.filtercolors[band],
-                         label='%s - syst+atm+aero' % (band))
-
-        plt.plot(self.atmos.wavelen, self.atmos.sb, 'k:',
-                 label='X =%.1f atmos' % (self.airmass), linestyle='-')
-        if len(self.lsst_atmos_aerosol) > 0:
-            plt.plot(self.atmos_aerosol.wavelen, self.atmos_aerosol.sb, 'k:',
-                     label='X =%.1f atm+aero' % (self.airmass), linestyle='--')
-        # plt.legend(loc=(0.85, 0.1), fontsize='smaller',
-            # fancybox=True, numpoints=1)
-
-        plt.legend(loc=(0.82, 0.1), fancybox=True, numpoints=1)
-
-        plt.xlabel('Wavelength (nm)')
-        plt.ylabel('Sb (0-1)')
-        plt.title('System throughput')
-        # plt.show()
-
-    def Plot_DarkSky(self):
-        """ Plot darksky
-        """
-        # self.Load_DarkSky()
-        plt.plot(self.darksky.wavelen,
-                 self.darksky.flambda, 'k:', linestyle='-')
-        plt.xlabel('Wavelength (nm)')
-        plt.ylabel('flambda (ergs/cm$^2$/s/nm)')
-        plt.title('Dark Sky SED')
-        plt.show()
-
-    def Plot_Throughputs_Spectrum(self, wavelength, fluxes, z):
-        """ Plot throughput spectrum
-        """
-        fig, ax1 = plt.subplots()
-        style = [',', ',', ',', ',']
-
-        for i, band in enumerate(self.filterlist):
-
-            plt.plot(self.lsst_system[band].wavelen,
-                     self.lsst_system[band].sb,
-                     linestyle='-', color=self.filtercolors[band],
-                     label='%s - system' % (band))
 
     def Mean_Wave(self):
         """ Estimate mean wave
@@ -679,12 +598,14 @@ class Telescope(Throughputs):
     lsst_system: system throughput (lens+mirrors+filters)
     lsst_atmos: lsst_system+atmosphere
     lsst_atmos_aerosol: lsst_system+atmosphere+aerosol
+
+    Note: I would like to see this replaced by a class in sims_photUtils instead. This does not belong in MAF.
     """
 
     def __init__(self, name='unknown', airmass=1., **kwargs):
 
         self.name = name
-        Throughputs.__init__(self, **kwargs)
+        super().__init__(self, **kwargs)
 
         params = ['mag_sky', 'm5', 'FWHMeff', 'Tb',
                   'Sigmab', 'zp', 'counts_zp', 'Skyb', 'flux_sky']

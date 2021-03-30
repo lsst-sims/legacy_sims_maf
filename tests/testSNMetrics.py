@@ -1,11 +1,9 @@
 from builtins import zip
-import matplotlib
-# matplotlib.use("Agg")
 import numpy as np
 import unittest
-#import lsst.sims.maf.metrics as metrics
 import lsst.utils.tests
 from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
+from lsst.sims.maf.utils.snNSNUtils import Throughputs, Telescope
 from lsst.sims.maf.metrics import SNCadenceMetric
 from lsst.sims.maf.metrics import SNSNRMetric
 from lsst.sims.maf.metrics import SNSLMetric
@@ -39,13 +37,11 @@ def Observations_band(day0=59000, daymin=59000, cadence=3., season_length=140., 
     data = np.zeros(npts, dtype=list(zip(names, types)))
     data['observationStartMJD'] = dayobs
     data['night'] = np.floor(data['observationStartMJD']-day0+1)
-    #data['night'] = 10
     data['fiveSigmaDepth'] = m5_ref[band]
     data['visitExposureTime'] = 30.
     data['numExposures'] = 1
     data['visitTime'] = 34
     data['filter'] = band
-    #data['season'] = 1.
     data['seeingFwhmEff'] = 0.8
     data['seeingFwhmGeom'] = 0.8
     data['healpixID'] = 10
@@ -129,6 +125,19 @@ def fakeData(band, season=1):
 
 
 class TestSNmetrics(unittest.TestCase):
+
+    def testThroughputs(self):
+        """Test the Throughputs class"""
+        ## Again, this should not be in MAF but should use appropriate classes in lsst.sims.photUtils.
+        # Can we set it up - are the relevant standard environment variables present?
+        tp = Throughputs()
+
+
+    def testTelescope(self):
+        """Test the Telescope class"""
+        # The Telescope class should be replaced by lsst.sims.photUtils.BandpassSet
+        t = Telescope(airmass=1.2)
+
 
     def testSNCadenceMetric(self):
         """Test the SN cadence metric """
