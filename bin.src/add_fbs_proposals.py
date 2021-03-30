@@ -9,9 +9,12 @@ from sqlite3 import OperationalError, IntegrityError
 
 import numpy as np
 import pandas as pd
-
 import healpy as hp
-from lsst.sims.featureScheduler import utils as schedUtils
+
+from lsst.sims.maf.metrics import CountMetric
+from lsst.sims.maf.slicers import HealpixSlicer
+import lsst.sims.maf.metricBundles as mb
+
 
 __all__ = ['define_ddname', 'get_visits', 'label_visits', 'update_database']
 
@@ -23,7 +26,8 @@ def define_ddname(note):
 
 def get_visits(opsimdb):
     conn = sqlite3.connect(opsimdb)
-    visits = pd.read_sql('select observationId, fieldRA, fieldDec, filter, note from summaryallprops', conn)
+    query = 'select observationId, observationStartMJD, fieldRA, fieldDec, filter, note from summaryallprops'
+    visits = pd.read_sql(query, conn)
     conn.close()
     return(visits)
 
@@ -103,29 +107,28 @@ def update_database(opsimdb, visits, propTags, propId):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Add approximate proposal id labels to FBS visits, '
-                                                 'assuming standard WFD footprint.')
+                                                 'assuming WFD == area with 750 or more visits.')
     parser.add_argument('dbfile', type=str, help='sqlite file of observations (full path).')
-    parser.add_argument('--wfd', type=str, default='standard',
-                        help='Type of wfd footprint [standard, extended, dust]')
     args = parser.parse_args()
 
-    # There are some standard WFD footprints: the standard version, the extended version (with gal-lat cut),
-    # and an extended version with dust extinction cuts.
-    # Some of the actual simulations use variations on the declination limits; these aren't account for.
-    # If you're using something else (non-standard), this script will have to be modified.
-    # Note these "footprints" are standard (full) length healpix arrays for nside, but with values of 0/1
-    wfd_defaults = ['standard', 'extended', 'dust', 'extended with dust']
-    nside = 64
-
-    if args.wfd.lower() == 'standard':
-        wfd_footprint = schedUtils.WFD_no_gp_healpixels(nside)
-    elif args.wfd.lower() == 'extended':
-        wfd_footprint = schedUtils.WFD_bigsky_healpixels(nside)
-    elif args.wfd.lower() == 'dust' or args.wfd.lower() == 'extended with dust':
-        wfd_footprint = schedUtils.WFD_no_dust_healpixels(nside)
-    else:
-        raise ValueError(f'This script understands wfd footprints of types {wfd_defaults}')
-
+    # Pull out the visits. We'll reuse these for the footprint calculation below.
+    # Note that visits is a dataframe.
     visits = get_visits(args.dbfile)
+
+    # Instead of always figuring out the WFD footprint from what we expected, let's define it based on
+    # what we got .. and define the "WFD" as the area with at least 750 visits per pointing.
+    nside = 64
+    # Find the WFD footprint
+    m = CountMetric(col='observationStartMJD')
+    s = HealpixSlicer(nside)
+    simdata = visits.query('not note.str.startswith("DD")', engine='python').to_records()
+    bundle = mb.MetricBundle(m, s, 'notDD')
+    g = mb.MetricBundleGroup({'0': bundle}, None)
+    g.setCurrent('notDD')
+    g.runCurrent('notDD', simData=simdata)
+
+    wfd_footprint = bundle.metricValues.filled(0)
+    wfd_footprint = np.where(wfd_footprint > 750, 1, 0)
+
     visits, propTags, propId = label_visits(visits, wfd_footprint)
     update_database(args.dbfile, visits, propTags, propId)
