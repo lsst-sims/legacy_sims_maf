@@ -605,7 +605,7 @@ class Telescope(Throughputs):
     def __init__(self, name='unknown', airmass=1., **kwargs):
 
         self.name = name
-        super().__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
         params = ['mag_sky', 'm5', 'FWHMeff', 'Tb',
                   'Sigmab', 'zp', 'counts_zp', 'Skyb', 'flux_sky']
