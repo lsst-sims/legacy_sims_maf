@@ -1,3 +1,4 @@
+from lsst.utils import getPackageDir
 from lsst.sims.photUtils import SignalToNoise
 from lsst.sims.photUtils import PhotometricParameters
 from lsst.sims.photUtils import Bandpass, Sed
