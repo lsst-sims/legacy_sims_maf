@@ -353,11 +353,9 @@ class Throughputs(object):
     Parameters
     -------------
     through_dir : str, opt
-       throughput directory
-       Default : LSST_THROUGHPUTS_BASELINE
+       throughput directory. If None, uses $THROUGHPUTS_DIR/baseline
     atmos_dir : str, opt
-       directory of atmos files
-       Default : THROUGHPUTS_DIR
+       directory of atmos files. If None, uses $THROUGHPUTS_DIR
     telescope_files : list(str),opt
        list of of throughput files
        Default : ['detector.dat', 'lens1.dat','lens2.dat',
@@ -390,8 +388,8 @@ class Throughputs(object):
     def __init__(self, **kwargs):
 
         params = {}
-        params['through_dir'] = 'LSST_THROUGHPUTS_BASELINE'
-        params['atmos_dir'] = 'THROUGHPUTS_DIR'
+        params['through_dir'] = os.path.join(getPackageDir('throughputs'), 'baseline')
+        params['atmos_dir'] = os.path.join(getPackageDir('throughputs'), 'atmos')
         params['atmos'] = True
         params['aerosol'] = True
         params['telescope_files'] = ['detector.dat', 'lens1.dat',
@@ -400,19 +398,14 @@ class Throughputs(object):
         params['filterlist'] = 'ugrizy'
         params['wave_min'] = 300.
         params['wave_max'] = 1150.
+        # This lets a user override the atmosphere and throughputs directories.
         for par in ['through_dir', 'atmos_dir', 'atmos', 'aerosol',
                     'telescope_files', 'filterlist', 'wave_min', 'wave_max']:
             if par in kwargs.keys():
                 params[par] = kwargs[par]
 
         self.atmos = params['atmos']
-        self.throughputsDir = os.getenv(params['through_dir'])
-        if os.path.exists(os.path.join
-                          (os.getenv(params['atmos_dir']), 'atmos')):
-            self.atmosDir = os.path.join(
-                os.getenv(params['atmos_dir']), 'atmos')
-        else:
-            self.atmosDir = os.getenv(params['atmos_dir'])
+        self.throughputsDir = params['through_dir']
 
         self.telescope_files = params['telescope_files']
         self.filter_files = ['filter_'+f+'.dat' for f in params['filterlist']]
