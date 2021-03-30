@@ -405,7 +405,7 @@ class Throughputs(object):
             if par in kwargs.keys():
                 params[par] = kwargs[par]
 
-        self.atmos = params['atmos']
+        self.atmosDir = params['atmos']
         self.throughputsDir = params['through_dir']
 
         self.telescope_files = params['telescope_files']
