@@ -132,7 +132,7 @@ class CampaignLengthMetric(BaseMetric):
         if len(long[0]) == 0:
             return self.badval
         data = np.sort(dataSlice[long], order=self.mjdCol)
-        seasons = calcSeason(np.degrees(slicePoint['ra'], data[self.mjdCol]))
+        seasons = calcSeason(np.degrees(slicePoint['ra']), data[self.mjdCol])
         intSeasons = np.floor(seasons)
         count = len(np.unique(intSeasons))
         return count
