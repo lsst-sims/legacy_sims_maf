@@ -192,9 +192,9 @@ def tdcBatch(colmap=None, runName='opsim', nside=64,
     tdcMetric = metrics.TdcMetric(metricName='TDC',  mjdCol=colmap['mjd'],
                                   nightCol=colmap['night'], filterCol=colmap['filter'],
                                   m5Col=colmap['fiveSigmaDepth'])
-
+    dustmap = maps.DustMap(nside=nside, interp=False)
     bundle = mb.MetricBundle(tdcMetric, slicer, constraint=extraSql, metadata=extraMetadata,
-                             displayDict=displayDict, plotFuncs=subsetPlots,
+                             displayDict=displayDict, plotFuncs=subsetPlots, mapsList=[dustmap],
                              summaryMetrics=summaryMetrics)
 
     bundleList = [bundle]
