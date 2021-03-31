@@ -173,7 +173,7 @@ def descWFDBatch(colmap=None, runName='opsim', nside=64,
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def tdcBatch(colmap=None, runName='opsim', nside=64, accuracyThreshold=0.04,
+def tdcBatch(colmap=None, runName='opsim', nside=64,
              extraSql=None, extraMetadata=None):
     # The options to add additional sql constraints are removed for now.
     if colmap is None:
@@ -189,8 +189,9 @@ def tdcBatch(colmap=None, runName='opsim', nside=64, accuracyThreshold=0.04,
     # Ideally need a way to do better on calculating the summary metrics for the high accuracy area.
 
     slicer = slicers.HealpixSlicer(nside=nside)
-    tdcMetric = metrics.TdcMetric(metricName='TDC', nightCol=colmap['night'],
-                                  expTimeCol=colmap['exptime'], mjdCol=colmap['mjd'])
+    tdcMetric = metrics.TdcMetric(metricName='TDC',  mjdCol=colmap['mjd'],
+                                  nightCol=colmap['night'], filterCol=colmap['filter'],
+                                  m5Col=colmap['fiveSigmaDepth'])
 
     bundle = mb.MetricBundle(tdcMetric, slicer, constraint=extraSql, metadata=extraMetadata,
                              displayDict=displayDict, plotFuncs=subsetPlots,
