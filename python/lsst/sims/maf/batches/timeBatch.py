@@ -3,7 +3,6 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
@@ -13,7 +12,7 @@ __all__ = ['intraNight', 'interNight', 'seasons']
 
 
 def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
-               ditherStacker=None, ditherkwargs=None, slicer=None, display_group='IntraNight', subgroup='Pairs'):
+               slicer=None, display_group='IntraNight', subgroup='Pairs'):
     """Generate a set of statistics about the pair/triplet/etc. rate within a night.
 
     Parameters
@@ -28,10 +27,6 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         Additional sql constraint to apply to all metrics.
     extraMetadata : str or None, opt
         Additional metadata to apply to all results.
-    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
-        Optional dither stacker to use to define ra/dec columns.
-    ditherkwargs: dict, opt
-        Optional dictionary of kwargs for the dither stacker.
     slicer : slicer object (None)
         Optinally use something other than a HealpixSlicer
 
@@ -48,7 +43,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         if metadata is None:
             metadata = extraSql
 
-    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(None, colmap, None)
     metadata = combineMetadata(metadata, ditherMeta)
 
     bundleList = []
@@ -152,7 +147,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
 
 
 def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
-               ditherStacker=None, ditherkwargs=None, slicer=None, display_group='InterNight', subgroup='Night gaps'):
+               slicer=None, display_group='InterNight', subgroup='Night gaps'):
     """Generate a set of statistics about the spacing between nights with observations.
 
     Parameters
@@ -167,10 +162,6 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         Additional sql constraint to apply to all metrics.
     extraMetadata : str or None, opt
         Additional metadata to use for all outputs.
-    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
-        Optional dither stacker to use to define ra/dec columns.
-    ditherkwargs: dict, opt
-        Optional dictionary of kwargs for the dither stacker.
     slicer : slicer object (None)
         Optinally use something other than a HealpixSlicer
 
@@ -185,7 +176,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     bundleList = []
 
     # Set up basic all and per filter sql constraints.
-    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(None, colmap, None)
     metadata = combineMetadata(extraMetadata, ditherMeta)
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
@@ -273,7 +264,7 @@ def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata
     bundleList = []
 
     # Set up basic all and per filter sql constraints.
-    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(None, colmap, None)
     metadata = combineMetadata(extraMetadata, ditherMeta)
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
