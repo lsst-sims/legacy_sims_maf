@@ -188,7 +188,7 @@ def tdcBatch(colmap=None, runName='opsim', nside=64,
     summaryMetrics = [metrics.MeanMetric(), metrics.MedianMetric(), metrics.RmsMetric()]
     # Ideally need a way to do better on calculating the summary metrics for the high accuracy area.
 
-    slicer = slicers.HealpixSlicer(nside=nside)
+    slicer = slicers.HealpixSlicer(nside=nside, useCache=False)
     tdcMetric = metrics.TdcMetric(metricName='TDC',  mjdCol=colmap['mjd'],
                                   nightCol=colmap['night'], filterCol=colmap['filter'],
                                   m5Col=colmap['fiveSigmaDepth'])
