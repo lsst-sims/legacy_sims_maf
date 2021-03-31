@@ -244,13 +244,13 @@ class TdcMetric(BaseMetric):
     def run(self, dataSlice, slicePoint):
         # Calculate dust-extinction limiting magnitudes for each visit.
         filterlist = np.unique(dataSlice[self.filterCol])
-        m5Dust = np.zeros(len(dataSlice), float)
+        m5Dust = np.zeros(len(dataSlice), float) - 999
         for f in filterlist:
             match = np.where(dataSlice[self.filterCol]) == f
             A_x = self.Ax1[f] * slicePoint['ebv']
             m5Dust[match] = dataSlice[self.m5Col][match] - A_x
             good = np.where(m5Dust[match] > self.magCuts[f])
-            m5Dust[~good] = -999
+            m5Dust[match][good] = dataSlice[self.m5Col][match]
         idxs = np.where(m5Dust > -998)
         if len(idxs) == 0:
             return self.badval
