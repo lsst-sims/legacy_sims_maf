@@ -237,7 +237,8 @@ class TdcMetric(BaseMetric):
         # Set the default wavelength limits for the lsst filters. These are approximately correct.
         dust_properties = Dust_values()
         self.Ax1 = dust_properties.Ax1
-        super().__init__(col=[self.mjdCol, self.m5Col, self.nightCol], badval=badval, maps=maps,
+        super().__init__(col=[self.mjdCol, self.m5Col, self.nightCol, self.filterCol],
+                         badval=badval, maps=maps,
                          metricName = metricName, units = '%s' %('%'), **kwargs)
 
     def run(self, dataSlice, slicePoint):
