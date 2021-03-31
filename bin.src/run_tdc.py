@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 import os
-import glob
 import argparse
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 import numpy as np
 import healpy as hp
 

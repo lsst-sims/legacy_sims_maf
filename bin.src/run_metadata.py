@@ -98,7 +98,7 @@ def setBatches(opsdb, colmap, args):
 
 
 if __name__ == '__main__':
-    args = parseArgs(subdir='all_combine')
+    args = parseArgs(subdir='metadata')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:

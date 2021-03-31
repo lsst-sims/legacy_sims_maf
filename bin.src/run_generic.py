@@ -5,8 +5,6 @@ This is the basis for other scripts to run specialized sets of batches.
 See run_glance and run_cadence for examples.
 """
 
-from __future__ import print_function
-
 import os
 import argparse
 import matplotlib
@@ -56,17 +54,19 @@ def setSQL(opsdb, sqlConstraint=None, extraMeta=None):
         sqltags['NES'] = nesWhere
         metadata['NES'] = 'NES'
     if sqlConstraint is not None:
-        wfdWhere = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
-        ddWhere = '(%s) and (%s)' % (sqlConstraint, ddWhere)
-        nesWhere = '(%s) and (%s)' % (sqlConstraint, nesWhere)
-    if sqlConstraint is not None and len(sqlConstraint) > 0:
-        md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
-        md = md.replace('"','').replace('  ', ' ')
-        for t in metadata:
-            metadata[t] += ' %s' % md
+        sqltags['WFD'] = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
+        sqltags['DD'] = '(%s) and (%s)' % (sqlConstraint, ddWhere)
+        sqltags['NES'] = '(%s) and (%s)' % (sqlConstraint, nesWhere)
+    # Use extra metadata if available
     if extraMeta is not None and len(extraMeta) > 0:
         for t in metadata:
             metadata[t] += ' %s' % extraMeta
+    # else, if sqlconstraint present (only) use that.
+    elif sqlConstraint is not None and len(sqlConstraint) > 0:
+        md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
+        md = md.replace('"', '').replace('  ', ' ')
+        for t in metadata:
+            metadata[t] += ' %s' % md
     # Reset metadata to None if there was nothing there. (helpful for batches).
     for t in metadata:
         if len(metadata[t]) == 0:

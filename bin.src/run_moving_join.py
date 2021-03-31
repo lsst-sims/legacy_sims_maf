@@ -4,6 +4,8 @@ import os
 import glob
 import argparse
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 
 import lsst.sims.maf.batches as batches
 
