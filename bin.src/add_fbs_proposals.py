@@ -117,15 +117,17 @@ if __name__ == '__main__':
 
     # Instead of always figuring out the WFD footprint from what we expected, let's define it based on
     # what we got .. and define the "WFD" as the area with at least 750 visits per pointing.
+    runName = os.path.split(args.dbfile)[-1].replace('.db', '')
     nside = 64
     # Find the WFD footprint
     m = CountMetric(col='observationStartMJD')
     s = HealpixSlicer(nside)
-    simdata = visits.query('not note.str.startswith("DD")', engine='python').to_records()
-    bundle = mb.MetricBundle(m, s, 'notDD')
+    simdata = visits.query('visitExposureTime > 11')
+    simdata = simdata.query('not note.str.startswith("DD")', engine='python').to_records()
+    bundle = mb.MetricBundle(m, s, 'long notDD', runName=runName)
     g = mb.MetricBundleGroup({'0': bundle}, None)
-    g.setCurrent('notDD')
-    g.runCurrent('notDD', simData=simdata)
+    g.setCurrent('long notDD')
+    g.runCurrent('long notDD', simData=simdata)
 
     wfd_footprint = bundle.metricValues.filled(0)
     wfd_footprint = np.where(wfd_footprint > 750, 1, 0)
