@@ -246,12 +246,12 @@ class TdcMetric(BaseMetric):
         filterlist = np.unique(dataSlice[self.filterCol])
         m5Dust = np.zeros(len(dataSlice), float)
         for f in filterlist:
-            match = np.where(dataSlice[self.filterCol]) == f
+            match = np.where(dataSlice[self.filterCol] == f)
             A_x = self.Ax1[f] * slicePoint['ebv']
             m5Dust[match] = dataSlice[self.m5Col][match] - A_x
             m5Dust[match] = np.where(m5Dust[match] > self.magCuts[f], m5Dust[match], -999)
         idxs = np.where(m5Dust > -998)
-        if len(idxs) == 0:
+        if len(idxs[0]) == 0:
             return self.badval
         data = np.sort(dataSlice[idxs], order=self.mjdCol)
         # SlicePoints ra/dec are always in radians - convert to degrees to calculate season
