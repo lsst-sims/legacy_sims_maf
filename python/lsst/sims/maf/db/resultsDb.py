@@ -334,7 +334,7 @@ class ResultsDb(object):
             metricIds.append(m.metricId)
         return metricIds
 
-    def getSummaryStats(self, metricId=None, summaryName=None):
+    def getSummaryStats(self, metricId=None, summaryName=None, withSimName=False):
         """
         Get the summary stats (optionally for metricId list).
         Optionally, also specify the summary metric name.
@@ -352,12 +352,18 @@ class ResultsDb(object):
             if summaryName is not None:
                 query = query.filter(SummaryStatRow.summaryName == summaryName)
             for m, s in query:
-                summarystats.append((m.metricId, m.metricName, m.slicerName, m.metricMetadata,
-                                     s.summaryName, s.summaryValue))
+                vals = (m.metricId, m.metricName, m.slicerName, m.metricMetadata,
+                                     s.summaryName, s.summaryValue)
+                if withSimName:
+                    vals += (m.simDataName,)
+                summarystats.append(vals)
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
-                          ('slicerName', np.str_, self.slen), ('metricMetadata', np.str_, self.slen),
-                          ('summaryName', np.str_, self.slen), ('summaryValue', float)])
+        dtype_list = [('metricId', int), ('metricName', np.str_, self.slen),
+                      ('slicerName', np.str_, self.slen), ('metricMetadata', np.str_, self.slen),
+                      ('summaryName', np.str_, self.slen), ('summaryValue', float)]
+        if withSimName:
+            dtype_list += [('simDataName', np.str_, self.slen)]
+        dtype = np.dtype(dtype_list)
         summarystats = np.array(summarystats, dtype)
         return summarystats
 
