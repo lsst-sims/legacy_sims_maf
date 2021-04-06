@@ -51,7 +51,8 @@ def ColMapDict(dictName=None):
         colMap['proposalId'] = 'proposalId'
         colMap['slewactivities'] = {}
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong',
+                                  'saturation_mag']
         colMap['metadataAngleList'] = ['rotSkyPos']
         colMap['note'] = 'note'
 

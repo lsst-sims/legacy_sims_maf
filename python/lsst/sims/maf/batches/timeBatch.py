@@ -62,7 +62,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     md = 'gri'
     if metadata is not None:
         md += ' ' + metadata
-    dtMin = 15.0
+    dtMin = 10.0
     dtMax = 60.0
     metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
                                         metricName='Fraction of visits in pairs (%.0f-%.0f min)' % (dtMin,
@@ -75,8 +75,21 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                              plotFuncs=subsetPlots, displayDict=displayDict)
     bundleList.append(bundle)
 
+    dtMin = 20.0
+    dtMax = 90.0
+    metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
+                                        metricName='Fraction of visits in pairs (%.0f-%.0f min)' % (dtMin,
+                                                                                                    dtMax))
+    displayDict['caption'] = 'Fraction of %s visits that have a paired visit' \
+                             'between %.1f and %.1f minutes away. ' % (md, dtMin, dtMax)
+    displayDict['caption'] += 'If all visits were in pairs, this fraction would be 1.'
+    displayDict['order'] += 1
+    bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, summaryMetrics=standardStats,
+                             plotFuncs=subsetPlots, displayDict=displayDict)
+    bundleList.append(bundle)
+
     # Look at the fraction of visits which have another visit within dtMax, gri.
-    dtMax = 50.0
+    dtMax = 60.0
     metric = metrics.NRevisitsMetric(mjdCol=colmap['mjd'], dT=dtMax, normed=True,
                                      metricName='Fraction of visits with a revisit < %.0f min' % dtMax)
     displayDict['caption'] = 'Fraction of %s visits that have another visit ' \
