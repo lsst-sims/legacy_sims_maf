@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import matplotlib
 matplotlib.use('Agg')
 
@@ -125,7 +126,7 @@ if __name__ == '__main__':
     simdata = visits.query('visitExposureTime > 11')
     simdata = simdata.query('not note.str.startswith("DD")', engine='python').to_records()
     bundle = mb.MetricBundle(m, s, 'long notDD', runName=runName)
-    g = mb.MetricBundleGroup({'0': bundle}, None)
+    g = mb.MetricBundleGroup({f'{runName}': bundle}, None)
     g.setCurrent('long notDD')
     g.runCurrent('long notDD', simData=simdata)
 
