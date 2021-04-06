@@ -3,9 +3,9 @@ from future.utils import with_metaclass
 import os
 import inspect
 import numpy as np
-from sqlalchemy import func, text
+from sqlalchemy import func, text, column
 from sqlalchemy import Table
-from sqlalchemy.engine import reflection
+import sqlalchemy
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
@@ -13,6 +13,7 @@ with warnings.catch_warnings():
 
 
 __all__ = ['DatabaseRegistry', 'Database']
+
 
 class DatabaseRegistry(type):
     """
@@ -83,23 +84,23 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
 
         self.dbTypeMap = {'BIGINT': (int,), 'BOOLEAN': (bool,), 'FLOAT': (float,), 'INTEGER': (int,),
                           'NUMERIC': (float,), 'SMALLINT': (int,), 'TINYINT': (int,),
-                          'VARCHAR': (np.str, 256), 'TEXT': (np.str, 256), 'CLOB': (np.str, 256),
-                          'NVARCHAR': (np.str, 256), 'NCLOB': (np.str, 256), 'NTEXT': (np.str, 256),
-                          'CHAR': (np.str, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
-                          'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
-                          'DATETIME': (np.str, 50)}
+                          'VARCHAR': (str, 256), 'TEXT': (str, 256), 'CLOB': (str, 256),
+                          'NVARCHAR': (str, 256), 'NCLOB': (str, 256), 'NTEXT': (str, 256),
+                          'CHAR': (str, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
+                          'STRING': (str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
+                          'DATETIME': (str, 50)}
         if longstrings:
-            typeOverRide = {'VARCHAR':(np.str, 1024), 'NVARCHAR':(np.str, 1024),
-                            'TEXT':(np.str, 1024), 'CLOB':(np.str, 1024),
-                            'STRING':(np.str, 1024)}
+            typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
+                            'TEXT':(str, 1024), 'CLOB':(str, 1024),
+                            'STRING':(str, 1024)}
             self.dbTypeMap.update(typeOverRide)
 
         # Get a dict (keyed by the table names) of all the columns in each table and view.
-        self.tableNames = reflection.Inspector.from_engine(self.connection.engine).get_table_names()
-        self.tableNames += reflection.Inspector.from_engine(self.connection.engine).get_view_names()
+        self.tableNames = sqlalchemy.inspect(self.connection.engine).get_table_names()
+        self.tableNames += sqlalchemy.inspect(self.connection.engine).get_view_names()
         self.columnNames = {}
         for t in self.tableNames:
-            cols = reflection.Inspector.from_engine(self.connection.engine).get_columns(t)
+            cols = sqlalchemy.inspect(self.connection.engine).get_columns(t)
             self.columnNames[t] = [xxx['name'] for xxx in cols]
         # Create all the sqlalchemy table objects. This lets us see the schema and query it with types.
         self.tables = {}
@@ -205,13 +206,14 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         # are what the user will specify.
 
         # Build the query.
+        tablename_str = str(tablename).replace('"', '')
         query = self._build_query(tablename, colnames=colnames, sqlconstraint=sqlconstraint,
                                   groupBy=groupBy, numLimit=numLimit)
 
         # Determine dtype for numpy recarray.
         dtype = []
         for col in colnames:
-            ty = self.tables[tablename].c[col].type
+            ty = self.tables[tablename_str].c[str(col).replace('"', '')].type
             dt = self.dbTypeMap[ty.__visit_name__]
             try:
                 # Override the default length, if the type has it
@@ -220,7 +222,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
                     dt = dt[:-1] + (ty.length,)
             except AttributeError:
                 pass
-            dtype.append((col,) + dt)
+            dtype.append((str(col).replace('"', ''),) + dt)
 
         # Execute query on database.
         exec_query = self.connection.session.execute(query)
@@ -243,25 +245,26 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         return data
 
     def _build_query(self, tablename, colnames, sqlconstraint=None, groupBy=None, numLimit=None):
-        if tablename not in self.tables:
+        tablename_str = str(tablename).replace('"', '')
+        if tablename_str not in self.tables:
             raise ValueError('Tablename %s not in list of available tables (%s).'
                              % (tablename, self.tables.keys()))
         if colnames is None:
             colnames = self.columnNames[tablename]
         else:
             for col in colnames:
-                if col not in self.columnNames[tablename]:
-                    raise ValueError("Requested column %s not available in table %s" % (col, tablename))
+                if str(col).replace('"', '') not in self.columnNames[tablename_str]:
+                    raise ValueError("Requested column %s not available in table %s" % (col, tablename_str))
             if groupBy is not None:
                 if groupBy not in self.columnNames[tablename]:
-                    raise ValueError("GroupBy column %s is not available in table %s" % (groupBy, tablename))
+                    raise ValueError("GroupBy column %s is not available in table %s" % (groupBy, tablename_str))
         # Put together sqlalchemy query object.
         for col in colnames:
             if col == colnames[0]:
-                query = self.connection.session.query(col)
+                query = self.connection.session.query(column(col))
             else:
-                query = query.add_columns(col)
-        query = query.select_from(self.tables[tablename])
+                query = query.add_columns(column(col))
+        query = query.select_from(self.tables[tablename_str])
         if sqlconstraint is not None:
             if len(sqlconstraint) > 0:
                 query = query.filter(text(sqlconstraint))
