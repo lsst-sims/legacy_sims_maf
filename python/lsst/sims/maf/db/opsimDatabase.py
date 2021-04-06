@@ -265,8 +265,8 @@ class OpsimDatabaseFBS(BaseOpsimDatabase):
         self.decCol = column('fieldDec')
         self.propIdCol = column('proposalId')
         # For config parsing.
-        self.versionCol = column('featureScheduler version')
-        self.dateCol = column('Date, ymd')
+        self.versionCol = 'featureScheduler version'
+        self.dateCol = 'Date, ymd'
         self.raDecInDeg = True
         self.opsimVersion = 'FBS'
 
