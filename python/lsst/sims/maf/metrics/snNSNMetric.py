@@ -85,7 +85,7 @@ class SNNSNMetric(BaseMetric):
         self.zlim_coeff = zlim_coeff
 
         cols = [self.nightCol, self.m5Col, self.filterCol, self.mjdCol, self.obsidCol,
-                self.nexpCol, self.vistimeCol, self.exptimeCol, self.seasonCol]
+                self.nexpCol, self.vistimeCol, self.exptimeCol]
 
         super(SNNSNMetric, self).__init__(
             col=cols, metricDtype='object', metricName=metricName, **kwargs)
@@ -249,7 +249,6 @@ class SNNSNMetric(BaseMetric):
 
             resd = np.rec.fromrecords([(nSN, zlim, healpixID)], names=[
                                       'nSN', 'zlim', 'healpixID'])
-
             res = nlr.merge_arrays([idarray, resd], flatten=True)
 
         else:
