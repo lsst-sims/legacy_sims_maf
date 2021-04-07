@@ -1,5 +1,6 @@
 from builtins import zip
 import numpy as np
+import copy
 import matplotlib.pyplot as plt
 from .plotHandler import BasePlotter
 from matplotlib.patches import Ellipse
@@ -92,7 +93,7 @@ class NeoDistancePlotter(BasePlotter):
             H[good] += 1
 
         # Set the under value to white
-        myCmap = plt.cm.get_cmap('jet').copy()
+        myCmap = copy.copy(plt.cm.get_cmap('jet'))
         myCmap.set_under('w')
         blah = ax.pcolormesh(xgrid, ygrid + 1, H, cmap=myCmap, vmin=.001, shading='auto')
         cb = plt.colorbar(blah, ax=ax)
