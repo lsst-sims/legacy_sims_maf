@@ -6,10 +6,7 @@ import numpy as np
 from sqlalchemy import func, text, column
 from sqlalchemy import Table
 import sqlalchemy
-import warnings
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", UserWarning)
-    from lsst.sims.catalogs.db import DBObject
+from .dbObj import DBObject
 
 
 __all__ = ['DatabaseRegistry', 'Database']
