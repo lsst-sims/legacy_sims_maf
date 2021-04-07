@@ -970,8 +970,8 @@ class Load_Reference:
         self.Instrument = {}
         self.Instrument['name'] = 'LSST'  # name of the telescope (internal)
         # dir of throughput
-        self.Instrument['throughput_dir'] = os.path.join(getPackageDir('THROUGHPUTS_DIR'), 'baseline')
-        self.Instrument['atmos_dir'] =  os.path.join(getPackageDir('THROUGHPUTS_DIR'), 'atmos')
+        self.Instrument['throughput_dir'] = os.path.join(getPackageDir('throughputs'), 'baseline')
+        self.Instrument['atmos_dir'] =  os.path.join(getPackageDir('throughputs'), 'atmos')
         self.Instrument['airmass'] = 1.2  # airmass value
         self.Instrument['atmos'] = True  # atmos
         self.Instrument['aerosol'] = False  # aerosol
