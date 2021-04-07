@@ -331,16 +331,18 @@ class LCfast:
         """
         Method to estimate :math:`srand=\sqrt((0.04-\gamma)*x+\gamma*x^2)`
         with :math:`x = 10^{0.4*(m-m_5)}`
+
         Parameters
-        ---------------
+        -----------
         gamma: float
           gamma value
         mag: float
           magnitude
         m5: float
            fiveSigmaDepth value
+
         Returns
-        ----------
+        -------
         srand = np.sqrt((0.04-gamma)*x+gamma*x**2)
         with x = 10**(0.4*(mag-m5))
         """
@@ -1378,11 +1380,12 @@ class GetReference:
 
 
 class SN_Rate:
-    """ 
+    """
     Estimate production rates of typeIa SN
     Available rates: Ripoche, Perrett, Dilday
+
     Parameters
-    ---------------
+    ----------
     rate :  str,opt
       type of rate chosen (Ripoche, Perrett, Dilday) (default : Perrett)
     H0 : float, opt

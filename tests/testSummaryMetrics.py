@@ -52,7 +52,7 @@ class TestSummaryMetrics(unittest.TestCase):
         self.assertEqual(median_nvis, 826)
         # Now update so that 13k of sky is 826, rest 0.
         deginsph = 41253
-        npix_nk = np.int(npix * (13000. / deginsph))
+        npix_nk = int(npix * (13000. / deginsph))
         data['metricdata'] = 0
         data['metricdata'][:npix_nk] = 826
         result = metric.run(data, slicePoint)

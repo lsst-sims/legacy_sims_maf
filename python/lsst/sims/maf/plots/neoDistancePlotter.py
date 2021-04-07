@@ -92,9 +92,9 @@ class NeoDistancePlotter(BasePlotter):
             H[good] += 1
 
         # Set the under value to white
-        myCmap = plt.cm.get_cmap('jet')
+        myCmap = plt.cm.get_cmap('jet').copy()
         myCmap.set_under('w')
-        blah = ax.pcolormesh(xgrid, ygrid + 1, H, cmap=myCmap, vmin=.001)
+        blah = ax.pcolormesh(xgrid, ygrid + 1, H, cmap=myCmap, vmin=.001, shading='auto')
         cb = plt.colorbar(blah, ax=ax)
         cb.set_label(plotDict['units'])
 
