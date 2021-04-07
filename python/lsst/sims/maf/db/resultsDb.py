@@ -358,11 +358,11 @@ class ResultsDb(object):
                     vals += (m.simDataName,)
                 summarystats.append(vals)
         # Convert to numpy array.
-        dtype_list = [('metricId', int), ('metricName', np.str_, self.slen),
-                      ('slicerName', np.str_, self.slen), ('metricMetadata', np.str_, self.slen),
-                      ('summaryName', np.str_, self.slen), ('summaryValue', float)]
+        dtype_list = [('metricId', int), ('metricName', str, self.slen),
+                      ('slicerName', str, self.slen), ('metricMetadata', str, self.slen),
+                      ('summaryName', str, self.slen), ('summaryValue', float)]
         if withSimName:
-            dtype_list += [('simDataName', np.str_, self.slen)]
+            dtype_list += [('simDataName', str, self.slen)]
         dtype = np.dtype(dtype_list)
         summarystats = np.array(summarystats, dtype)
         return summarystats
@@ -387,10 +387,10 @@ class ResultsDb(object):
                 plotFiles.append((m.metricId, m.metricName, m.metricMetadata,
                                   p.plotType, p.plotFile, thumbfile))
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
-                          ('metricMetadata', np.str_, self.slen),
-                          ('plotType', np.str_, self.slen), ('plotFile', np.str_, self.slen),
-                          ('thumbFile', np.str_, self.slen)])
+        dtype = np.dtype([('metricId', int), ('metricName', str, self.slen),
+                          ('metricMetadata', str, self.slen),
+                          ('plotType', str, self.slen), ('plotFile', str, self.slen),
+                          ('thumbFile', str, self.slen)])
         plotFiles = np.array(plotFiles, dtype)
         return plotFiles
 
@@ -426,12 +426,12 @@ class ResultsDb(object):
                         m.sqlConstraint, m.metricMetadata, m.metricDataFile)
                 metricInfo.append(mInfo)
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
-                          ('baseMetricNames', np.str_, self.slen),
-                          ('slicerName', np.str_, self.slen),
-                          ('sqlConstraint', np.str_, self.slen),
-                          ('metricMetadata', np.str_, self.slen),
-                          ('metricDataFile', np.str_, self.slen)])
+        dtype = np.dtype([('metricId', int), ('metricName', str, self.slen),
+                          ('baseMetricNames', str, self.slen),
+                          ('slicerName', str, self.slen),
+                          ('sqlConstraint', str, self.slen),
+                          ('metricMetadata', str, self.slen),
+                          ('metricDataFile', str, self.slen)])
         metricInfo = np.array(metricInfo, dtype)
         return metricInfo
 
