@@ -74,7 +74,7 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
                       metrics.fONv(nside=nside, norm=True, metricName='fONv/benchmark',
                                    Asky=benchmarkArea, Nvisit=benchmarkNvisits),
                       metrics.fOArea(nside=nside, norm=False, metricName=f'fOArea_{minNvisits}',
-                                     Asky=benchmarkArea, Nvisits=minNvisits)]
+                                     Asky=benchmarkArea, Nvisit=minNvisits)]
     caption = 'The FO metric evaluates the overall efficiency of observing. '
     caption += ('foNv: out of %.2f sq degrees, the area receives at least X and a median of Y visits '
                 '(out of %d, if compared to benchmark). ' % (benchmarkArea, benchmarkNvisits))
