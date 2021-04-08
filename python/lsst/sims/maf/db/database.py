@@ -253,7 +253,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
                 if str(col).replace('"', '') not in self.columnNames[tablename_str]:
                     raise ValueError("Requested column %s not available in table %s" % (col, tablename_str))
             if groupBy is not None:
-                if groupBy not in self.columnNames[tablename]:
+                if str(groupBy).replace('"', '') not in self.columnNames[tablename]:
                     raise ValueError("GroupBy column %s is not available in table %s" % (groupBy, tablename_str))
         # Put together sqlalchemy query object.
         for col in colnames:
