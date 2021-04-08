@@ -83,15 +83,15 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
 
         self.dbTypeMap = {'BIGINT': (int,), 'BOOLEAN': (bool,), 'FLOAT': (float,), 'INTEGER': (int,),
                           'NUMERIC': (float,), 'SMALLINT': (int,), 'TINYINT': (int,),
-                          'VARCHAR': (np.str, 256), 'TEXT': (np.str, 256), 'CLOB': (np.str, 256),
-                          'NVARCHAR': (np.str, 256), 'NCLOB': (np.str, 256), 'NTEXT': (np.str, 256),
-                          'CHAR': (np.str, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
-                          'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
-                          'DATETIME': (np.str, 50)}
+                          'VARCHAR': (np.str_, 256), 'TEXT': (np.str_, 256), 'CLOB': (np.str_, 256),
+                          'NVARCHAR': (np.str_, 256), 'NCLOB': (np.str_, 256), 'NTEXT': (np.str_, 256),
+                          'CHAR': (np.str_, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
+                          'STRING': (np.str_, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
+                          'DATETIME': (np.str_, 50)}
         if longstrings:
-            typeOverRide = {'VARCHAR':(np.str, 1024), 'NVARCHAR':(np.str, 1024),
-                            'TEXT':(np.str, 1024), 'CLOB':(np.str, 1024),
-                            'STRING':(np.str, 1024)}
+            typeOverRide = {'VARCHAR':(np.str_, 1024), 'NVARCHAR':(np.str_, 1024),
+                            'TEXT':(np.str_, 1024), 'CLOB':(np.str_, 1024),
+                            'STRING':(np.str_, 1024)}
             self.dbTypeMap.update(typeOverRide)
 
         # Get a dict (keyed by the table names) of all the columns in each table and view.

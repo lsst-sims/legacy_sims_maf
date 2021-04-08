@@ -8,6 +8,7 @@ import time
 from scipy.interpolate import interp1d
 import numpy.lib.recfunctions as nlr
 
+__all__ = ['SNNSNMetric']
 
 class SNNSNMetric(BaseMetric):
     """
@@ -971,7 +972,7 @@ class SNNSNMetric(BaseMetric):
             return 0
 
         z_effi = np.array(zplot[idx], dtype={
-            'names': ['z'], 'formats': [np.float]})
+            'names': ['z'], 'formats': [float]})
         # from this make some "z-periods" to avoid accidental zdecrease at low z
         z_gap = 0.05
         seasoncalc = np.ones(z_effi.size, dtype=int)

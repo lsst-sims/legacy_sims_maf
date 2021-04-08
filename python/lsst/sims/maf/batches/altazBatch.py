@@ -58,7 +58,7 @@ def altazHealpix(colmap=None, runName='opsim', extraSql=None,
     plotFunc = plots.HealpixSkyMap()
 
     for f in filterlist:
-        if f is 'all':
+        if f == 'all':
             subgroup = 'All Observations'
         else:
             subgroup = 'Per filter'
@@ -112,7 +112,7 @@ def altazLambert(colmap=None, runName='opsim', extraSql=None,
     plotFunc = plots.LambertSkyMap()
 
     for f in filterlist:
-        if f is 'all':
+        if f == 'all':
             subgroup = 'All Observations'
         else:
             subgroup = 'Per filter'

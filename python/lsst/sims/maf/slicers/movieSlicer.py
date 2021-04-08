@@ -1,4 +1,3 @@
-from __future__ import print_function
 from builtins import str
 # cumulative one dimensional movie slicer
 import os
@@ -6,7 +5,6 @@ import warnings
 import subprocess
 from subprocess import CalledProcessError
 import numpy as np
-import matplotlib.pyplot as plt
 from functools import wraps
 
 from lsst.sims.maf.utils import percentileClipping, optimalBins
@@ -16,7 +14,6 @@ from .baseSlicer import BaseSlicer
 __all__ = ['MovieSlicer']
 
 class MovieSlicer(BaseSlicer):
-    """movie Slicer."""
     def __init__(self, sliceColName=None, sliceColUnits=None,
                  bins=None, binMin=None, binMax=None, binsize=None,
                  verbose=True, badval=0, cumulative=True, forceNoFfmpeg=False):
@@ -49,7 +46,7 @@ class MovieSlicer(BaseSlicer):
             except CalledProcessError:
                 raise Exception('Could not find ffmpeg on the system, so will not be able to create movie.'
                                 ' Use forceNoFfmpeg=True to override this error and create individual images.')
-        super(MovieSlicer, self).__init__(verbose=verbose, badval=badval)
+        super().__init__(verbose=verbose, badval=badval)
         self.sliceColName = sliceColName
         self.columnsNeeded = [sliceColName]
         self.bins = bins

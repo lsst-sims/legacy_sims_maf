@@ -4,8 +4,6 @@
 Run metrics on a single piece of metadata.
 """
 
-from __future__ import print_function
-
 import argparse
 import matplotlib
 matplotlib.use('Agg')

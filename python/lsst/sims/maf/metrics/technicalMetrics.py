@@ -241,7 +241,7 @@ class CompletenessMetric(BaseMetric):
         allCompleteness = []
         for f, nVis in zip(self.filters, self.nvisitsRequested):
             filterVisits = np.size(np.where(dataSlice[self.filterCol] == f)[0])
-            allCompleteness.append(filterVisits/np.float(nVis))
+            allCompleteness.append(filterVisits/float(nVis))
         allCompleteness.append(np.min(np.array(allCompleteness)))
         return np.array(allCompleteness)
 

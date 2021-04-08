@@ -14,7 +14,7 @@ __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
-            benchmarkArea=18000, benchmarkNvisits=825, ditherStacker=None, ditherkwargs=None):
+            benchmarkArea=18000, benchmarkNvisits=825, minNvisits=750):
     """Metrics for calculating fO.
 
     Parameters
@@ -29,10 +29,6 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
         Additional sql constraint to apply to all metrics.
     extraMetadata : str or None, opt
         Additional metadata to apply to all results.
-    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
-        Optional dither stacker to use to define ra/dec columns.
-    ditherkwargs: dict, opt
-        Optional dictionary of kwargs for the dither stacker.
 
     Returns
     -------
@@ -56,7 +52,7 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 
     subgroup = metadata
 
-    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(None, colmap, None)
     # Don't want dither info in subgroup (too long), but do want it in bundle name.
     metadata = combineMetadata(metadata, ditherMeta)
 
@@ -76,7 +72,9 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
                       metrics.fONv(nside=nside, norm=False, metricName='fONv',
                                    Asky=benchmarkArea, Nvisit=benchmarkNvisits),
                       metrics.fONv(nside=nside, norm=True, metricName='fONv/benchmark',
-                                   Asky=benchmarkArea, Nvisit=benchmarkNvisits)]
+                                   Asky=benchmarkArea, Nvisit=benchmarkNvisits),
+                      metrics.fOArea(nside=nside, norm=False, metricName=f'fOArea_{minNvisits}',
+                                     Asky=benchmarkArea, Nvisit=minNvisits)]
     caption = 'The FO metric evaluates the overall efficiency of observing. '
     caption += ('foNv: out of %.2f sq degrees, the area receives at least X and a median of Y visits '
                 '(out of %d, if compared to benchmark). ' % (benchmarkArea, benchmarkNvisits))

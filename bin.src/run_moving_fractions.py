@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     first = bdict[metricNames[0]]
     figroot = f'{first.runName}'
-    if args.metadata is not '.':
+    if args.metadata != '.':
         figroot += f'_{args.metadata}'
 
     # Calculate completeness. This utility writes these to disk.

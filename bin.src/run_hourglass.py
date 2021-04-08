@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
-import argparse
 import matplotlib
 matplotlib.use('Agg')
 import lsst.sims.maf.batches as batches

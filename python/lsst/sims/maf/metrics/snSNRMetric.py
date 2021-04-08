@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pylab as plt
 import numpy.lib.recfunctions as rf
-import yaml
 from scipy import interpolate
 import lsst.sims.maf.metrics as metrics
 from lsst.sims.maf.utils.snUtils import GenerateFakeObservations
-from collections import Iterable
+from collections.abc import Iterable
 import time
 
+__all__ = ['SNSNRMetric']
 
 class SNSNRMetric(metrics.BaseMetric):
 

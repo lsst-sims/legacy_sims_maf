@@ -57,7 +57,7 @@ def findTelescopes(minSize=3.):
     ]
 
     scopes = np.zeros(len(telescopes), dtype = list(zip(
-        ['aperture', 'name', 'lat', 'lon'], [float, (np.str, 38), float, float])))
+        ['aperture', 'name', 'lat', 'lon'], [float, (np.str_, 38), float, float])))
 
     # name, lat (S negative), lon (W negative)
     observatories = [

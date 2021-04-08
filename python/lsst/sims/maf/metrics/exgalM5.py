@@ -1,4 +1,3 @@
-import numpy as np
 from .baseMetric import BaseMetric
 from .simpleMetrics import Coaddm5Metric
 from lsst.sims.photUtils import Dust_values

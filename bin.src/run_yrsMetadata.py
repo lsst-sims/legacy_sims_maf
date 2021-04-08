@@ -4,8 +4,6 @@
 Run metrics on a single piece of metadata, for years 1, 2, 5, 10
 """
 
-from __future__ import print_function
-
 import argparse
 import numpy as np
 import matplotlib
