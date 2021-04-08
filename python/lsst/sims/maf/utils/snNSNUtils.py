@@ -331,16 +331,18 @@ class LCfast:
         """
         Method to estimate :math:`srand=\sqrt((0.04-\gamma)*x+\gamma*x^2)`
         with :math:`x = 10^{0.4*(m-m_5)}`
+
         Parameters
-        ---------------
+        -----------
         gamma: float
           gamma value
         mag: float
           magnitude
         m5: float
            fiveSigmaDepth value
+
         Returns
-        ----------
+        -------
         srand = np.sqrt((0.04-gamma)*x+gamma*x**2)
         with x = 10**(0.4*(mag-m5))
         """
@@ -970,8 +972,8 @@ class Load_Reference:
         self.Instrument = {}
         self.Instrument['name'] = 'LSST'  # name of the telescope (internal)
         # dir of throughput
-        self.Instrument['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE'
-        self.Instrument['atmos_dir'] = 'THROUGHPUTS_DIR'  # dir of atmos
+        self.Instrument['throughput_dir'] = os.path.join(getPackageDir('throughputs'), 'baseline')
+        self.Instrument['atmos_dir'] =  os.path.join(getPackageDir('throughputs'), 'atmos')
         self.Instrument['airmass'] = 1.2  # airmass value
         self.Instrument['atmos'] = True  # atmos
         self.Instrument['aerosol'] = False  # aerosol
@@ -1378,11 +1380,12 @@ class GetReference:
 
 
 class SN_Rate:
-    """ 
+    """
     Estimate production rates of typeIa SN
     Available rates: Ripoche, Perrett, Dilday
+
     Parameters
-    ---------------
+    ----------
     rate :  str,opt
       type of rate chosen (Ripoche, Perrett, Dilday) (default : Perrett)
     H0 : float, opt

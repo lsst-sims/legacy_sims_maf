@@ -43,7 +43,7 @@ class fONv(BaseMetric):
         # Determine how many healpixels are included in Asky sq deg.
         self.Asky = Asky
         self.scale = hp.nside2pixarea(self.nside, degrees=True)
-        self.npix_Asky = np.int(np.ceil(self.Asky / self.scale))
+        self.npix_Asky = int(np.ceil(self.Asky / self.scale))
         self.norm = norm
 
     def run(self, dataSlice, slicePoint=None):

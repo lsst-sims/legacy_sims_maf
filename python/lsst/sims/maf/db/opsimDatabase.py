@@ -1238,8 +1238,8 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         query = 'select %s, %s, %s from Proposal group by %s' %(self.propIdCol, self.propConfCol,
                                                                 self.propNameCol, self.propIdCol)
         propdata = self.query_arbitrary(query, dtype=([(self.propIdCol, int),
-                                                       (self.propConfCol, np.str, 256),
-                                                       (self.propNameCol, np.str, 256)]))
+                                                       (self.propConfCol, np.str_, 256),
+                                                       (self.propNameCol, np.str_, 256)]))
         # Make 'nice' proposal names
         propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata[self.propConfCol]])
         # Get 'nice' module names

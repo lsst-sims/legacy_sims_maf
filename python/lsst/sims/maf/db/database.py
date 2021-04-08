@@ -31,11 +31,13 @@ class DatabaseRegistry(type):
         databasename = modname + name
         if databasename in cls.registry:
             raise Exception('Redefining databases %s! (there are >1 database classes with the same name)'
-                            %(databasename))
+                            % (databasename))
         if databasename not in ['BaseDatabase']:
             cls.registry[databasename] = cls
+
     def getClass(cls, databasename):
         return cls.registry[databasename]
+
     def help(cls, doc=False):
         for databasename in sorted(cls.registry):
             if not doc:
@@ -71,9 +73,9 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
                  longstrings=False, verbose=False):
         # If it's a sqlite file, check that the filename exists.
         # This gives a more understandable error message than trying to connect to non-existent file later.
-        if driver=='sqlite':
+        if driver == 'sqlite':
             if not os.path.isfile(database):
-                raise IOError('Sqlite database file "%s" not found.' %(database))
+                raise IOError('Sqlite database file "%s" not found.' % (database))
 
         # Connect to database using DBObject init.
         super(Database, self).__init__(database=database, driver=driver,
@@ -87,9 +89,10 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
                           'STRING': (str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
                           'DATETIME': (str, 50)}
         if longstrings:
-            typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
-                            'TEXT':(str, 1024), 'CLOB':(str, 1024),
-                            'STRING':(str, 1024)}
+            typeOverRide = {'VARCHAR': (str, 1024), 'NVARCHAR': (str, 1024),
+                            'TEXT': (str, 1024), 'CLOB': (str, 1024),
+                            'STRING': (str, 1024)}
+
             self.dbTypeMap.update(typeOverRide)
 
         # Get a dict (keyed by the table names) of all the columns in each table and view.
@@ -176,7 +179,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         return self.execute_arbitrary(sqlQuery, dtype=dtype)
 
     def query_columns(self, tablename, colnames=None, sqlconstraint=None,
-                            groupBy=None, numLimit=None, chunksize=1000000):
+                      groupBy=None, numLimit=None, chunksize=1000000):
         """Query a table in the database and return data from colnames in recarray.
 
         Parameters
@@ -224,7 +227,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         # Execute query on database.
         exec_query = self.connection.session.execute(query)
 
-        if chunksize is None or chunksize==0:
+        if chunksize is None or chunksize == 0:
             # Fetch all results and convert to numpy recarray.
             results = exec_query.fetchall()
             data = self._convert_results(results, dtype)

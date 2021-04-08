@@ -4,7 +4,7 @@ import numpy.lib.recfunctions as rf
 from scipy import interpolate
 import lsst.sims.maf.metrics as metrics
 from lsst.sims.maf.utils.snUtils import GenerateFakeObservations
-from collections import Iterable
+from collections.abc import Iterable
 import time
 
 __all__ = ['SNSNRMetric']
