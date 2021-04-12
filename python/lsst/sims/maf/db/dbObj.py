@@ -3,7 +3,7 @@ from lsst.utils import getPackageDir
 import os
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.engine import reflection, url
-from sqlalchemy import (create_engine, MetaData, event)
+from sqlalchemy import (create_engine, MetaData, event, inspect)
 import warnings
 from io import BytesIO
 str_cast = str
@@ -132,15 +132,15 @@ class DBConnection(object):
             username, password = auth.getAuth(self._driver,
                                               host=self._host, port=self._port,
                                               database=self._database)
-            dbUrl = url.URL(self._driver,
-                            host=self._host,
-                            port=self._port,
-                            database=self._database,
-                            username=username,
-                            password=password)
+            dbUrl = url.URL.create(self._driver,
+                                   host=self._host,
+                                   port=self._port,
+                                   database=self._database,
+                                   username=username,
+                                   password=password)
         else:
-            dbUrl = url.URL(self._driver,
-                            database=self._database)
+            dbUrl = url.URL.create(self._driver,
+                                   database=self._database)
 
         self._engine = create_engine(dbUrl, echo=self._verbose)
 
@@ -323,8 +323,8 @@ class DBObject(object):
 
     def get_table_names(self):
         """Return a list of the names of the tables (and views) in the database"""
-        return [str(xx) for xx in reflection.Inspector.from_engine(self.connection.engine).get_table_names()] + \
-        [str(xx) for xx in reflection.Inspector.from_engine(self.connection.engine).get_view_names()]
+        return [str(xx) for xx in inspect(self.connection.engine).get_table_names()] + \
+               [str(xx) for xx in inspect(self.connection.engine).get_view_names()]
 
     def get_column_names(self, tableName=None):
         """
@@ -336,11 +336,11 @@ class DBObject(object):
         if tableName is not None:
             if tableName not in tableNameList:
                 return []
-            return [str_cast(xx['name']) for xx in reflection.Inspector.from_engine(self.connection.engine).get_columns(tableName)]
+            return [str_cast(xx['name']) for xx in inspect(self.connection.engine).get_columns(tableName)]
         else:
             columnDict = {}
             for name in tableNameList:
-                columnList = [str_cast(xx['name']) for xx in reflection.Inspector.from_engine(self.connection.engine).get_columns(name)]
+                columnList = [str_cast(xx['name']) for xx in inspect(self.connection.engine).get_columns(name)]
                 columnDict[name] = columnList
             return columnDict
 

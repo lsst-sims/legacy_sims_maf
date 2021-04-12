@@ -83,15 +83,15 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
 
         self.dbTypeMap = {'BIGINT': (int,), 'BOOLEAN': (bool,), 'FLOAT': (float,), 'INTEGER': (int,),
                           'NUMERIC': (float,), 'SMALLINT': (int,), 'TINYINT': (int,),
-                          'VARCHAR': (str, 256), 'TEXT': (str, 256), 'CLOB': (str, 256),
-                          'NVARCHAR': (str, 256), 'NCLOB': (str, 256), 'NTEXT': (str, 256),
-                          'CHAR': (str, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
-                          'STRING': (str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
-                          'DATETIME': (str, 50)}
+                          'VARCHAR': (np.str_, 256), 'TEXT': (np.str_, 256), 'CLOB': (np.str_, 256),
+                          'NVARCHAR': (np.str_, 256), 'NCLOB': (np.str_, 256), 'NTEXT': (np.str_, 256),
+                          'CHAR': (np.str_, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
+                          'STRING': (np.str_, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
+                          'DATETIME': (np.str_, 50)}
         if longstrings:
-            typeOverRide = {'VARCHAR': (str, 1024), 'NVARCHAR': (str, 1024),
-                            'TEXT': (str, 1024), 'CLOB': (str, 1024),
-                            'STRING': (str, 1024)}
+            typeOverRide = {'VARCHAR': (np.str_, 1024), 'NVARCHAR': (np.str_, 1024),
+                            'TEXT': (np.str_, 1024), 'CLOB': (np.str_, 1024),
+                            'STRING': (np.str_, 1024)}
 
             self.dbTypeMap.update(typeOverRide)
 
