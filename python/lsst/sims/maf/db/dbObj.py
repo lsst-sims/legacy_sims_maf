@@ -118,29 +118,11 @@ class DBConnection(object):
         except AttributeError:
             pass
 
-    def _connect_to_engine(self, auth=None):
+    def _connect_to_engine(self):
 
-        # DbAuth will not look up hosts that are None, '' or 0
-        if self._host:
-            # This is triggered when you need to connect to a remote database.
-            # Use 'HOME' as the default location (backwards compatibility) but fail graciously
-            authdir = os.getenv('HOME')
-            if authdir is None:
-                # Use an empty file in this package, which causes
-                # a fallback to database-native authentication.
-                authdir = getPackageDir('sims_catalogs')
-            username, password = auth.getAuth(self._driver,
-                                              host=self._host, port=self._port,
-                                              database=self._database)
-            dbUrl = url.URL.create(self._driver,
-                                   host=self._host,
-                                   port=self._port,
-                                   database=self._database,
-                                   username=username,
-                                   password=password)
-        else:
-            dbUrl = url.URL.create(self._driver,
-                                   database=self._database)
+        # Remove dbAuth things. Assume we are only connecting to a local database.
+        dbUrl = url.URL.create(self._driver,
+                               database=self._database)
 
         self._engine = create_engine(dbUrl, echo=self._verbose)
 
