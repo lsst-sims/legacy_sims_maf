@@ -7,7 +7,6 @@ import lsst.utils.tests
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 from lsst.utils import getPackageDir
 
-
 class TestDb(unittest.TestCase):
 
     @classmethod

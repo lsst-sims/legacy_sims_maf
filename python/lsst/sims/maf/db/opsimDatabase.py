@@ -7,6 +7,7 @@ import warnings
 from .database import Database
 from lsst.sims.utils import Site
 from lsst.sims.maf.utils import getDateVersion
+from sqlalchemy import column
 
 __all__ = ['testOpsimVersion', 'OpsimDatabase', 'OpsimDatabaseFBS', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
 
@@ -259,10 +260,10 @@ class OpsimDatabaseFBS(BaseOpsimDatabase):
         It is NOT meant to function as a general column map, just to abstract values
         which are used *within this class*.
         """
-        self.mjdCol = 'observationStartMJD'
-        self.raCol = 'fieldRA'
-        self.decCol = 'fieldDec'
-        self.propIdCol = 'proposalId'
+        self.mjdCol = column('observationStartMJD')
+        self.raCol = column('fieldRA')
+        self.decCol = column('fieldDec')
+        self.propIdCol = column('proposalId')
         # For config parsing.
         self.versionCol = 'featureScheduler version'
         self.dateCol = 'Date, ymd'
