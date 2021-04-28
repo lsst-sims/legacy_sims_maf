@@ -143,8 +143,12 @@ class TeffMetric(BaseMetric):
         self.m5Col = m5Col
         self.filterCol = filterCol
         if fiducialDepth is None:
-            self.depth = {'u': 23.9, 'g': 25.0, 'r': 24.7, 'i': 24.0,
-                          'z': 23.3, 'y': 22.1}  # design value
+            # From reference von Karman 500nm zenith seeing of 0.69"
+            # and zenith dark seeing from sims_skybrightness_pre
+            # See $SIMS_MAF_DIR/notebooks/teff_base.ipynb
+            self.depth = {'u': 23.60, 'g': 24.65,
+                          'r': 24.23, 'i': 23.80,
+                          'z': 23.19, 'y': 22.38}
         else:
             if isinstance(fiducialDepth, dict):
                 self.depth = fiducialDepth
