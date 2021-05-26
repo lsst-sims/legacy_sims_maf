@@ -1,6 +1,6 @@
 import numpy
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.engine import reflection, url
+from sqlalchemy.engine import url
 from sqlalchemy import (create_engine, MetaData, event, inspect)
 import warnings
 from io import BytesIO
@@ -53,7 +53,7 @@ class ChunkIterator(object):
         return self
 
     def __next__(self):
-        if self.chunk_size is None and not self.exec_query.closed:
+        if self.chunk_size is None:
             chunk = self.exec_query.fetchall()
             return self._postprocess_results(chunk)
         elif self.chunk_size is not None:
