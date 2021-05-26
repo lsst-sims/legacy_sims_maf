@@ -1,6 +1,4 @@
 import numpy
-from lsst.utils import getPackageDir
-import os
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.engine import reflection, url
 from sqlalchemy import (create_engine, MetaData, event, inspect)
@@ -121,11 +119,8 @@ class DBConnection(object):
     def _connect_to_engine(self):
 
         # Remove dbAuth things. Assume we are only connecting to a local database.
-        # Line to use when we update sqlalchemy 
-        #dbUrl = url.URL.create(self._driver,
-        #                       database=self._database)
-        # Remove this line when sqlalchemy updated:
-        dbUrl = url.URL(self._driver, database=self._database)
+        dbUrl = url.URL.create(self._driver,
+                               database=self._database)
 
         self._engine = create_engine(dbUrl, echo=self._verbose)
 
