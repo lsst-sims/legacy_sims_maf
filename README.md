@@ -1,3 +1,5 @@
+Moved to [rubin_sim](github.com/lsst/rubin_sim)
+
 This is the LSST MAF (Metrics Analysis Framework) package. 
 
 To install, please follow these [instructions](https://confluence.lsstcorp.org/display/SIM/Catalogs+and+MAF).
